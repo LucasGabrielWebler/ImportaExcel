@@ -1149,7 +1149,7 @@ begin
     //TIPOCAD (A=AMBOS, C=CLIENTE, F=FORNECEDOR)
     else if (LowerCase(StringGrid1.Cells[i,0])='tipocad') then
     begin
-      temp := StringGrid1.Cells[i,k];
+      temp := UpperCase(Trim(StringGrid1.Cells[i,k]));
       if ((temp='S') or (temp='1') or (temp='C')) then begin
         temp:='C';
       end
