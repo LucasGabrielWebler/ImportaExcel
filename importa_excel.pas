@@ -236,14 +236,14 @@ begin
       queryTemp.CommandText := 'ALTER TRIGGER clieforn_biu0 INACTIVE;';
       queryTemp.ExecSQL;
       //Executar INSERT
-      queryTemp.CommandText := 'insert into clieforn ('+ colClieForn +') values ' + '(' + dadosClieForn + ');';
+      queryTemp.CommandText := 'INSERT INTO clieforn ('+ colClieForn +') VALUES ' + '(' + dadosClieForn + ');';
       queryTemp.ExecSQL;
       //Reativar Trigger das cidades
       queryTemp.CommandText := 'ALTER TRIGGER clieforn_biu0 ACTIVE;';
       queryTemp.ExecSQL;
 
       queryTemp.SQL.Clear;
-      queryTemp.SQL.Add('select c.codi from clieforn c where c.codi = gen_id(gen_clieforn_id,0);');
+      queryTemp.SQL.Add('SELECT c.codi FROM clieforn c WHERE c.codi = gen_id(gen_clieforn_id,0);');
       queryTemp.Open;
 
     except
@@ -322,7 +322,7 @@ begin
       queryTemp := TSQLQuery.Create(nil);
       queryTemp.SQLConnection := frmPrinc.conDestino;
       queryTemp.SQL.Clear;
-      queryTemp.SQL.Add('select tp.codi from titup tp where tp.codi = :PCODI');
+      queryTemp.SQL.Add('SELECT tp.codi FROM titup tp WHERE tp.codi = :PCODI');
       queryTemp.ParamByName('PCODI').AsString := Codigo;
       queryTemp.Open;
 
@@ -354,7 +354,7 @@ begin
       queryTemp := TSQLQuery.Create(nil);
       queryTemp.SQLConnection := frmPrinc.conDestino;
       queryTemp.SQL.Clear;
-      queryTemp.SQL.Add('select tr.codi from titur tr where tr.codi = :PCODI');
+      queryTemp.SQL.Add('SELECT tr.codi FROM titur tr WHERE tr.codi = :PCODI');
       queryTemp.ParamByName('PCODI').AsString := Codigo;
       queryTemp.Open;
 
@@ -386,7 +386,7 @@ begin
       queryTemp := TSQLQuery.Create(nil);
       queryTemp.SQLConnection := frmPrinc.conDestino;
       queryTemp.SQL.Clear;
-      queryTemp.SQL.Add('select g.codi from grup_prod g where g.codi = :PCODI');
+      queryTemp.SQL.Add('SELECT g.codi FROM grup_prod g WHERE g.codi = :PCODI');
       queryTemp.ParamByName('PCODI').AsString := Codigo;
       queryTemp.Open;
 
@@ -418,7 +418,7 @@ begin
       queryTemp := TSQLQuery.Create(nil);
       queryTemp.SQLConnection := frmPrinc.conDestino;
       queryTemp.SQL.Clear;
-      queryTemp.SQL.Add('select sg.codi from sub_grup_prod sg where sg.codi = :PCODI');
+      queryTemp.SQL.Add('SELECT sg.codi FROM sub_grup_prod sg WHERE sg.codi = :PCODI');
       queryTemp.ParamByName('PCODI').AsString := Codigo;
       queryTemp.Open;
 
@@ -450,7 +450,7 @@ begin
       queryTemp := TSQLQuery.Create(nil);
       queryTemp.SQLConnection := frmPrinc.conDestino;
       queryTemp.SQL.Clear;
-      queryTemp.SQL.Add('select m.codi from marca m where m.codi = :PCODI');
+      queryTemp.SQL.Add('SELECT m.codi FROM marca m WHERE m.codi = :PCODI');
       queryTemp.ParamByName('PCODI').AsString := Codigo;
       queryTemp.Open;
 
@@ -485,7 +485,7 @@ begin
         queryTemp.SQL.Clear;
         //queryTemp.SQL.Add('select c.codi from clieforn c where c.nome = :PNOME');
         //queryTemp.ParamByName('PNOME').AsString := clieforn;
-        queryTemp.CommandText := 'select c.codi from clieforn c where c.nome = ' + clieforn + ';';
+        queryTemp.CommandText := 'SELECT c.codi FROM clieforn c WHERE c.nome = ' + clieforn + ';';
         queryTemp.ExecSQL;
         queryTemp.Open;
 
@@ -520,7 +520,7 @@ begin
         temp := UpperCase(RemoveAcento(StringGrid1.Cells[i,line]));
         temp := stringreplace(temp, ',', '.',[rfReplaceAll, rfIgnoreCase]);
 
-        if str <> '' then str := str + ' and ';
+        if str <> '' then str := str + ' AND ';
         str := str + 'refe = '+QuotedStr(temp);
       end;
     end;
@@ -530,7 +530,7 @@ begin
         temp := UpperCase(RemoveAcento(StringGrid1.Cells[i,line]));
         temp := stringreplace(temp, ',', '.',[rfReplaceAll, rfIgnoreCase]);
 
-        if str <> '' then str := str + ' and ';
+        if str <> '' then str := str + ' AND ';
         str := str + 'refe_original = '+QuotedStr(temp);
       end;
     end;
@@ -540,7 +540,7 @@ begin
         temp := UpperCase(RemoveAcento(StringGrid1.Cells[i,line]));
         temp := stringreplace(temp, ',', '.',[rfReplaceAll, rfIgnoreCase]);
 
-        if str <> '' then str := str + ' and ';
+        if str <> '' then str := str + ' AND ';
         str := str + 'codi_barra = '+QuotedStr(temp);
       end;
     end;
@@ -550,13 +550,13 @@ begin
         temp := UpperCase(RemoveAcento(StringGrid1.Cells[i,line]));
         temp := stringreplace(temp, ',', '.',[rfReplaceAll, rfIgnoreCase]);
 
-        if str <> '' then str := str + ' and ';
+        if str <> '' then str := str + ' AND ';
         str := str + 'codi_barra_com = '+QuotedStr(temp);
       end;
     end;
   end;
   if str = '' then Result := ''
-  else Result := '(select codi from prod where ' +str+ ' )';
+  else Result := '(SELECT codi FROM prod WHERE ' +str+ ' )';
 end;
 
 
@@ -754,7 +754,7 @@ begin
         if SelectImport.Text='Clie/Forn' then
         begin
           //Arrumar Generator dos Clientes e Fornecedores
-          max := querySelect('select max(codi) from clieforn');
+          max := querySelect('SELECT MAX(codi) FROM clieforn');
           if StrToInt(max) > 0 then
           begin
             frmImportando.atualizaStatus('Alterando generator do Clie/Forn.');
@@ -766,7 +766,7 @@ begin
         else if SelectImport.Text='Produtos' then
         begin
           //Arrumar Generator dos Produtos
-          max := querySelect('select max(codi) from prod');
+          max := querySelect('SELECT MAX(codi) FROM prod');
           if StrToInt(max) > 0 then
           begin
             frmImportando.atualizaStatus('Alterar Generator do Produto.');
@@ -781,27 +781,27 @@ begin
             if (i<>-1) then
             begin
               frmImportando.atualizaStatus('Ajustando Preços.');
-              SQL.CommandText := 'update prod_custos pc set pc.cust_preco_prazo = pc.cust_custo_real+(pc.cust_custo_real * pc.cust_margem1 /100) where pc.cust_custo_real>0;';
+              SQL.CommandText := 'UPDATE prod_custos pc SET pc.cust_preco_prazo = pc.cust_custo_real+(pc.cust_custo_real * pc.cust_margem1 /100) WHERE pc.cust_custo_real>0;';
               SQL.ExecSQL;
-              SQL.CommandText := 'update prod_custos pc set pc.cust_preco_vista = pc.cust_preco_prazo;';
+              SQL.CommandText := 'UPDATE prod_custos pc SET pc.cust_preco_vista = pc.cust_preco_prazo;';
               SQL.ExecSQL;
             end
             //Se não existir coluna margem, recalcular margem
             else begin
               //Atualizar MARGEM1
               frmImportando.atualizaStatus('Ajustando MARGENS.');
-              SQL.CommandText := 'update prod_custos pc set pc.cust_margem1= abs(pc.cust_preco_prazo - pc.cust_custo_real)/pc.cust_custo_real where pc.cust_custo_real>0;';
+              SQL.CommandText := 'UPDATE prod_custos pc SET pc.cust_margem1= ABS(pc.cust_preco_prazo - pc.cust_custo_real)/pc.cust_custo_real WHERE pc.cust_custo_real>0;';
               SQL.ExecSQL;
-              SQL.CommandText := 'update prod_custos pc set pc.cust_margem1 = pc.cust_margem1 * 100;';
+              SQL.CommandText := 'UPDATE prod_custos pc SET pc.cust_margem1 = pc.cust_margem1 * 100;';
               SQL.ExecSQL;
             end;
 
             //Atualizar MARGEM2
-            SQL.CommandText := 'update prod_custos pc set pc.cust_margem2 = (cast(pc.cust_preco_vista as numeric (18,2))/cast(pc.cust_preco_prazo as numeric (18,2)) -1)*100 where cast(pc.cust_preco_prazo as numeric (18,2))>0;';
+            SQL.CommandText := 'UPDATE prod_custos pc SET pc.cust_margem2 = (CAST(pc.cust_preco_vista as numeric (18,2))/CAST(pc.cust_preco_prazo as numeric (18,2)) -1)*100 WHERE CAST(pc.cust_preco_prazo as numeric (18,2))>0;';
             SQL.ExecSQL;
             //Criar registro na PROD_AJUS
             frmImportando.atualizaStatus('Inserindo dados na tabela PROD_AJUS.');
-            SQL.CommandText := 'insert into prod_ajus (codi,data) values (gen_id(gen_prod_ajus_id,1),CURRENT_DATE);';
+            SQL.CommandText := 'INSERT INTO prod_ajus (codi,data) VALUES (gen_id(gen_prod_ajus_id,1),CURRENT_DATE);';
             SQL.ExecSQL;
           end
           //Se for UPDATE
@@ -809,7 +809,7 @@ begin
             if (colUpdateCount > 0) and (BuscaColuna(StringGrid1,'qtd') <> -1) then begin
               //Criar registro na PROD_AJUS somente se for feito update na QTD da Itens
               frmImportando.atualizaStatus('Inserindo dados na tabela PROD_AJUS.');
-              SQL.CommandText := 'insert into prod_ajus (codi,data) values (gen_id(gen_prod_ajus_id,1),CURRENT_DATE);';
+              SQL.CommandText := 'INSERT INTO prod_ajus (codi,data) VALUES (gen_id(gen_prod_ajus_id,1),CURRENT_DATE);';
               SQL.ExecSQL;
             end;
 
@@ -818,9 +818,9 @@ begin
             if (i<>-1) then
             begin
               frmImportando.atualizaStatus('Ajustando Preços.');
-              SQL.CommandText := 'update prod_custos pc set pc.cust_preco_prazo = pc.cust_custo_real+(pc.cust_custo_real * pc.cust_margem1 /100) where pc.cust_custo_real>0;';
+              SQL.CommandText := 'UPDATE prod_custos pc SET pc.cust_preco_prazo = pc.cust_custo_real+(pc.cust_custo_real * pc.cust_margem1 /100) WHERE pc.cust_custo_real>0;';
               SQL.ExecSQL;
-              SQL.CommandText := 'update prod_custos pc set pc.cust_preco_vista = pc.cust_preco_prazo;';
+              SQL.CommandText := 'UPDATE prod_custos pc SET pc.cust_preco_vista = pc.cust_preco_prazo;';
               SQL.ExecSQL;;
             end
             //Se não existir coluna margem, ve se tem alguma coluna de preço e recalcular margem
@@ -831,9 +831,9 @@ begin
               begin
                 //Atualizar MARGEM1
                 frmImportando.atualizaStatus('Ajustando MARGEM 1.');
-                SQL.CommandText := 'update prod_custos pc set pc.cust_margem1= abs(pc.cust_preco_prazo - pc.cust_custo_real)/pc.cust_custo_real where pc.cust_custo_real>0;';
+                SQL.CommandText := 'UPDATE prod_custos pc SET pc.cust_margem1= ABS(pc.cust_preco_prazo - pc.cust_custo_real)/pc.cust_custo_real WHERE pc.cust_custo_real>0;';
                 SQL.ExecSQL;
-                SQL.CommandText := 'update prod_custos pc set pc.cust_margem1 = pc.cust_margem1 * 100;';
+                SQL.CommandText := 'UPDATE prod_custos pc SET pc.cust_margem1 = pc.cust_margem1 * 100;';
                 SQL.ExecSQL;
               end;
               //Preço A VISTA
@@ -842,7 +842,7 @@ begin
               begin
                 //Atualizar MARGEM2
                 frmImportando.atualizaStatus('Ajustando MARGEM 2.');
-                SQL.CommandText := 'update prod_custos pc set pc.cust_margem2= (pc.cust_preco_prazo - pc.cust_preco_vista)*100/pc.cust_preco_prazo where pc.cust_preco_prazo>0;';
+                SQL.CommandText := 'UPDATE prod_custos pc SET pc.cust_margem2= (pc.cust_preco_prazo - pc.cust_preco_vista)*100/pc.cust_preco_prazo WHERE pc.cust_preco_prazo>0;';
                 SQL.ExecSQL;
               end;
             end;
@@ -853,7 +853,7 @@ begin
         else if SelectImport.Text='Grupos' then
         begin
           //Arrumar Generator dos Grupos
-          max := querySelect('select max(codi) from grup_prod');
+          max := querySelect('SELECT MAX(codi) FROM grup_prod');
           if StrToInt(max) > 0 then
           begin
             frmImportando.atualizaStatus('Alterar Generator dos Grupos.');
@@ -865,7 +865,7 @@ begin
         else if SelectImport.Text='SubGrupos' then
         begin
           //Arrumar Generator dos SubGrupos
-          max := querySelect('select max(codi) from sub_grup_prod');
+          max := querySelect('SELECT MAX(codi) FROM sub_grup_prod');
           if StrToInt(max) > 0 then
           begin
             frmImportando.atualizaStatus('Alterar Generator dos SubGrupos.');
@@ -877,7 +877,7 @@ begin
         else if SelectImport.Text='Marcas' then
         begin
           //Arrumar Generator das MARCAS
-          max := querySelect('select max(codi) from marca');
+          max := querySelect('SELECT MAX(codi) FROM marca');
           if StrToInt(max) > 0 then
           begin
             frmImportando.atualizaStatus('Alterar Generator das Marcas.');
@@ -906,7 +906,7 @@ begin
         if SelectImport.Text='Clie/Forn' then
         begin
           frmImportando.atualizaStatus('Alterando generator do Clie/Forn.');
-          WriteLn(fileTXT, 'select gen_id(gen_clieforn_id, abs((select max(CODI) from clieforn) - (select gen_id(gen_clieforn_id,0) from RDB$DATABASE)) ) from RDB$DATABASE;');
+          WriteLn(fileTXT, 'SELECT gen_id(gen_clieforn_id, ABS((SELECT MAX(CODI) FROM clieforn) - (SELECT gen_id(gen_clieforn_id,0) FROM RDB$DATABASE)) ) FROM RDB$DATABASE;');
           WriteLn(fileTXT, 'COMMIT WORK;');
         end
 
@@ -916,7 +916,7 @@ begin
           if colUpdateCount <= 0 then begin
             //Arrumar Generator dos Produtos
             frmImportando.atualizaStatus('Alterar Generator do Produto.');
-            WriteLn(fileTXT, 'select gen_id(gen_prod_id, abs((select max(CODI) from prod) - (select gen_id(gen_prod_id,0) from RDB$DATABASE)) ) from RDB$DATABASE;');
+            WriteLn(fileTXT, 'SELECT gen_id(gen_prod_id, ABS((SELECT MAX(CODI) FROM prod) - (SELECT gen_id(gen_prod_id,0) FROM RDB$DATABASE)) ) FROM RDB$DATABASE;');
             WriteLn(fileTXT, 'COMMIT WORK;');
 
             //Verificar se existe coluna margem, recalcular preços
@@ -924,27 +924,27 @@ begin
             if (i<>-1) then
             begin
               frmImportando.atualizaStatus('Ajustando Preços.');
-              WriteLn(fileTXT, 'update prod_custos pc set pc.cust_preco_prazo = pc.cust_custo_real+(pc.cust_custo_real * pc.cust_margem1 /100) where pc.cust_custo_real>0;');
+              WriteLn(fileTXT, 'UPDATE prod_custos pc SET pc.cust_preco_prazo = pc.cust_custo_real+(pc.cust_custo_real * pc.cust_margem1 /100) WHERE pc.cust_custo_real>0;');
               WriteLn(fileTXT, 'COMMIT WORK;');
-              WriteLn(fileTXT, 'update prod_custos pc set pc.cust_preco_vista = pc.cust_preco_prazo;');
+              WriteLn(fileTXT, 'UPDATE prod_custos pc SET pc.cust_preco_vista = pc.cust_preco_prazo;');
               WriteLn(fileTXT, 'COMMIT WORK;');
             end
             //Se não existir coluna margem, recalcular margem
             else begin
               //Atualizar MARGEM1
               frmImportando.atualizaStatus('Ajustando MARGENS.');
-              WriteLn(fileTXT, 'update prod_custos pc set pc.cust_margem1= abs(pc.cust_preco_prazo - pc.cust_custo_real)/pc.cust_custo_real where pc.cust_custo_real>0;');
+              WriteLn(fileTXT, 'UPDATE prod_custos pc SET pc.cust_margem1= ABS(pc.cust_preco_prazo - pc.cust_custo_real)/pc.cust_custo_real WHERE pc.cust_custo_real>0;');
               WriteLn(fileTXT, 'COMMIT WORK;');
-              WriteLn(fileTXT, 'update prod_custos pc set pc.cust_margem1 = pc.cust_margem1 * 100;');
+              WriteLn(fileTXT, 'UPDATE prod_custos pc SET pc.cust_margem1 = pc.cust_margem1 * 100;');
               WriteLn(fileTXT, 'COMMIT WORK;');
             end;
 
             //Atualizar MARGEM2
-            WriteLn(fileTXT, 'update prod_custos pc set pc.cust_margem2 = (cast(pc.cust_preco_vista as numeric (18,2))/cast(pc.cust_preco_prazo as numeric (18,2)) -1)*100 where cast(pc.cust_preco_prazo as numeric (18,2))>0;');
+            WriteLn(fileTXT, 'UPDATE prod_custos pc SET pc.cust_margem2 = (CAST(pc.cust_preco_vista as numeric (18,2))/CAST(pc.cust_preco_prazo as numeric (18,2)) -1)*100 WHERE CAST(pc.cust_preco_prazo as numeric (18,2))>0;');
             WriteLn(fileTXT, 'COMMIT WORK;');
             //Criar registro na PROD_AJUS
             frmImportando.atualizaStatus('Inserindo dados na tabela PROD_AJUS.');
-            WriteLn(fileTXT, 'insert into prod_ajus (codi,data) values (gen_id(gen_prod_ajus_id,1),CURRENT_DATE);');
+            WriteLn(fileTXT, 'INSERT INTO prod_ajus (codi,data) VALUES (gen_id(gen_prod_ajus_id,1),CURRENT_DATE);');
             WriteLn(fileTXT, 'COMMIT WORK;');
           end
 
@@ -953,7 +953,7 @@ begin
             if (colUpdateCount > 0) and (BuscaColuna(StringGrid1,'qtd') <> -1) then begin
               //Criar registro na PROD_AJUS somente se for feito update na QTD da Itens
               frmImportando.atualizaStatus('Inserindo dados na tabela PROD_AJUS.');
-              WriteLn(fileTXT, 'insert into prod_ajus (codi,data) values (gen_id(gen_prod_ajus_id,1),CURRENT_DATE);');
+              WriteLn(fileTXT, 'INSERT INTO prod_ajus (codi,data) VALUES (gen_id(gen_prod_ajus_id,1),CURRENT_DATE);');
               WriteLn(fileTXT, 'COMMIT WORK;');
             end;
 
@@ -962,9 +962,9 @@ begin
             if (i<>-1) then
             begin
               frmImportando.atualizaStatus('Ajustando Preços.');
-              WriteLn(fileTXT, 'update prod_custos pc set pc.cust_preco_prazo = pc.cust_custo_real+(pc.cust_custo_real * pc.cust_margem1 /100) where pc.cust_custo_real>0;');
+              WriteLn(fileTXT, 'UPDATE prod_custos pc SET pc.cust_preco_prazo = pc.cust_custo_real+(pc.cust_custo_real * pc.cust_margem1 /100) WHERE pc.cust_custo_real>0;');
               WriteLn(fileTXT, 'COMMIT WORK;');
-              WriteLn(fileTXT, 'update prod_custos pc set pc.cust_preco_vista = pc.cust_preco_prazo;');
+              WriteLn(fileTXT, 'UPDATE prod_custos pc SET pc.cust_preco_vista = pc.cust_preco_prazo;');
               WriteLn(fileTXT, 'COMMIT WORK;');
             end
             //Se não existir coluna margem, ve se tem alguma coluna de preço e recalcular margem
@@ -975,9 +975,9 @@ begin
               begin
                 //Atualizar MARGEM1
                 frmImportando.atualizaStatus('Ajustando MARGEM 1.');
-                WriteLn(fileTXT, 'update prod_custos pc set pc.cust_margem1= abs(pc.cust_preco_prazo - pc.cust_custo_real)/pc.cust_custo_real where pc.cust_custo_real>0;');
+                WriteLn(fileTXT, 'UPDATE prod_custos pc SET pc.cust_margem1= ABS(pc.cust_preco_prazo - pc.cust_custo_real)/pc.cust_custo_real WHERE pc.cust_custo_real>0;');
                 WriteLn(fileTXT, 'COMMIT WORK;');
-                WriteLn(fileTXT, 'update prod_custos pc set pc.cust_margem1 = pc.cust_margem1 * 100;');
+                WriteLn(fileTXT, 'UPDATE prod_custos pc SET pc.cust_margem1 = pc.cust_margem1 * 100;');
                 WriteLn(fileTXT, 'COMMIT WORK;');
               end;
               //Preço A VISTA
@@ -986,7 +986,7 @@ begin
               begin
                 //Atualizar MARGEM2
                 frmImportando.atualizaStatus('Ajustando MARGEM 2.');
-                WriteLn(fileTXT, 'update prod_custos pc set pc.cust_margem2= (pc.cust_preco_prazo - pc.cust_preco_vista)*100/pc.cust_preco_prazo where pc.cust_preco_prazo>0;');
+                WriteLn(fileTXT, 'UPDATE prod_custos pc SET pc.cust_margem2= (pc.cust_preco_prazo - pc.cust_preco_vista)*100/pc.cust_preco_prazo WHERE pc.cust_preco_prazo>0;');
                 WriteLn(fileTXT, 'COMMIT WORK;');
               end;
             end;
@@ -997,7 +997,7 @@ begin
         begin
           //Arrumar Generator dos Grupos
           frmImportando.atualizaStatus('Alterar Generator dos Grupos.');
-          WriteLn(fileTXT, 'select gen_id(gen_grup_prod_id, abs((select max(CODI) from grup_prod) - (select gen_id(gen_grup_prod_id,0) from RDB$DATABASE)) ) from RDB$DATABASE;');
+          WriteLn(fileTXT, 'SELECT gen_id(gen_grup_prod_id, abs((SELECT MAX(CODI) FROM grup_prod) - (SELECT gen_id(gen_grup_prod_id,0) FROM RDB$DATABASE)) ) FROM RDB$DATABASE;');
           WriteLn(fileTXT, 'COMMIT WORK;');
         end
 
@@ -1005,7 +1005,7 @@ begin
         begin
           //Arrumar Generator dos SubGrupos
           frmImportando.atualizaStatus('Alterar Generator dos SubGrupos.');
-          WriteLn(fileTXT, 'select gen_id(GEN_SUB_GRUP_PROD_ID, abs((select max(CODI) from sub_grup_prod) - (select gen_id(GEN_SUB_GRUP_PROD_ID,0) from RDB$DATABASE)) ) from RDB$DATABASE;');
+          WriteLn(fileTXT, 'SELECT gen_id(GEN_SUB_GRUP_PROD_ID, ABS((SELECT MAX(CODI) FROM sub_grup_prod) - (SELECT gen_id(GEN_SUB_GRUP_PROD_ID,0) FROM RDB$DATABASE)) ) FROM RDB$DATABASE;');
           WriteLn(fileTXT, 'COMMIT WORK;');
         end
 
@@ -1013,7 +1013,7 @@ begin
         begin
           //Arrumar Generator das MARCAS
           frmImportando.atualizaStatus('Alterar Generator das Marcas.');
-          WriteLn(fileTXT, 'select gen_id(GEN_MARCA_ID, abs((select max(CODI) from marca) - (select gen_id(GEN_MARCA_ID,0) from RDB$DATABASE)) ) from RDB$DATABASE;');
+          WriteLn(fileTXT, 'SELECT gen_id(GEN_MARCA_ID, ABS((SELECT MAX(CODI) FROM marca) - (SELECT gen_id(GEN_MARCA_ID,0) FROM RDB$DATABASE)) ) FROM RDB$DATABASE;');
           WriteLn(fileTXT, 'COMMIT WORK;');
         end
 
@@ -1269,7 +1269,7 @@ begin
   SQL := TSQLDataSet.Create(Nil);
   SQL.SQLConnection := conDestino;
 
-  SQL.CommandText := 'delete from clieforn;';
+  SQL.CommandText := 'DELETE FROM clieforn;';
   SQL.ExecSQL;
 
   SQL.CommandText := 'ALTER SEQUENCE GEN_CLIEFORN_ID RESTART WITH 0;';
@@ -1293,7 +1293,7 @@ begin
   SQL := TSQLDataSet.Create(Nil);
   SQL.SQLConnection := conDestino;
 
-  SQL.CommandText := 'delete from grup_prod;';
+  SQL.CommandText := 'DELETE FROM grup_prod;';
   SQL.ExecSQL;
 
   SQL.CommandText := 'ALTER SEQUENCE GEN_grup_prod_ID RESTART WITH 0;';
@@ -1317,7 +1317,7 @@ begin
   SQL := TSQLDataSet.Create(Nil);
   SQL.SQLConnection := conDestino;
 
-  SQL.CommandText := 'delete from marca;';
+  SQL.CommandText := 'DELETE FROM marca;';
   SQL.ExecSQL;
 
   SQL.CommandText := 'ALTER SEQUENCE GEN_MARCA_ID RESTART WITH 0;';
@@ -1341,11 +1341,11 @@ begin
   SQL := TSQLDataSet.Create(Nil);
   SQL.SQLConnection := conDestino;
 
-  SQL.CommandText := 'delete from prod;';
+  SQL.CommandText := 'DELETE FROM prod;';
   SQL.ExecSQL;
-  SQL.CommandText := 'delete from prod_ajus;';
+  SQL.CommandText := 'DELETE FROM prod_ajus;';
   SQL.ExecSQL;
-  SQL.CommandText := 'delete from itens;';
+  SQL.CommandText := 'DELETE FROM itens;';
   SQL.ExecSQL;
 
   SQL.CommandText := 'ALTER SEQUENCE GEN_ITENS_ID RESTART WITH 0;';
@@ -1385,7 +1385,7 @@ begin
   SQL := TSQLDataSet.Create(Nil);
   SQL.SQLConnection := conDestino;
 
-  SQL.CommandText := 'delete from sub_grup_prod;';
+  SQL.CommandText := 'DELETE FROM sub_grup_prod;';
   SQL.ExecSQL;
 
   SQL.CommandText := 'ALTER SEQUENCE GEN_sub_grup_prod_ID RESTART WITH 0;';
@@ -1409,10 +1409,10 @@ begin
   SQL := TSQLDataSet.Create(Nil);
   SQL.SQLConnection := conDestino;
 
-  SQL.CommandText := 'delete from titup;';
+  SQL.CommandText := 'DELETE FROM titup;';
   SQL.ExecSQL;
 
-  SQL.CommandText := 'delete from btitup;';
+  SQL.CommandText := 'DELETE FROM btitup;';
   SQL.ExecSQL;
 
   ShowMessage('Limpado dados de Títulos a Pagar.');
@@ -1433,10 +1433,10 @@ begin
   SQL := TSQLDataSet.Create(Nil);
   SQL.SQLConnection := conDestino;
 
-  SQL.CommandText := 'delete from titur;';
+  SQL.CommandText := 'DELETE FROM titur;';
   SQL.ExecSQL;
 
-  SQL.CommandText := 'delete from btitur;';
+  SQL.CommandText := 'DELETE FROM btitur;';
   SQL.ExecSQL;
 
   ShowMessage('Limpado dados de Títulos a Receber.');

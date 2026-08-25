@@ -87,7 +87,7 @@ begin
 
     //Testa se é Update
     if VerificaUpdate(StringGrid1.Cells[i,0]) = 1 then begin
-      if condUpdate <> '' then condUpdate := condUpdate + ' and ';
+      if condUpdate <> '' then condUpdate := condUpdate + ' AND ';
       condUpdate := condUpdate + StringGrid1.Cells[i,0] + '=' + QuotedStr(StringGrid1.Cells[i,k]);
     end
     else begin
@@ -121,7 +121,7 @@ begin
           frmImportando.atualizaStatus('Inserindo dados na tabela '+frmPrinc.edtTableName.Text+'.');
 
           //Executar INSERT
-          SQL.CommandText := 'insert into '+frmPrinc.edtTableName.Text+' ('+ col +') values ' + '(' + dados + ');';
+          SQL.CommandText := 'INSERT INTO '+frmPrinc.edtTableName.Text+' ('+ col +') VALUES ' + '(' + dados + ');';
           SQL.ExecSQL;
         end
         //Se for UPDATE
@@ -131,7 +131,7 @@ begin
           if dadosUpdate = '' then Exit;
 
           //Executar UPDATE
-          SQL.CommandText := 'update '+frmPrinc.edtTableName.Text+' set '+ dadosUpdate +' where ' + condUpdate + ';';
+          SQL.CommandText := 'UPDATE '+frmPrinc.edtTableName.Text+' SET '+ dadosUpdate +' WHERE ' + condUpdate + ';';
           SQL.ExecSQL;
         end;
 
@@ -168,13 +168,13 @@ begin
         //Se for INSERT
         if colUpdateCount <= 0 then begin
           //Executar INSERT
-          WriteLn(fileTXT, 'insert into '+frmPrinc.edtTableName.Text+' ('+ col +') values ' + '(' + dados + ');');
+          WriteLn(fileTXT, 'INSERT INTO '+frmPrinc.edtTableName.Text+' ('+ col +') VALUES ' + '(' + dados + ');');
           WriteLn(fileTXT, 'COMMIT WORK;');
         end
         //Se for UPDATE
         else begin
           //Executar UPDATE
-          WriteLn(fileTXT, 'update '+frmPrinc.edtTableName.Text+' set '+ dadosUpdate +' where ' + condUpdate + ';');
+          WriteLn(fileTXT, 'UPDATE '+frmPrinc.edtTableName.Text+' SET '+ dadosUpdate +' WHERE ' + condUpdate + ';');
           WriteLn(fileTXT, 'COMMIT WORK;');
         end;
       except

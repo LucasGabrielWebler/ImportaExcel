@@ -108,7 +108,7 @@ begin
 
         //Executar INSERT
         frmImportando.atualizaStatus('Inserindo dados na tabela SUB_GRUP_PROD.');
-        SQL.CommandText := 'insert into sub_grup_prod ('+ colSubGrupo +') values ' + '(' + dadosSubGrupo + ');';
+        SQL.CommandText := 'INSERT INTO sub_grup_prod ('+ colSubGrupo +') VALUES ' + '(' + dadosSubGrupo + ');';
         SQL.ExecSQL;
 
       except
@@ -139,7 +139,7 @@ begin
         frmImportando.atualizaStatus('Comandos da SUB_GRUP_PROD.');
         WriteLn(fileTXT, '----------Comandos da SUB_GRUP_PROD----------');
 
-        WriteLn(fileTXT, 'insert into sub_grup_prod ('+ colSubGrupo +') values ' + '(' + dadosSubGrupo + ');');
+        WriteLn(fileTXT, 'INSERT INTO sub_grup_prod ('+ colSubGrupo +') VALUES ' + '(' + dadosSubGrupo + ');');
         WriteLn(fileTXT, 'COMMIT WORK;');
       except
         on e: exception do

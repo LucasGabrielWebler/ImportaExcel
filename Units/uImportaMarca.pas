@@ -95,7 +95,7 @@ begin
 
         //Executar INSERT
         frmImportando.atualizaStatus('Inserindo dados na tabela MARCA.');
-        SQL.CommandText := 'insert into marca ('+ colMarca +') values ' + '(' + dadosMarca + ');';
+        SQL.CommandText := 'INSERT INTO marca ('+ colMarca +') VALUES ' + '(' + dadosMarca + ');';
         SQL.ExecSQL;
 
       except
@@ -126,7 +126,7 @@ begin
         frmImportando.atualizaStatus('Comandos da MARCA.');
         WriteLn(fileTXT, '----------Comandos da MARCA----------');
 
-        WriteLn(fileTXT, 'insert into marca ('+ colMarca +') values ' + '(' + dadosMarca + ');');
+        WriteLn(fileTXT, 'INSERT INTO marca ('+ colMarca +') VALUES ' + '(' + dadosMarca + ');');
         WriteLn(fileTXT, 'COMMIT WORK;');
       except
         on e: exception do

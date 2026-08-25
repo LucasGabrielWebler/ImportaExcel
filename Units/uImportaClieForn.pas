@@ -83,7 +83,7 @@ begin
       dadosClieForn := dadosClieForn + ',''' + temp + '''';
       //Testa se é Update
       if VerificaUpdate('uf') = 1 then begin
-        if condUpdateClieForn <> '' then condUpdateClieForn := condUpdateClieForn + ' and ';
+        if condUpdateClieForn <> '' then condUpdateClieForn := condUpdateClieForn + ' AND ';
         condUpdateClieForn := condUpdateClieForn + 'uf=' + '''' + temp + '''';
       end
       else begin
@@ -106,7 +106,7 @@ begin
       dadosClieForn := dadosClieForn + ',''' + temp + '''';
       //Testa se é Update
       if VerificaUpdate('cida') = 1 then begin
-        if condUpdateClieForn <> '' then condUpdateClieForn := condUpdateClieForn + ' and ';
+        if condUpdateClieForn <> '' then condUpdateClieForn := condUpdateClieForn + ' AND ';
         condUpdateClieForn := condUpdateClieForn + 'cida=' + '''' + temp2 + '''';
       end
       else begin
@@ -127,7 +127,7 @@ begin
       dadosClieForn := dadosClieForn + ',''' + temp + '''';
       //Testa se é Update
       if VerificaUpdate('empresa') = 1 then begin
-        if condUpdateClieForn <> '' then condUpdateClieForn := condUpdateClieForn + ' and ';
+        if condUpdateClieForn <> '' then condUpdateClieForn := condUpdateClieForn + ' AND ';
         condUpdateClieForn := condUpdateClieForn + 'empresa=' + '''' + temp + '''';
       end
       else begin
@@ -144,7 +144,7 @@ begin
       //Se for letras, buscar código.
       if not (IsNumeric(temp)) then
       begin
-        temp2 := querySelect('select g.codi from grupo_cliente g where g.descr = '''+temp+'''');
+        temp2 := querySelect('SELECT g.codi FROM grupo_cliente g WHERE g.descr = '''+temp+'''');
         //Se não encontrar a string, cadastrar sub grupo
         if temp2='' then begin
           if UpperCase( ExtractFileExt(frmPrinc.DBPath.Text) ) = '.TXT' then begin
@@ -152,12 +152,12 @@ begin
             AssignFile(fileTXT, frmPrinc.DBPath.Text);
             if not FileExists(frmPrinc.DBPath.Text) then ReWrite(fileTXT)
             else append(fileTXT);
-            WriteLn(fileTXT, 'insert into grupo_cliente (CODI,DESCR,COMISSAO) values (case when (select gc.codi from grupo_cliente gc where gc.descr='''+temp+''') is null then gen_id(gen_grupo_cliente_id,1 ) else (select gc.codi from grupo_cliente gc where gc.descr='''+temp+''') end,'''+temp+''',1);');
+            WriteLn(fileTXT, 'INSERT INTO grupo_cliente (CODI,DESCR,COMISSAO) VALUES (CASE WHEN (SELECT gc.codi FROM grupo_cliente gc WHERE gc.descr='''+temp+''') IS NULL THEN gen_id(gen_grupo_cliente_id,1 ) ELSE (SELECT gc.codi FROM grupo_cliente gc WHERE gc.descr='''+temp+''') END,'''+temp+''',1);');
             WriteLn(fileTXT, 'COMMIT WORK;');
             CloseFile(fileTXT);
           end
           else begin
-            queryInsert('insert into grupo_cliente (CODI,DESCR,COMISSAO) values (gen_id(gen_grupo_cliente_id,1),'''+temp+''',1);');
+            queryInsert('INSERT INTO grupo_cliente (CODI,DESCR,COMISSAO) VALUES (gen_id(gen_grupo_cliente_id,1),'''+temp+''',1);');
           end;
           colClieForn := colClieForn + ',codi_grupo_clie';
           dadosClieForn := dadosClieForn + ',' + 'gen_id(gen_grupo_cliente_id,0)';
@@ -180,7 +180,7 @@ begin
       else begin
         //Se for números, considera como código
         //Antes buscamos se existe o código cadastrado, se não encontrar colocamos o generator mesmo
-        temp2 := querySelect('select g.codi from grupo_cliente g where g.codi = '''+temp+'''');
+        temp2 := querySelect('SELECT g.codi FROM grupo_cliente g WHERE g.codi = '''+temp+'''');
         //Se não encontrar o codigo, colocamos o generator
         if temp2='' then begin
           colClieForn := colClieForn + ',codi_grupo_clie';
@@ -193,7 +193,7 @@ begin
         end;
         //Testa se é Update
         if VerificaUpdate('grupo') = 1 then begin
-          if condUpdateClieForn <> '' then condUpdateClieForn := condUpdateClieForn + ' and ';
+          if condUpdateClieForn <> '' then condUpdateClieForn := condUpdateClieForn + ' AND ';
           condUpdateClieForn := condUpdateClieForn + 'codi_grupo_clie=' + '''' + temp + '''';
         end
         else begin
@@ -212,7 +212,7 @@ begin
       dadosClieForn := dadosClieForn + ',''' + temp2 + '''';
       //Testa se é Update
       if VerificaUpdate('nome') = 1 then begin
-        if condUpdateClieForn <> '' then condUpdateClieForn := condUpdateClieForn + ' and ';
+        if condUpdateClieForn <> '' then condUpdateClieForn := condUpdateClieForn + ' AND ';
         condUpdateClieForn := condUpdateClieForn + 'nome=' + '''' + temp2 + '''';
       end
       else begin
@@ -238,7 +238,7 @@ begin
       dadosClieForn := dadosClieForn + ',''' + temp2 + '''';
       //Testa se é Update
       if VerificaUpdate('nome_fant') = 1 then begin
-        if condUpdateClieForn <> '' then condUpdateClieForn := condUpdateClieForn + ' and ';
+        if condUpdateClieForn <> '' then condUpdateClieForn := condUpdateClieForn + ' AND ';
         condUpdateClieForn := condUpdateClieForn + 'nome_fant=' + '''' + temp2 + '''';
       end
       else begin
@@ -268,7 +268,7 @@ begin
         dadosClieForn := dadosClieForn + ',''' + temp + '''';
         //Testa se é Update
         if VerificaUpdate('data_nasc') = 1 then begin
-          if condUpdateClieForn <> '' then condUpdateClieForn := condUpdateClieForn + ' and ';
+          if condUpdateClieForn <> '' then condUpdateClieForn := condUpdateClieForn + ' AND ';
           condUpdateClieForn := condUpdateClieForn + 'data_nasc=' + '''' + temp + '''';
         end
         else begin
@@ -286,7 +286,7 @@ begin
         dadosClieForn := dadosClieForn + ',''' + temp + '''';
         //Testa se é Update
         if VerificaUpdate('data_nasc') = 1 then begin
-          if condUpdateClieForn <> '' then condUpdateClieForn := condUpdateClieForn + ' and ';
+          if condUpdateClieForn <> '' then condUpdateClieForn := condUpdateClieForn + ' AND ';
           condUpdateClieForn := condUpdateClieForn + 'data_nasc=' + '''' + temp + '''';
         end
         else begin
@@ -312,7 +312,7 @@ begin
         dadosClieForn := dadosClieForn + ',''' + 'F' + '''';
         //Testa se é Update
         if VerificaUpdate('cpf') = 1 then begin
-          if condUpdateClieForn <> '' then condUpdateClieForn := condUpdateClieForn + ' and ';
+          if condUpdateClieForn <> '' then condUpdateClieForn := condUpdateClieForn + ' AND ';
           condUpdateClieForn := condUpdateClieForn + 'cpf=' + '''' + temp + '''';
         end
         else begin
@@ -339,7 +339,7 @@ begin
         dadosClieForn := dadosClieForn + ',''' + 'J' + '''';
         //Testa se é Update
         if VerificaUpdate('cnpj') = 1 then begin
-          if condUpdateClieForn <> '' then condUpdateClieForn := condUpdateClieForn + ' and ';
+          if condUpdateClieForn <> '' then condUpdateClieForn := condUpdateClieForn + ' AND ';
           condUpdateClieForn := condUpdateClieForn + 'cnpj=' + '''' + temp + '''';
         end
         else begin
@@ -366,7 +366,7 @@ begin
         dadosClieForn := dadosClieForn + ',''' + 'F' + '''';
         //Testa se é Update
         if VerificaUpdate('cpf_cnpj') = 1 then begin
-          if condUpdateClieForn <> '' then condUpdateClieForn := condUpdateClieForn + ' and ';
+          if condUpdateClieForn <> '' then condUpdateClieForn := condUpdateClieForn + ' AND ';
           condUpdateClieForn := condUpdateClieForn + 'cpf=' + '''' + temp2 + '''';
         end
         else begin
@@ -385,7 +385,7 @@ begin
         dadosClieForn := dadosClieForn + ',''' + 'J' + '''';
         //Testa se é Update
         if VerificaUpdate('cpf_cnpj') = 1 then begin
-          if condUpdateClieForn <> '' then condUpdateClieForn := condUpdateClieForn + ' and ';
+          if condUpdateClieForn <> '' then condUpdateClieForn := condUpdateClieForn + ' AND ';
           condUpdateClieForn := condUpdateClieForn + 'cnpj=' + '''' + temp2 + '''';
         end
         else begin
@@ -401,8 +401,8 @@ begin
         dadosClieForn := dadosClieForn + ',' + 'null';
         //Testa se é Update
         if VerificaUpdate('cpf_cnpj') = 1 then begin
-          if condUpdateClieForn <> '' then condUpdateClieForn := condUpdateClieForn + ' and ';
-          condUpdateClieForn := condUpdateClieForn + 'cpf is null';
+          if condUpdateClieForn <> '' then condUpdateClieForn := condUpdateClieForn + ' AND ';
+          condUpdateClieForn := condUpdateClieForn + 'cpf IS NULL';
         end
         else begin
           if dadosUpdateClieForn <> '' then dadosUpdateClieForn := dadosUpdateClieForn + ', ';
@@ -415,7 +415,7 @@ begin
         dadosClieForn := dadosClieForn + ',' + 'null';
         //Testa se é Update
         if VerificaUpdate('cpf_cnpj') = 1 then begin
-          if condUpdateClieForn <> '' then condUpdateClieForn := condUpdateClieForn + ' and ';
+          if condUpdateClieForn <> '' then condUpdateClieForn := condUpdateClieForn + ' AND ';
           condUpdateClieForn := condUpdateClieForn + 'cnpj if null';
         end
         else begin
@@ -430,8 +430,8 @@ begin
         dadosClieForn := dadosClieForn + ',' + 'null';
         //Testa se é Update
         if VerificaUpdate('cpf_cnpj') = 1 then begin
-          if condUpdateClieForn <> '' then condUpdateClieForn := condUpdateClieForn + ' and ';
-          condUpdateClieForn := condUpdateClieForn + 'tipo is null';
+          if condUpdateClieForn <> '' then condUpdateClieForn := condUpdateClieForn + ' AND ';
+          condUpdateClieForn := condUpdateClieForn + 'tipo IS NULL';
         end
         else begin
           if dadosUpdateClieForn <> '' then dadosUpdateClieForn := dadosUpdateClieForn + ', ';
@@ -453,7 +453,7 @@ begin
         dadosClieForn := dadosClieForn + ',''' + temp + '''';
         //Testa se é Update
         if VerificaUpdate('rg') = 1 then begin
-          if condUpdateClieForn <> '' then condUpdateClieForn := condUpdateClieForn + ' and ';
+          if condUpdateClieForn <> '' then condUpdateClieForn := condUpdateClieForn + ' AND ';
           condUpdateClieForn := condUpdateClieForn + 'rg=' + '''' + temp + '''';
         end
         else begin
@@ -480,7 +480,7 @@ begin
         dadosClieForn := dadosClieForn + ',''' + temp + '''';
         //Testa se é Update
         if VerificaUpdate('insc') = 1 then begin
-          if condUpdateClieForn <> '' then condUpdateClieForn := condUpdateClieForn + ' and ';
+          if condUpdateClieForn <> '' then condUpdateClieForn := condUpdateClieForn + ' AND ';
           condUpdateClieForn := condUpdateClieForn + 'insc=' + '''' + temp + '''';
         end
         else begin
@@ -507,7 +507,7 @@ begin
         dadosClieForn := dadosClieForn + ',''' + temp + '''';
         //Testa se é Update
         if VerificaUpdate('inscr_produtor') = 1 then begin
-          if condUpdateClieForn <> '' then condUpdateClieForn := condUpdateClieForn + ' and ';
+          if condUpdateClieForn <> '' then condUpdateClieForn := condUpdateClieForn + ' AND ';
           condUpdateClieForn := condUpdateClieForn + 'inscr_produtor=' + '''' + temp + '''';
         end
         else begin
@@ -530,7 +530,7 @@ begin
       dadosClieForn := dadosClieForn + ',''' + temp + '''';
       //Testa se é Update
       if VerificaUpdate('ende') = 1 then begin
-        if condUpdateClieForn <> '' then condUpdateClieForn := condUpdateClieForn + ' and ';
+        if condUpdateClieForn <> '' then condUpdateClieForn := condUpdateClieForn + ' AND ';
         condUpdateClieForn := condUpdateClieForn + 'ende=' + '''' + temp + '''';
       end
       else begin
@@ -548,7 +548,7 @@ begin
       dadosClieForn := dadosClieForn + ',''' + temp + '''';
       //Testa se é Update
       if VerificaUpdate('bair') = 1 then begin
-        if condUpdateClieForn <> '' then condUpdateClieForn := condUpdateClieForn + ' and ';
+        if condUpdateClieForn <> '' then condUpdateClieForn := condUpdateClieForn + ' AND ';
         condUpdateClieForn := condUpdateClieForn + 'bair=' + '''' + temp + '''';
       end
       else begin
@@ -566,7 +566,7 @@ begin
       dadosClieForn := dadosClieForn + ',''' + temp + '''';
       //Testa se é Update
       if VerificaUpdate('comp') = 1 then begin
-        if condUpdateClieForn <> '' then condUpdateClieForn := condUpdateClieForn + ' and ';
+        if condUpdateClieForn <> '' then condUpdateClieForn := condUpdateClieForn + ' AND ';
         condUpdateClieForn := condUpdateClieForn + 'comp=' + '''' + temp + '''';
       end
       else begin
@@ -585,7 +585,7 @@ begin
       dadosClieForn := dadosClieForn + ',''' + temp + '''';
       //Testa se é Update
       if VerificaUpdate('cep') = 1 then begin
-        if condUpdateClieForn <> '' then condUpdateClieForn := condUpdateClieForn + ' and ';
+        if condUpdateClieForn <> '' then condUpdateClieForn := condUpdateClieForn + ' AND ';
         condUpdateClieForn := condUpdateClieForn + 'cep=' + '''' + temp + '''';
       end
       else begin
@@ -601,7 +601,7 @@ begin
       dadosClieForn := dadosClieForn + ',''' + temp + '''';
       //Testa se é Update
       if VerificaUpdate('prox') = 1 then begin
-        if condUpdateClieForn <> '' then condUpdateClieForn := condUpdateClieForn + ' and ';
+        if condUpdateClieForn <> '' then condUpdateClieForn := condUpdateClieForn + ' AND ';
         condUpdateClieForn := condUpdateClieForn + 'prox=' + '''' + temp + '''';
       end
       else begin
@@ -617,7 +617,7 @@ begin
       dadosClieForn := dadosClieForn + ',''' + temp + '''';
       //Testa se é Update
       if VerificaUpdate('fone') = 1 then begin
-        if condUpdateClieForn <> '' then condUpdateClieForn := condUpdateClieForn + ' and ';
+        if condUpdateClieForn <> '' then condUpdateClieForn := condUpdateClieForn + ' AND ';
         condUpdateClieForn := condUpdateClieForn + 'fone=' + '''' + temp + '''';
       end
       else begin
@@ -633,7 +633,7 @@ begin
       dadosClieForn := dadosClieForn + ',''' + temp + '''';
       //Testa se é Update
       if VerificaUpdate('fone2') = 1 then begin
-        if condUpdateClieForn <> '' then condUpdateClieForn := condUpdateClieForn + ' and ';
+        if condUpdateClieForn <> '' then condUpdateClieForn := condUpdateClieForn + ' AND ';
         condUpdateClieForn := condUpdateClieForn + 'fone2=' + '''' + temp + '''';
       end
       else begin
@@ -649,7 +649,7 @@ begin
       dadosClieForn := dadosClieForn + ',''' + temp + '''';
       //Testa se é Update
       if VerificaUpdate('fone_firm') = 1 then begin
-        if condUpdateClieForn <> '' then condUpdateClieForn := condUpdateClieForn + ' and ';
+        if condUpdateClieForn <> '' then condUpdateClieForn := condUpdateClieForn + ' AND ';
         condUpdateClieForn := condUpdateClieForn + 'fone_firm=' + '''' + temp + '''';
       end
       else begin
@@ -665,7 +665,7 @@ begin
       dadosClieForn := dadosClieForn + ',''' + temp + '''';
       //Testa se é Update
       if VerificaUpdate('fax') = 1 then begin
-        if condUpdateClieForn <> '' then condUpdateClieForn := condUpdateClieForn + ' and ';
+        if condUpdateClieForn <> '' then condUpdateClieForn := condUpdateClieForn + ' AND ';
         condUpdateClieForn := condUpdateClieForn + 'fax=' + '''' + temp + '''';
       end
       else begin
@@ -683,7 +683,7 @@ begin
       dadosClieForn := dadosClieForn + ',''' + temp + '''';
       //Testa se é Update
       if VerificaUpdate('firm') = 1 then begin
-        if condUpdateClieForn <> '' then condUpdateClieForn := condUpdateClieForn + ' and ';
+        if condUpdateClieForn <> '' then condUpdateClieForn := condUpdateClieForn + ' AND ';
         condUpdateClieForn := condUpdateClieForn + 'firm=' + '''' + temp + '''';
       end
       else begin
@@ -705,7 +705,7 @@ begin
         dadosClieForn := dadosClieForn + ',''' + temp + '''';
         //Testa se é Update
         if VerificaUpdate('desd') = 1 then begin
-          if condUpdateClieForn <> '' then condUpdateClieForn := condUpdateClieForn + ' and ';
+          if condUpdateClieForn <> '' then condUpdateClieForn := condUpdateClieForn + ' AND ';
           condUpdateClieForn := condUpdateClieForn + 'desd=' + '''' + temp + '''';
         end
         else begin
@@ -723,7 +723,7 @@ begin
         dadosClieForn := dadosClieForn + ',''' + temp + '''';
         //Testa se é Update
         if VerificaUpdate('desd') = 1 then begin
-          if condUpdateClieForn <> '' then condUpdateClieForn := condUpdateClieForn + ' and ';
+          if condUpdateClieForn <> '' then condUpdateClieForn := condUpdateClieForn + ' AND ';
           condUpdateClieForn := condUpdateClieForn + 'desd=' + '''' + temp + '''';
         end
         else begin
@@ -740,7 +740,7 @@ begin
       dadosClieForn := dadosClieForn + ',''' + temp + '''';
       //Testa se é Update
       if VerificaUpdate('ende_firm') = 1 then begin
-        if condUpdateClieForn <> '' then condUpdateClieForn := condUpdateClieForn + ' and ';
+        if condUpdateClieForn <> '' then condUpdateClieForn := condUpdateClieForn + ' AND ';
         condUpdateClieForn := condUpdateClieForn + 'ende_firm=' + '''' + temp + '''';
       end
       else begin
@@ -756,7 +756,7 @@ begin
       dadosClieForn := dadosClieForn + ',''' + temp + '''';
       //Testa se é Update
       if VerificaUpdate('carg') = 1 then begin
-        if condUpdateClieForn <> '' then condUpdateClieForn := condUpdateClieForn + ' and ';
+        if condUpdateClieForn <> '' then condUpdateClieForn := condUpdateClieForn + ' AND ';
         condUpdateClieForn := condUpdateClieForn + 'carg=' + '''' + temp + '''';
       end
       else begin
@@ -772,7 +772,7 @@ begin
       dadosClieForn := dadosClieForn + ',''' + temp + '''';
       //Testa se é Update
       if VerificaUpdate('sala') = 1 then begin
-        if condUpdateClieForn <> '' then condUpdateClieForn := condUpdateClieForn + ' and ';
+        if condUpdateClieForn <> '' then condUpdateClieForn := condUpdateClieForn + ' AND ';
         condUpdateClieForn := condUpdateClieForn + 'sala=' + '''' + temp + '''';
       end
       else begin
@@ -788,7 +788,7 @@ begin
       dadosClieForn := dadosClieForn + ',''' + temp + '''';
       //Testa se é Update
       if VerificaUpdate('bair_firm') = 1 then begin
-        if condUpdateClieForn <> '' then condUpdateClieForn := condUpdateClieForn + ' and ';
+        if condUpdateClieForn <> '' then condUpdateClieForn := condUpdateClieForn + ' AND ';
         condUpdateClieForn := condUpdateClieForn + 'bair_firm=' + '''' + temp + '''';
       end
       else begin
@@ -804,7 +804,7 @@ begin
       dadosClieForn := dadosClieForn + ',''' + temp + '''';
       //Testa se é Update
       if VerificaUpdate('cida_firm') = 1 then begin
-        if condUpdateClieForn <> '' then condUpdateClieForn := condUpdateClieForn + ' and ';
+        if condUpdateClieForn <> '' then condUpdateClieForn := condUpdateClieForn + ' AND ';
         condUpdateClieForn := condUpdateClieForn + 'cida_firm=' + '''' + temp + '''';
       end
       else begin
@@ -820,7 +820,7 @@ begin
       dadosClieForn := dadosClieForn + ',''' + temp + '''';
       //Testa se é Update
       if VerificaUpdate('uf_firm') = 1 then begin
-        if condUpdateClieForn <> '' then condUpdateClieForn := condUpdateClieForn + ' and ';
+        if condUpdateClieForn <> '' then condUpdateClieForn := condUpdateClieForn + ' AND ';
         condUpdateClieForn := condUpdateClieForn + 'uf_firm=' + '''' + temp + '''';
       end
       else begin
@@ -836,7 +836,7 @@ begin
       dadosClieForn := dadosClieForn + ',''' + temp + '''';
       //Testa se é Update
       if VerificaUpdate('cep_firm') = 1 then begin
-        if condUpdateClieForn <> '' then condUpdateClieForn := condUpdateClieForn + ' and ';
+        if condUpdateClieForn <> '' then condUpdateClieForn := condUpdateClieForn + ' AND ';
         condUpdateClieForn := condUpdateClieForn + 'cep_firm=' + '''' + temp + '''';
       end
       else begin
@@ -852,7 +852,7 @@ begin
       dadosClieForn := dadosClieForn + ',''' + temp + '''';
       //Testa se é Update
       if VerificaUpdate('esta_civi') = 1 then begin
-        if condUpdateClieForn <> '' then condUpdateClieForn := condUpdateClieForn + ' and ';
+        if condUpdateClieForn <> '' then condUpdateClieForn := condUpdateClieForn + ' AND ';
         condUpdateClieForn := condUpdateClieForn + 'esta_civi=' + '''' + temp + '''';
       end
       else begin
@@ -870,7 +870,7 @@ begin
       dadosClieForn := dadosClieForn + ',''' + temp + '''';
       //Testa se é Update
       if VerificaUpdate('nome_pai') = 1 then begin
-        if condUpdateClieForn <> '' then condUpdateClieForn := condUpdateClieForn + ' and ';
+        if condUpdateClieForn <> '' then condUpdateClieForn := condUpdateClieForn + ' AND ';
         condUpdateClieForn := condUpdateClieForn + 'nome_pai=' + '''' + temp + '''';
       end
       else begin
@@ -888,7 +888,7 @@ begin
       dadosClieForn := dadosClieForn + ',''' + temp + '''';
       //Testa se é Update
       if VerificaUpdate('nome_mae') = 1 then begin
-        if condUpdateClieForn <> '' then condUpdateClieForn := condUpdateClieForn + ' and ';
+        if condUpdateClieForn <> '' then condUpdateClieForn := condUpdateClieForn + ' AND ';
         condUpdateClieForn := condUpdateClieForn + 'nome_mae=' + '''' + temp + '''';
       end
       else begin
@@ -906,7 +906,7 @@ begin
       dadosClieForn := dadosClieForn + ',''' + temp + '''';
       //Testa se é Update
       if VerificaUpdate('conj') = 1 then begin
-        if condUpdateClieForn <> '' then condUpdateClieForn := condUpdateClieForn + ' and ';
+        if condUpdateClieForn <> '' then condUpdateClieForn := condUpdateClieForn + ' AND ';
         condUpdateClieForn := condUpdateClieForn + 'conj=' + '''' + temp + '''';
       end
       else begin
@@ -924,7 +924,7 @@ begin
       dadosClieForn := dadosClieForn + ',''' + temp + '''';
       //Testa se é Update
       if VerificaUpdate('conj_firm') = 1 then begin
-        if condUpdateClieForn <> '' then condUpdateClieForn := condUpdateClieForn + ' and ';
+        if condUpdateClieForn <> '' then condUpdateClieForn := condUpdateClieForn + ' AND ';
         condUpdateClieForn := condUpdateClieForn + 'conj_firm=' + '''' + temp + '''';
       end
       else begin
@@ -942,7 +942,7 @@ begin
       dadosClieForn := dadosClieForn + ',''' + temp + '''';
       //Testa se é Update
       if VerificaUpdate('conj_firm') = 1 then begin
-        if condUpdateClieForn <> '' then condUpdateClieForn := condUpdateClieForn + ' and ';
+        if condUpdateClieForn <> '' then condUpdateClieForn := condUpdateClieForn + ' AND ';
         condUpdateClieForn := condUpdateClieForn + 'conj_firm=' + '''' + temp + '''';
       end
       else begin
@@ -960,7 +960,7 @@ begin
       dadosClieForn := dadosClieForn + ',''' + temp + '''';
       //Testa se é Update
       if VerificaUpdate('conj_sala') = 1 then begin
-        if condUpdateClieForn <> '' then condUpdateClieForn := condUpdateClieForn + ' and ';
+        if condUpdateClieForn <> '' then condUpdateClieForn := condUpdateClieForn + ' AND ';
         condUpdateClieForn := condUpdateClieForn + 'conj_sala=' + '''' + temp + '''';
       end
       else begin
@@ -978,7 +978,7 @@ begin
       dadosClieForn := dadosClieForn + ',''' + temp + '''';
       //Testa se é Update
       if VerificaUpdate('conj_carg') = 1 then begin
-        if condUpdateClieForn <> '' then condUpdateClieForn := condUpdateClieForn + ' and ';
+        if condUpdateClieForn <> '' then condUpdateClieForn := condUpdateClieForn + ' AND ';
         condUpdateClieForn := condUpdateClieForn + 'conj_carg=' + '''' + temp + '''';
       end
       else begin
@@ -1000,7 +1000,7 @@ begin
         dadosClieForn := dadosClieForn + ',''' + temp + '''';
         //Testa se é Update
         if VerificaUpdate('data_conj') = 1 then begin
-          if condUpdateClieForn <> '' then condUpdateClieForn := condUpdateClieForn + ' and ';
+          if condUpdateClieForn <> '' then condUpdateClieForn := condUpdateClieForn + ' AND ';
           condUpdateClieForn := condUpdateClieForn + 'data_conj=' + '''' + temp + '''';
         end
         else begin
@@ -1018,7 +1018,7 @@ begin
         dadosClieForn := dadosClieForn + ',''' + temp + '''';
         //Testa se é Update
         if VerificaUpdate('data_conj') = 1 then begin
-          if condUpdateClieForn <> '' then condUpdateClieForn := condUpdateClieForn + ' and ';
+          if condUpdateClieForn <> '' then condUpdateClieForn := condUpdateClieForn + ' AND ';
           condUpdateClieForn := condUpdateClieForn + 'data_conj=' + '''' + temp + '''';
         end
         else begin
@@ -1036,7 +1036,7 @@ begin
       dadosClieForn := dadosClieForn + ',''' + temp + '''';
       //Testa se é Update
       if VerificaUpdate('obs') = 1 then begin
-        if condUpdateClieForn <> '' then condUpdateClieForn := condUpdateClieForn + ' and ';
+        if condUpdateClieForn <> '' then condUpdateClieForn := condUpdateClieForn + ' AND ';
         condUpdateClieForn := condUpdateClieForn + 'obs=' + '''' + temp + '''';
       end
       else begin
@@ -1099,7 +1099,7 @@ begin
       dadosClieForn := dadosClieForn + ',''' + temp + '''';
       //Testa se é Update
       if VerificaUpdate('mail') = 1 then begin
-        if condUpdateClieForn <> '' then condUpdateClieForn := condUpdateClieForn + ' and ';
+        if condUpdateClieForn <> '' then condUpdateClieForn := condUpdateClieForn + ' AND ';
         condUpdateClieForn := condUpdateClieForn + 'mail=' + '''' + temp + '''';
       end
       else begin
@@ -1118,7 +1118,7 @@ begin
         dadosClieForn := dadosClieForn + ',''' + temp + '''';
         //Testa se é Update
         if VerificaUpdate('sexo') = 1 then begin
-          if condUpdateClieForn <> '' then condUpdateClieForn := condUpdateClieForn + ' and ';
+          if condUpdateClieForn <> '' then condUpdateClieForn := condUpdateClieForn + ' AND ';
           condUpdateClieForn := condUpdateClieForn + 'sexo=' + '''' + temp + '''';
         end
         else begin
@@ -1133,7 +1133,7 @@ begin
         dadosClieForn := dadosClieForn + ',''' + temp + '''';
         //Testa se é Update
         if VerificaUpdate('sexo') = 1 then begin
-          if condUpdateClieForn <> '' then condUpdateClieForn := condUpdateClieForn + ' and ';
+          if condUpdateClieForn <> '' then condUpdateClieForn := condUpdateClieForn + ' AND ';
           condUpdateClieForn := condUpdateClieForn + 'sexo=' + '''' + temp + '''';
         end
         else begin
@@ -1163,7 +1163,7 @@ begin
       dadosClieForn := dadosClieForn + ',''' + temp + '''';
       //Testa se é Update
       if VerificaUpdate('tipocad') = 1 then begin
-        if condUpdateClieForn <> '' then condUpdateClieForn := condUpdateClieForn + ' and ';
+        if condUpdateClieForn <> '' then condUpdateClieForn := condUpdateClieForn + ' AND ';
         condUpdateClieForn := condUpdateClieForn + 'tipocad=' + '''' + temp + '''';
       end
       else begin
@@ -1182,7 +1182,7 @@ begin
         dadosClieForn := dadosClieForn + ',''' + temp + '''';
         //Testa se é Update
         if VerificaUpdate('ativo') = 1 then begin
-          if condUpdateClieForn <> '' then condUpdateClieForn := condUpdateClieForn + ' and ';
+          if condUpdateClieForn <> '' then condUpdateClieForn := condUpdateClieForn + ' AND ';
           condUpdateClieForn := condUpdateClieForn + 'ativo=' + '''' + temp + '''';
         end
         else begin
@@ -1197,7 +1197,7 @@ begin
         dadosClieForn := dadosClieForn + ',''' + temp + '''';
         //Testa se é Update
         if VerificaUpdate('ativo') = 1 then begin
-          if condUpdateClieForn <> '' then condUpdateClieForn := condUpdateClieForn + ' and ';
+          if condUpdateClieForn <> '' then condUpdateClieForn := condUpdateClieForn + ' AND ';
           condUpdateClieForn := condUpdateClieForn + 'ativo=' + '''' + temp + '''';
         end
         else begin
@@ -1239,7 +1239,7 @@ begin
           SQL.CommandText := 'ALTER TRIGGER clieforn_biu0 INACTIVE;';
           SQL.ExecSQL;
           //Executar INSERT
-          SQL.CommandText := 'insert into clieforn ('+ colClieForn +') values ' + '(' + dadosClieForn + ');';
+          SQL.CommandText := 'INSERT INTO clieforn ('+ colClieForn +') VALUES ' + '(' + dadosClieForn + ');';
           SQL.ExecSQL;
           //Reativar Trigger das cidades
           SQL.CommandText := 'ALTER TRIGGER clieforn_biu0 ACTIVE;';
@@ -1252,7 +1252,7 @@ begin
           if dadosUpdateClieForn = '' then Exit;
 
           //Executar UPDATE
-          SQL.CommandText := 'update clieforn set '+ dadosUpdateClieForn +' where ' + condUpdateClieForn + ';';
+          SQL.CommandText := 'UPDATE clieforn SET '+ dadosUpdateClieForn +' WHERE ' + condUpdateClieForn + ';';
           SQL.ExecSQL;
         end;
 
@@ -1292,7 +1292,7 @@ begin
           WriteLn(fileTXT, 'ALTER TRIGGER clieforn_biu0 INACTIVE;');
           WriteLn(fileTXT, 'COMMIT WORK;');
           //Executar INSERT
-          WriteLn(fileTXT, 'insert into clieforn ('+ colClieForn +') values ' + '(' + dadosClieForn + ');');
+          WriteLn(fileTXT, 'INSERT INTO clieforn ('+ colClieForn +') VALUES ' + '(' + dadosClieForn + ');');
           WriteLn(fileTXT, 'COMMIT WORK;');
           //Reativar Trigger das cidades
           WriteLn(fileTXT, 'ALTER TRIGGER clieforn_biu0 ACTIVE;');
@@ -1301,7 +1301,7 @@ begin
         //Se for UPDATE
         else begin
           //Executar UPDATE
-          WriteLn(fileTXT, 'update clieforn set '+ dadosUpdateClieForn +' where ' + condUpdateClieForn + ';');
+          WriteLn(fileTXT, 'UPDATE clieforn SET '+ dadosUpdateClieForn +' WHERE ' + condUpdateClieForn + ';');
           WriteLn(fileTXT, 'COMMIT WORK;');
         end;
       except

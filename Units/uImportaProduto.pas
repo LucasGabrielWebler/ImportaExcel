@@ -135,15 +135,15 @@ begin
 
     //Testa se é Update
     if VerificaUpdate('empr') = 1 then begin
-      if condUpdateProd <> '' then condUpdateProd := condUpdateProd + ' and ';
+      if condUpdateProd <> '' then condUpdateProd := condUpdateProd + ' AND ';
       condUpdateProd := condUpdateProd + 'empr=' + '''' + UpperCase(RemoveAcento(prodEmpr)) + '''';
-      if condUpdateProdTrib <> '' then condUpdateProdTrib := condUpdateProdTrib + ' and ';
+      if condUpdateProdTrib <> '' then condUpdateProdTrib := condUpdateProdTrib + ' AND ';
       condUpdateProdTrib := condUpdateProdTrib + 'trib_empr=' + '''' + UpperCase(RemoveAcento(prodEmpr)) + '''';
-      if condUpdateProdAdic <> '' then condUpdateProdAdic := condUpdateProdAdic + ' and ';
+      if condUpdateProdAdic <> '' then condUpdateProdAdic := condUpdateProdAdic + ' AND ';
       condUpdateProdAdic := condUpdateProdAdic + 'adic_empr=' + '''' + UpperCase(RemoveAcento(prodEmpr)) + '''';
-      if condUpdateProdCust <> '' then condUpdateProdCust := condUpdateProdCust + ' and ';
+      if condUpdateProdCust <> '' then condUpdateProdCust := condUpdateProdCust + ' AND ';
       condUpdateProdCust := condUpdateProdCust + 'cust_empr=' + '''' + UpperCase(RemoveAcento(prodEmpr)) + '''';
-      if condUpdateItens <> '' then condUpdateItens := condUpdateItens + ' and ';
+      if condUpdateItens <> '' then condUpdateItens := condUpdateItens + ' AND ';
       condUpdateItens := condUpdateItens + 'cod_empr=' + '''' + UpperCase(RemoveAcento(prodEmpr)) + '''';
     end
     else begin
@@ -253,15 +253,15 @@ begin
 
     //Testa se é Update
     if VerificaUpdate('codi') = 1 then begin
-      if condUpdateProd <> '' then condUpdateProd := condUpdateProd + ' and ';
+      if condUpdateProd <> '' then condUpdateProd := condUpdateProd + ' AND ';
       condUpdateProd := condUpdateProd + 'codi=' + '''' + UpperCase(RemoveAcento(prodCod)) + '''';
-      if condUpdateProdTrib <> '' then condUpdateProdTrib := condUpdateProdTrib + ' and ';
+      if condUpdateProdTrib <> '' then condUpdateProdTrib := condUpdateProdTrib + ' AND ';
       condUpdateProdTrib := condUpdateProdTrib + 'trib_prod_codi=' + '''' + UpperCase(RemoveAcento(prodCod)) + '''';
-      if condUpdateProdAdic <> '' then condUpdateProdAdic := condUpdateProdAdic + ' and ';
+      if condUpdateProdAdic <> '' then condUpdateProdAdic := condUpdateProdAdic + ' AND ';
       condUpdateProdAdic := condUpdateProdAdic + 'adic_prod_codi=' + '''' + UpperCase(RemoveAcento(prodCod)) + '''';
-      if condUpdateProdCust <> '' then condUpdateProdCust := condUpdateProdCust + ' and ';
+      if condUpdateProdCust <> '' then condUpdateProdCust := condUpdateProdCust + ' AND ';
       condUpdateProdCust := condUpdateProdCust + 'cust_prod_codi=' + '''' + UpperCase(RemoveAcento(prodCod)) + '''';
-      if condUpdateItens <> '' then condUpdateItens := condUpdateItens + ' and ';
+      if condUpdateItens <> '' then condUpdateItens := condUpdateItens + ' AND ';
       condUpdateItens := condUpdateItens + 'cod_prod=' + '''' + UpperCase(RemoveAcento(prodCod)) + '''';
     end
     else begin
@@ -350,7 +350,7 @@ begin
     //Se for letras, buscar código.
     if not (IsNumeric(temp)) then
     begin
-      temp2 := querySelect('select g.codi from grup_prod g where g.descr = '''+temp+'''');
+      temp2 := querySelect('SELECT g.codi FROM grup_prod g WHERE g.descr = '''+temp+'''');
       //Se não encontrar a string, cadastrar grupo
       if temp2='' then begin
         if UpperCase( ExtractFileExt(frmPrinc.DBPath.Text) ) = '.TXT' then begin
@@ -358,12 +358,12 @@ begin
             AssignFile(fileTXT, frmPrinc.DBPath.Text);
             if not FileExists(frmPrinc.DBPath.Text) then ReWrite(fileTXT)
             else append(fileTXT);
-            WriteLn(fileTXT, 'insert into grup_prod (CODI,DESCR,EMPR) values (case when (select g.codi from grup_prod g where g.descr = '''+temp+''') is null then gen_id(gen_grup_prod_id,1 ) else (select g.codi from grup_prod g where g.descr = '''+temp+''') end,'''+temp+''',1);');
+            WriteLn(fileTXT, 'INSERT INTO grup_prod (CODI,DESCR,EMPR) VALUES (CASE WHEN (SELECT g.codi FROM grup_prod g WHERE g.descr = '''+temp+''') IS NULL THEN gen_id(gen_grup_prod_id,1 ) ELSE (SELECT g.codi FROM grup_prod g WHERE g.descr = '''+temp+''') END,'''+temp+''',1);');
             WriteLn(fileTXT, 'COMMIT WORK;');
             CloseFile(fileTXT);
           end
         else begin
-          queryInsert('insert into grup_prod (CODI,DESCR,EMPR) values (gen_id(gen_grup_prod_id,1),'''+temp+''',1);');
+          queryInsert('INSERT INTO grup_prod (CODI,DESCR,EMPR) VALUES (gen_id(gen_grup_prod_id,1),'''+temp+''',1);');
         end;
         colProd := colProd + ',grup';
         dadosProd := dadosProd + ',' + 'gen_id(gen_grup_prod_id,0)';
@@ -374,16 +374,16 @@ begin
       end;
       //Testa se é Update
       if VerificaUpdate('grup') = 1 then begin
-        if condUpdateProd <> '' then condUpdateProd := condUpdateProd + ' and ';
-        condUpdateProd := condUpdateProd + 'grup=(select codi from grup_prod where descr='+''''+temp+''')';
-        if condUpdateProdTrib <> '' then condUpdateProdTrib := condUpdateProdTrib + ' and ';
-        condUpdateProdTrib := condUpdateProdTrib + 'trib_prod_codi in (select codi from prod where grup = (select codi from grup_prod where descr='+''''+temp+'''))';
-        if condUpdateProdAdic <> '' then condUpdateProdAdic := condUpdateProdAdic + ' and ';
-        condUpdateProdAdic := condUpdateProdAdic + 'adic_prod_codi in (select codi from prod where grup = (select codi from grup_prod where descr='+''''+temp+'''))';
-        if condUpdateProdCust <> '' then condUpdateProdCust := condUpdateProdCust + ' and ';
-        condUpdateProdCust := condUpdateProdCust + 'cust_prod_codi in (select codi from prod where grup = (select codi from grup_prod where descr='+''''+temp+'''))';
-        if condUpdateItens <> '' then condUpdateItens := condUpdateItens + ' and ';
-        condUpdateItens := condUpdateItens + 'cod_prod in (select codi from prod where grup = (select codi from grup_prod where descr='+''''+temp+'''))';
+        if condUpdateProd <> '' then condUpdateProd := condUpdateProd + ' AND ';
+        condUpdateProd := condUpdateProd + 'grup=(SELECT codi FROM grup_prod WHERE descr='+''''+temp+''')';
+        if condUpdateProdTrib <> '' then condUpdateProdTrib := condUpdateProdTrib + ' AND ';
+        condUpdateProdTrib := condUpdateProdTrib + 'trib_prod_codi in (SELECT codi FROM prod WHERE grup = (SELECT codi FROM grup_prod WHERE descr='+''''+temp+'''))';
+        if condUpdateProdAdic <> '' then condUpdateProdAdic := condUpdateProdAdic + ' AND ';
+        condUpdateProdAdic := condUpdateProdAdic + 'adic_prod_codi in (SELECT codi FROM prod WHERE grup = (SELECT codi FROM grup_prod WHERE descr='+''''+temp+'''))';
+        if condUpdateProdCust <> '' then condUpdateProdCust := condUpdateProdCust + ' AND ';
+        condUpdateProdCust := condUpdateProdCust + 'cust_prod_codi in (SELECT codi FROM prod WHERE grup = (SELECT codi FROM grup_prod WHERE descr='+''''+temp+'''))';
+        if condUpdateItens <> '' then condUpdateItens := condUpdateItens + ' AND ';
+        condUpdateItens := condUpdateItens + 'cod_prod in (SELECT codi FROM prod WHERE grup = (SELECT codi FROM grup_prod WHERE descr='+''''+temp+'''))';
       end
       else begin
         if dadosUpdateProd <> '' then dadosUpdateProd := dadosUpdateProd + ', ';
@@ -393,7 +393,7 @@ begin
     else begin
       //Se for números, considera como código
       //Antes buscamos se existe o código cadastrado, se não encontrar colocamos o generator mesmo
-      temp2 := querySelect('select g.codi from grup_prod g where g.codi = '''+temp+'''');
+      temp2 := querySelect('SELECT g.codi FROM grup_prod g WHERE g.codi = '''+temp+'''');
       //Se não encontrar o codigo, colocamos o generator
       if temp2='' then begin
         colProd := colProd + ',grup';
@@ -406,16 +406,16 @@ begin
       end;
       //Testa se é Update
       if VerificaUpdate('grup') = 1 then begin
-        if condUpdateProd <> '' then condUpdateProd := condUpdateProd + ' and ';
+        if condUpdateProd <> '' then condUpdateProd := condUpdateProd + ' AND ';
         condUpdateProd := condUpdateProd + 'grup='+''''+temp+'''';
-        if condUpdateProdTrib <> '' then condUpdateProdTrib := condUpdateProdTrib + ' and ';
-        condUpdateProdTrib := condUpdateProdTrib + 'trib_prod_codi in (select codi from prod where grup = '+''''+temp+''')';
-        if condUpdateProdAdic <> '' then condUpdateProdAdic := condUpdateProdAdic + ' and ';
-        condUpdateProdAdic := condUpdateProdAdic + 'adic_prod_codi in (select codi from prod where grup = '+''''+temp+''')';
-        if condUpdateProdCust <> '' then condUpdateProdCust := condUpdateProdCust + ' and ';
-        condUpdateProdCust := condUpdateProdCust + 'cust_prod_codi in (select codi from prod where grup = '+''''+temp+''')';
-        if condUpdateItens <> '' then condUpdateItens := condUpdateItens + ' and ';
-        condUpdateItens := condUpdateItens + 'cod_prod in (select codi from prod where grup = '+''''+temp+''')';
+        if condUpdateProdTrib <> '' then condUpdateProdTrib := condUpdateProdTrib + ' AND ';
+        condUpdateProdTrib := condUpdateProdTrib + 'trib_prod_codi in (SELECT codi FROM prod WHERE grup = '+''''+temp+''')';
+        if condUpdateProdAdic <> '' then condUpdateProdAdic := condUpdateProdAdic + ' AND ';
+        condUpdateProdAdic := condUpdateProdAdic + 'adic_prod_codi in (SELECT codi FROM prod WHERE grup = '+''''+temp+''')';
+        if condUpdateProdCust <> '' then condUpdateProdCust := condUpdateProdCust + ' AND ';
+        condUpdateProdCust := condUpdateProdCust + 'cust_prod_codi in (SELECT codi FROM prod WHERE grup = '+''''+temp+''')';
+        if condUpdateItens <> '' then condUpdateItens := condUpdateItens + ' AND ';
+        condUpdateItens := condUpdateItens + 'cod_prod in (SELECT codi FROM prod WHERE grup = '+''''+temp+''')';
       end
       else begin
         if dadosUpdateProd <> '' then dadosUpdateProd := dadosUpdateProd + ', ';
@@ -437,7 +437,7 @@ begin
     //Se for letras, buscar código.
     if not (IsNumeric(temp)) then
     begin
-      temp2 := querySelect('select g.codi from sub_grup_prod g where g.descr = '''+temp+'''');
+      temp2 := querySelect('SELECT g.codi FROM sub_grup_prod g WHERE g.descr = '''+temp+'''');
       //Se não encontrar a string, cadastrar sub grupo
       if temp2='' then begin
         if UpperCase( ExtractFileExt(frmPrinc.DBPath.Text) ) = '.TXT' then begin
@@ -445,12 +445,12 @@ begin
             AssignFile(fileTXT, frmPrinc.DBPath.Text);
             if not FileExists(frmPrinc.DBPath.Text) then ReWrite(fileTXT)
             else append(fileTXT);
-            WriteLn(fileTXT, 'insert into sub_grup_prod (CODI,DESCR,EMPR) values (case when (select g.codi from sub_grup_prod g where g.descr = '''+temp+''') is null then gen_id(gen_sub_grup_prod_id,1 ) else (select g.codi from sub_grup_prod g where g.descr = '''+temp+''') end,'''+temp+''',1);');
+            WriteLn(fileTXT, 'INSERT INTO sub_grup_prod (CODI,DESCR,EMPR) VALUES (CASE WHEN (SELECT g.codi FROM sub_grup_prod g WHERE g.descr = '''+temp+''') IS NULL THEN gen_id(gen_sub_grup_prod_id,1 ) ELSE (SELECT g.codi FROM sub_grup_prod g WHERE g.descr = '''+temp+''') END,'''+temp+''',1);');
             WriteLn(fileTXT, 'COMMIT WORK;');
             CloseFile(fileTXT);
           end
         else begin
-          queryInsert('insert into sub_grup_prod (CODI,DESCR,EMPR) values (gen_id(gen_sub_grup_prod_id,1),'''+temp+''',1);');
+          queryInsert('INSERT INTO sub_grup_prod (CODI,DESCR,EMPR) VALUES (gen_id(gen_sub_grup_prod_id,1),'''+temp+''',1);');
         end;
         colProd := colProd + ',sub_grup';
         dadosProd := dadosProd + ',' + 'gen_id(gen_sub_grup_prod_id,0)';
@@ -461,16 +461,16 @@ begin
       end;
       //Testa se é Update
       if VerificaUpdate('sub_grup') = 1 then begin
-        if condUpdateProd <> '' then condUpdateProd := condUpdateProd + ' and ';
-        condUpdateProd := condUpdateProd + 'sub_grup=(select codi from sub_grup_prod where descr='+''''+temp+''')';
-        if condUpdateProdTrib <> '' then condUpdateProdTrib := condUpdateProdTrib + ' and ';
-        condUpdateProdTrib := condUpdateProdTrib + 'trib_prod_codi in (select codi from prod where sub_grup = (select codi from sub_grup_prod where descr='+''''+temp+'''))';
-        if condUpdateProdAdic <> '' then condUpdateProdAdic := condUpdateProdAdic + ' and ';
-        condUpdateProdAdic := condUpdateProdAdic + 'adic_prod_codi in (select codi from prod where sub_grup = (select codi from sub_grup_prod where descr='+''''+temp+'''))';
-        if condUpdateProdCust <> '' then condUpdateProdCust := condUpdateProdCust + ' and ';
-        condUpdateProdCust := condUpdateProdCust + 'cust_prod_codi in (select codi from prod where sub_grup = (select codi from sub_grup_prod where descr='+''''+temp+'''))';
-        if condUpdateItens <> '' then condUpdateItens := condUpdateItens + ' and ';
-        condUpdateItens := condUpdateItens + 'cod_prod in (select codi from prod where sub_grup = (select codi from sub_grup_prod where descr='+''''+temp+'''))';
+        if condUpdateProd <> '' then condUpdateProd := condUpdateProd + ' AND ';
+        condUpdateProd := condUpdateProd + 'sub_grup=(SELECT codi FROM sub_grup_prod WHERE descr='+''''+temp+''')';
+        if condUpdateProdTrib <> '' then condUpdateProdTrib := condUpdateProdTrib + ' AND ';
+        condUpdateProdTrib := condUpdateProdTrib + 'trib_prod_codi in (SELECT codi FROM prod WHERE sub_grup = (SELECT codi FROM sub_grup_prod WHERE descr='+''''+temp+'''))';
+        if condUpdateProdAdic <> '' then condUpdateProdAdic := condUpdateProdAdic + ' AND ';
+        condUpdateProdAdic := condUpdateProdAdic + 'adic_prod_codi in (SELECT codi FROM prod WHERE sub_grup = (SELECT codi FROM sub_grup_prod WHERE descr='+''''+temp+'''))';
+        if condUpdateProdCust <> '' then condUpdateProdCust := condUpdateProdCust + ' AND ';
+        condUpdateProdCust := condUpdateProdCust + 'cust_prod_codi in (SELECT codi FROM prod WHERE sub_grup = (SELECT codi FROM sub_grup_prod WHERE descr='+''''+temp+'''))';
+        if condUpdateItens <> '' then condUpdateItens := condUpdateItens + ' AND ';
+        condUpdateItens := condUpdateItens + 'cod_prod in (SELECT codi FROM prod WHERE sub_grup = (SELECT codi FROM sub_grup_prod WHERE descr='+''''+temp+'''))';
       end
       else begin
         if dadosUpdateProd <> '' then dadosUpdateProd := dadosUpdateProd + ', ';
@@ -480,7 +480,7 @@ begin
     else begin
       //Se for números, considera como código
       //Antes buscamos se existe o código cadastrado, se não encontrar colocamos o generator mesmo
-      temp2 := querySelect('select g.codi from sub_grup_prod g where g.codi = '''+temp+'''');
+      temp2 := querySelect('SELECT g.codi FROM sub_grup_prod g WHERE g.codi = '''+temp+'''');
       //Se não encontrar o codigo, colocamos o generator
       if temp2='' then begin
         colProd := colProd + ',sub_grup';
@@ -493,16 +493,16 @@ begin
       end;
       //Testa se é Update
       if VerificaUpdate('sub_grup') = 1 then begin
-        if condUpdateProd <> '' then condUpdateProd := condUpdateProd + ' and ';
+        if condUpdateProd <> '' then condUpdateProd := condUpdateProd + ' AND ';
         condUpdateProd := condUpdateProd + 'sub_grup='+''''+temp+'''';
-        if condUpdateProdTrib <> '' then condUpdateProdTrib := condUpdateProdTrib + ' and ';
-        condUpdateProdTrib := condUpdateProdTrib + 'trib_prod_codi in (select codi from prod where sub_grup = '+''''+temp+''')';
-        if condUpdateProdAdic <> '' then condUpdateProdAdic := condUpdateProdAdic + ' and ';
-        condUpdateProdAdic := condUpdateProdAdic + 'adic_prod_codi in (select codi from prod where sub_grup = '+''''+temp+''')';
-        if condUpdateProdCust <> '' then condUpdateProdCust := condUpdateProdCust + ' and ';
-        condUpdateProdCust := condUpdateProdCust + 'cust_prod_codi in (select codi from prod where sub_grup = '+''''+temp+''')';
-        if condUpdateItens <> '' then condUpdateItens := condUpdateItens + ' and ';
-        condUpdateItens := condUpdateItens + 'cod_prod in (select codi from prod where sub_grup = '+''''+temp+''')';
+        if condUpdateProdTrib <> '' then condUpdateProdTrib := condUpdateProdTrib + ' AND ';
+        condUpdateProdTrib := condUpdateProdTrib + 'trib_prod_codi in (SELECT codi FROM prod WHERE sub_grup = '+''''+temp+''')';
+        if condUpdateProdAdic <> '' then condUpdateProdAdic := condUpdateProdAdic + ' AND ';
+        condUpdateProdAdic := condUpdateProdAdic + 'adic_prod_codi in (SELECT codi FROM prod WHERE sub_grup = '+''''+temp+''')';
+        if condUpdateProdCust <> '' then condUpdateProdCust := condUpdateProdCust + ' AND ';
+        condUpdateProdCust := condUpdateProdCust + 'cust_prod_codi in (SELECT codi FROM prod WHERE sub_grup = '+''''+temp+''')';
+        if condUpdateItens <> '' then condUpdateItens := condUpdateItens + ' AND ';
+        condUpdateItens := condUpdateItens + 'cod_prod in (SELECT codi FROM prod WHERE sub_grup = '+''''+temp+''')';
       end
       else begin
         if dadosUpdateProd <> '' then dadosUpdateProd := dadosUpdateProd + ', ';
@@ -524,7 +524,7 @@ begin
     //Se for letras, buscar código.
     if not (IsNumeric(temp)) then
     begin
-      temp2 := querySelect('select g.codi from departamento g where g.descr = '''+temp+'''');
+      temp2 := querySelect('SELECT g.codi FROM departamento g WHERE g.descr = '''+temp+'''');
       //Se não encontrar a string, cadastrar departamento
       if temp2='' then begin
         if UpperCase( ExtractFileExt(frmPrinc.DBPath.Text) ) = '.TXT' then begin
@@ -532,14 +532,14 @@ begin
             AssignFile(fileTXT, frmPrinc.DBPath.Text);
             if not FileExists(frmPrinc.DBPath.Text) then ReWrite(fileTXT)
             else append(fileTXT);
-            WriteLn(fileTXT, 'insert into departamento (CODI,DESCR) values (case when (select g.codi from departamento g where g.descr = '''+temp+''') is null then (select max(g.codi) from departamento g) else (select g.codi from departamento g where g.descr = '''+temp+''') end,'''+temp+''');');
+            WriteLn(fileTXT, 'INSERT INTO departamento (CODI,DESCR) VALUES (CASE WHEN (SELECT g.codi FROM departamento g WHERE g.descr = '''+temp+''') IS NULL THEN (SELECT MAX(g.codi) FROM departamento g) ELSE (SELECT g.codi FROM departamento g WHERE g.descr = '''+temp+''') END,'''+temp+''');');
             WriteLn(fileTXT, 'COMMIT WORK;');
             CloseFile(fileTXT);
           end
         else begin
-          temp2 := querySelect('select max(g.codi) from departamento g');
+          temp2 := querySelect('SELECT MAX(g.codi) FROM departamento g');
           temp2 := IntToStr(StrToInt(temp2)+1);
-          queryInsert('insert into departamento (CODI,DESCR) values ('+temp2+','''+temp+''');');
+          queryInsert('INSERT INTO departamento (CODI,DESCR) VALUES ('+temp2+','''+temp+''');');
         end;
         colProd := colProd + ',codi_departamento';
         dadosProd := dadosProd + ',' + temp2;
@@ -550,16 +550,16 @@ begin
       end;
       //Testa se é Update
       if VerificaUpdate('departamento') = 1 then begin
-        if condUpdateProd <> '' then condUpdateProd := condUpdateProd + ' and ';
-        condUpdateProd := condUpdateProd + 'codi_departamento=(select codi from departamento where descr='+''''+temp+''')';
-        if condUpdateProdTrib <> '' then condUpdateProdTrib := condUpdateProdTrib + ' and ';
-        condUpdateProdTrib := condUpdateProdTrib + 'trib_prod_codi in (select codi from prod where codi_departamento = (select codi from departamento where descr='+''''+temp+'''))';
-        if condUpdateProdAdic <> '' then condUpdateProdAdic := condUpdateProdAdic + ' and ';
-        condUpdateProdAdic := condUpdateProdAdic + 'adic_prod_codi in (select codi from prod where codi_departamento = (select codi from departamento where descr='+''''+temp+'''))';
-        if condUpdateProdCust <> '' then condUpdateProdCust := condUpdateProdCust + ' and ';
-        condUpdateProdCust := condUpdateProdCust + 'cust_prod_codi in (select codi from prod where codi_departamento = (select codi from departamento where descr='+''''+temp+'''))';
-        if condUpdateItens <> '' then condUpdateItens := condUpdateItens + ' and ';
-        condUpdateItens := condUpdateItens + 'cod_prod in (select codi from prod where codi_departamento = (select codi from departamento where descr='+''''+temp+'''))';
+        if condUpdateProd <> '' then condUpdateProd := condUpdateProd + ' AND ';
+        condUpdateProd := condUpdateProd + 'codi_departamento=(SELECT codi FROM departamento WHERE descr='+''''+temp+''')';
+        if condUpdateProdTrib <> '' then condUpdateProdTrib := condUpdateProdTrib + ' AND ';
+        condUpdateProdTrib := condUpdateProdTrib + 'trib_prod_codi in (SELECT codi FROM prod WHERE codi_departamento = (SELECT codi FROM departamento WHERE descr='+''''+temp+'''))';
+        if condUpdateProdAdic <> '' then condUpdateProdAdic := condUpdateProdAdic + ' AND ';
+        condUpdateProdAdic := condUpdateProdAdic + 'adic_prod_codi in (SELECT codi FROM prod WHERE codi_departamento = (SELECT codi FROM departamento WHERE descr='+''''+temp+'''))';
+        if condUpdateProdCust <> '' then condUpdateProdCust := condUpdateProdCust + ' AND ';
+        condUpdateProdCust := condUpdateProdCust + 'cust_prod_codi in (SELECT codi FROM prod WHERE codi_departamento = (SELECT codi FROM departamento WHERE descr='+''''+temp+'''))';
+        if condUpdateItens <> '' then condUpdateItens := condUpdateItens + ' AND ';
+        condUpdateItens := condUpdateItens + 'cod_prod in (SELECT codi FROM prod WHERE codi_departamento = (SELECT codi FROM departamento WHERE descr='+''''+temp+'''))';
       end
       else begin
         if dadosUpdateProd <> '' then dadosUpdateProd := dadosUpdateProd + ', ';
@@ -569,10 +569,10 @@ begin
     else begin
       //Se for números, considera como código
       //Antes buscamos se existe o código cadastrado, se não encontrar colocamos o generator mesmo
-      temp2 := querySelect('select g.codi from departamento g where g.codi = '''+temp+'''');
+      temp2 := querySelect('SELECT g.codi FROM departamento g WHERE g.codi = '''+temp+'''');
       //Se não encontrar o codigo, colocamos o generator
       if temp2='' then begin
-        temp2 := querySelect('select max(g.codi) from departamento g');
+        temp2 := querySelect('SELECT MAX(g.codi) FROM departamento g');
         colProd := colProd + ',codi_departamento';
         dadosProd := dadosProd + ',' + temp2;
       end
@@ -583,16 +583,16 @@ begin
       end;
       //Testa se é Update
       if VerificaUpdate('departamento') = 1 then begin
-        if condUpdateProd <> '' then condUpdateProd := condUpdateProd + ' and ';
+        if condUpdateProd <> '' then condUpdateProd := condUpdateProd + ' AND ';
         condUpdateProd := condUpdateProd + 'codi_departamento='+''''+temp+'''';
-        if condUpdateProdTrib <> '' then condUpdateProdTrib := condUpdateProdTrib + ' and ';
-        condUpdateProdTrib := condUpdateProdTrib + 'trib_prod_codi in (select codi from prod where departamento = '+''''+temp+''')';
-        if condUpdateProdAdic <> '' then condUpdateProdAdic := condUpdateProdAdic + ' and ';
-        condUpdateProdAdic := condUpdateProdAdic + 'adic_prod_codi in (select codi from prod where departamento = '+''''+temp+''')';
-        if condUpdateProdCust <> '' then condUpdateProdCust := condUpdateProdCust + ' and ';
-        condUpdateProdCust := condUpdateProdCust + 'cust_prod_codi in (select codi from prod where departamento = '+''''+temp+''')';
-        if condUpdateItens <> '' then condUpdateItens := condUpdateItens + ' and ';
-        condUpdateItens := condUpdateItens + 'cod_prod in (select codi from prod where departamento = '+''''+temp+''')';
+        if condUpdateProdTrib <> '' then condUpdateProdTrib := condUpdateProdTrib + ' AND ';
+        condUpdateProdTrib := condUpdateProdTrib + 'trib_prod_codi in (SELECT codi FROM prod WHERE departamento = '+''''+temp+''')';
+        if condUpdateProdAdic <> '' then condUpdateProdAdic := condUpdateProdAdic + ' AND ';
+        condUpdateProdAdic := condUpdateProdAdic + 'adic_prod_codi in (SELECT codi FROM prod WHERE departamento = '+''''+temp+''')';
+        if condUpdateProdCust <> '' then condUpdateProdCust := condUpdateProdCust + ' AND ';
+        condUpdateProdCust := condUpdateProdCust + 'cust_prod_codi in (SELECT codi FROM prod WHERE departamento = '+''''+temp+''')';
+        if condUpdateItens <> '' then condUpdateItens := condUpdateItens + ' AND ';
+        condUpdateItens := condUpdateItens + 'cod_prod in (SELECT codi FROM prod WHERE departamento = '+''''+temp+''')';
       end
       else begin
         if dadosUpdateProd <> '' then dadosUpdateProd := dadosUpdateProd + ', ';
@@ -614,7 +614,7 @@ begin
     //Se for letras, buscar código.
     if not (IsNumeric(temp)) then
     begin
-      temp2 := querySelect('select g.codi from marca g where g.descr = '''+temp+'''');
+      temp2 := querySelect('SELECT g.codi FROM marca g WHERE g.descr = '''+temp+'''');
       //Se não encontrar a string, cadastrar marca
       if temp2='' then begin
         if UpperCase( ExtractFileExt(frmPrinc.DBPath.Text) ) = '.TXT' then begin
@@ -622,12 +622,12 @@ begin
             AssignFile(fileTXT, frmPrinc.DBPath.Text);
             if not FileExists(frmPrinc.DBPath.Text) then ReWrite(fileTXT)
             else append(fileTXT);
-            WriteLn(fileTXT, 'insert into marca (CODI,DESCR) values (case when (select g.codi from marca g where g.descr = '''+temp+''') is null then gen_id(gen_marca_id,1) else (select g.codi from marca g where g.descr = '''+temp+''') end,'''+temp+''');');
+            WriteLn(fileTXT, 'INSERT INTO marca (CODI,DESCR) VALUES (CASE WHEN (SELECT g.codi FROM marca g WHERE g.descr = '''+temp+''') IS NULL THEN gen_id(gen_marca_id,1) ELSE (SELECT g.codi FROM marca g WHERE g.descr = '''+temp+''') END,'''+temp+''');');
             WriteLn(fileTXT, 'COMMIT WORK;');
             CloseFile(fileTXT);
           end
         else begin
-          queryInsert('insert into marca (CODI,DESCR) values (gen_id(gen_marca_id,1),'''+temp+''');');
+          queryInsert('INSERT INTO marca (CODI,DESCR) VALUES (gen_id(gen_marca_id,1),'''+temp+''');');
         end;
         colProd := colProd + ',marca';
         dadosProd := dadosProd + ',' + 'gen_id(gen_marca_id,0)';
@@ -638,16 +638,16 @@ begin
       end;
       //Testa se é Update
       if VerificaUpdate('marca') = 1 then begin
-        if condUpdateProd <> '' then condUpdateProd := condUpdateProd + ' and ';
-        condUpdateProd := condUpdateProd + 'marca=(select codi from marca where descr='+''''+temp+''')';
-        if condUpdateProdTrib <> '' then condUpdateProdTrib := condUpdateProdTrib + ' and ';
-        condUpdateProdTrib := condUpdateProdTrib + 'trib_prod_codi in (select codi from prod where marca = (select codi from marca where descr='+''''+temp+'''))';
-        if condUpdateProdAdic <> '' then condUpdateProdAdic := condUpdateProdAdic + ' and ';
-        condUpdateProdAdic := condUpdateProdAdic + 'adic_prod_codi in (select codi from prod where marca = (select codi from marca where descr='+''''+temp+'''))';
-        if condUpdateProdCust <> '' then condUpdateProdCust := condUpdateProdCust + ' and ';
-        condUpdateProdCust := condUpdateProdCust + 'cust_prod_codi in (select codi from prod where marca = (select codi from marca where descr='+''''+temp+'''))';
-        if condUpdateItens <> '' then condUpdateItens := condUpdateItens + ' and ';
-        condUpdateItens := condUpdateItens + 'cod_prod in (select codi from prod where marca = (select codi from marca where descr='+''''+temp+'''))';
+        if condUpdateProd <> '' then condUpdateProd := condUpdateProd + ' AND ';
+        condUpdateProd := condUpdateProd + 'marca=(SELECT codi FROM marca WHERE descr='+''''+temp+''')';
+        if condUpdateProdTrib <> '' then condUpdateProdTrib := condUpdateProdTrib + ' AND ';
+        condUpdateProdTrib := condUpdateProdTrib + 'trib_prod_codi in (SELECT codi FROM prod WHERE marca = (SELECT codi FROM marca WHERE descr='+''''+temp+'''))';
+        if condUpdateProdAdic <> '' then condUpdateProdAdic := condUpdateProdAdic + ' AND ';
+        condUpdateProdAdic := condUpdateProdAdic + 'adic_prod_codi in (SELECT codi FROM prod WHERE marca = (SELECT codi FROM marca WHERE descr='+''''+temp+'''))';
+        if condUpdateProdCust <> '' then condUpdateProdCust := condUpdateProdCust + ' AND ';
+        condUpdateProdCust := condUpdateProdCust + 'cust_prod_codi in (SELECT codi FROM prod WHERE marca = (SELECT codi FROM marca WHERE descr='+''''+temp+'''))';
+        if condUpdateItens <> '' then condUpdateItens := condUpdateItens + ' AND ';
+        condUpdateItens := condUpdateItens + 'cod_prod in (SELECT codi FROM prod WHERE marca = (SELECT codi FROM marca WHERE descr='+''''+temp+'''))';
       end
       else begin
         if dadosUpdateProd <> '' then dadosUpdateProd := dadosUpdateProd + ', ';
@@ -657,7 +657,7 @@ begin
     else begin
       //Se for números, considera como código
       //Antes buscamos se existe o código cadastrado, se não encontrar colocamos o generator mesmo
-      temp2 := querySelect('select g.codi from marca g where g.codi = '''+temp+'''');
+      temp2 := querySelect('SELECT g.codi FROM marca g WHERE g.codi = '''+temp+'''');
       //Se não encontrar o codigo, colocamos o generator
       if temp2='' then begin
         colProd := colProd + ',marca';
@@ -670,16 +670,16 @@ begin
       end;
       //Testa se é Update
       if VerificaUpdate('marca') = 1 then begin
-        if condUpdateProd <> '' then condUpdateProd := condUpdateProd + ' and ';
+        if condUpdateProd <> '' then condUpdateProd := condUpdateProd + ' AND ';
         condUpdateProd := condUpdateProd + 'marca='+''''+temp+'''';
-        if condUpdateProdTrib <> '' then condUpdateProdTrib := condUpdateProdTrib + ' and ';
-        condUpdateProdTrib := condUpdateProdTrib + 'trib_prod_codi in (select codi from prod where marca = '+''''+temp+''')';
-        if condUpdateProdAdic <> '' then condUpdateProdAdic := condUpdateProdAdic + ' and ';
-        condUpdateProdAdic := condUpdateProdAdic + 'adic_prod_codi in (select codi from prod where marca = '+''''+temp+''')';
-        if condUpdateProdCust <> '' then condUpdateProdCust := condUpdateProdCust + ' and ';
-        condUpdateProdCust := condUpdateProdCust + 'cust_prod_codi in (select codi from prod where marca = '+''''+temp+''')';
-        if condUpdateItens <> '' then condUpdateItens := condUpdateItens + ' and ';
-        condUpdateItens := condUpdateItens + 'cod_prod in (select codi from prod where marca = '+''''+temp+''')';
+        if condUpdateProdTrib <> '' then condUpdateProdTrib := condUpdateProdTrib + ' AND ';
+        condUpdateProdTrib := condUpdateProdTrib + 'trib_prod_codi in (SELECT codi FROM prod WHERE marca = '+''''+temp+''')';
+        if condUpdateProdAdic <> '' then condUpdateProdAdic := condUpdateProdAdic + ' AND ';
+        condUpdateProdAdic := condUpdateProdAdic + 'adic_prod_codi in (SELECT codi FROM prod WHERE marca = '+''''+temp+''')';
+        if condUpdateProdCust <> '' then condUpdateProdCust := condUpdateProdCust + ' AND ';
+        condUpdateProdCust := condUpdateProdCust + 'cust_prod_codi in (SELECT codi FROM prod WHERE marca = '+''''+temp+''')';
+        if condUpdateItens <> '' then condUpdateItens := condUpdateItens + ' AND ';
+        condUpdateItens := condUpdateItens + 'cod_prod in (SELECT codi FROM prod WHERE marca = '+''''+temp+''')';
       end
       else begin
         if dadosUpdateProd <> '' then dadosUpdateProd := dadosUpdateProd + ', ';
@@ -696,16 +696,16 @@ begin
       dadosProd := dadosProd + ',''' + UpperCase(RemoveAcento(StringGrid1.Cells[i,k])) + '''';
       //Testa se é Update
       if VerificaUpdate('tipo') = 1 then begin
-        if condUpdateProd <> '' then condUpdateProd := condUpdateProd + ' and ';
+        if condUpdateProd <> '' then condUpdateProd := condUpdateProd + ' AND ';
         condUpdateProd := condUpdateProd + 'codi_tipo='+''''+UpperCase(RemoveAcento(StringGrid1.Cells[i,k]))+'''';
-        if condUpdateProdTrib <> '' then condUpdateProdTrib := condUpdateProdTrib + ' and ';
-        condUpdateProdTrib := condUpdateProdTrib + 'trib_prod_codi in (select codi from prod where codi_tipo = '+''''+UpperCase(RemoveAcento(StringGrid1.Cells[i,k]))+''')';
-        if condUpdateProdAdic <> '' then condUpdateProdAdic := condUpdateProdAdic + ' and ';
-        condUpdateProdAdic := condUpdateProdAdic + 'adic_prod_codi in (select codi from prod where codi_tipo = '+''''+UpperCase(RemoveAcento(StringGrid1.Cells[i,k]))+''')';
-        if condUpdateProdCust <> '' then condUpdateProdCust := condUpdateProdCust + ' and ';
-        condUpdateProdCust := condUpdateProdCust + 'cust_prod_codi in (select codi from prod where codi_tipo = '+''''+UpperCase(RemoveAcento(StringGrid1.Cells[i,k]))+''')';
-        if condUpdateItens <> '' then condUpdateItens := condUpdateItens + ' and ';
-        condUpdateItens := condUpdateItens + 'cod_prod in (select codi from prod where codi_tipo = '+''''+UpperCase(RemoveAcento(StringGrid1.Cells[i,k]))+''')';
+        if condUpdateProdTrib <> '' then condUpdateProdTrib := condUpdateProdTrib + ' AND ';
+        condUpdateProdTrib := condUpdateProdTrib + 'trib_prod_codi in (SELECT codi FROM prod WHERE codi_tipo = '+''''+UpperCase(RemoveAcento(StringGrid1.Cells[i,k]))+''')';
+        if condUpdateProdAdic <> '' then condUpdateProdAdic := condUpdateProdAdic + ' AND ';
+        condUpdateProdAdic := condUpdateProdAdic + 'adic_prod_codi in (SELECT codi FROM prod WHERE codi_tipo = '+''''+UpperCase(RemoveAcento(StringGrid1.Cells[i,k]))+''')';
+        if condUpdateProdCust <> '' then condUpdateProdCust := condUpdateProdCust + ' AND ';
+        condUpdateProdCust := condUpdateProdCust + 'cust_prod_codi in (SELECT codi FROM prod WHERE codi_tipo = '+''''+UpperCase(RemoveAcento(StringGrid1.Cells[i,k]))+''')';
+        if condUpdateItens <> '' then condUpdateItens := condUpdateItens + ' AND ';
+        condUpdateItens := condUpdateItens + 'cod_prod in (SELECT codi FROM prod WHERE codi_tipo = '+''''+UpperCase(RemoveAcento(StringGrid1.Cells[i,k]))+''')';
       end
       else begin
         if dadosUpdateProd <> '' then dadosUpdateProd := dadosUpdateProd + ', ';
@@ -741,36 +741,36 @@ begin
     colItens := colItens + ',qtd';
     //Testa se é Update
     if VerificaUpdate('qtd') = 1 then begin
-      if condUpdateProd <> '' then condUpdateProd := condUpdateProd + ' and ';
-      condUpdateProd := condUpdateProd + 'codi in (select cod_prod from prod_esto where qtd = '+temp+')';
-      if condUpdateProdTrib <> '' then condUpdateProdTrib := condUpdateProdTrib + ' and ';
-      condUpdateProdTrib := condUpdateProdTrib + 'trib_prod_codi in (select cod_prod from prod_esto where qtd = '+temp+')';
-      if condUpdateProdAdic <> '' then condUpdateProdAdic := condUpdateProdAdic + ' and ';
-      condUpdateProdAdic := condUpdateProdAdic + 'adic_prod_codi in (select cod_prod from prod_esto where qtd = '+temp+')';
-      if condUpdateProdCust <> '' then condUpdateProdCust := condUpdateProdCust + ' and ';
-      condUpdateProdCust := condUpdateProdCust + 'cust_prod_codi in (select cod_prod from prod_esto where qtd = '+temp+')';
-      if condUpdateItens <> '' then condUpdateItens := condUpdateItens + ' and ';
-      condUpdateItens := condUpdateItens + 'cod_prod in (select cod_prod from prod_esto where qtd = '+temp+')';
+      if condUpdateProd <> '' then condUpdateProd := condUpdateProd + ' AND ';
+      condUpdateProd := condUpdateProd + 'codi in (SELECT cod_prod FROM prod_esto WHERE qtd = '+temp+')';
+      if condUpdateProdTrib <> '' then condUpdateProdTrib := condUpdateProdTrib + ' AND ';
+      condUpdateProdTrib := condUpdateProdTrib + 'trib_prod_codi in (SELECT cod_prod FROM prod_esto WHERE qtd = '+temp+')';
+      if condUpdateProdAdic <> '' then condUpdateProdAdic := condUpdateProdAdic + ' AND ';
+      condUpdateProdAdic := condUpdateProdAdic + 'adic_prod_codi in (SELECT cod_prod FROM prod_esto WHERE qtd = '+temp+')';
+      if condUpdateProdCust <> '' then condUpdateProdCust := condUpdateProdCust + ' AND ';
+      condUpdateProdCust := condUpdateProdCust + 'cust_prod_codi in (SELECT cod_prod FROM prod_esto WHERE qtd = '+temp+')';
+      if condUpdateItens <> '' then condUpdateItens := condUpdateItens + ' AND ';
+      condUpdateItens := condUpdateItens + 'cod_prod in (SELECT cod_prod FROM prod_esto WHERE qtd = '+temp+')';
     end
     else begin
       {
        Comando para inserir na ITENS quando a diferenca de estoque for diferente de 0
       }
       //Comando Insert na itens - Ainda nao tem condição no WHERE, pois irá usar condUpdateItens concatenado
-      dadosUpdateItens := dadosUpdateItens + ' insert into ITENS (CODI,PRODCOD,NUME,TIPO,EPV,QTD,EMPR) '+
-          '    select '+
+      dadosUpdateItens := dadosUpdateItens + ' INSERT INTO ITENS (CODI,PRODCOD,NUME,TIPO,EPV,QTD,EMPR) '+
+          '    SELECT '+
           '        gen_id(gen_itens_id,1) CODI, '+
           '        '+prodCod+' PRODCOD, '+
           '        gen_id(gen_prod_ajus_id,0)+1 NUME, '+
-          '        case '+
-          '            when ('+temp+'-pe.qtd) > 0 then 6 '+
-          '            when ('+temp+'-pe.qtd) < 0 then 3 '+
-          '        end TIPO, '+
+          '        CASE '+
+          '            WHEN ('+temp+'-pe.qtd) > 0 THEN 6 '+
+          '            WHEN ('+temp+'-pe.qtd) < 0 THEN 3 '+
+          '        END TIPO, '+
           '        ''A'' EPV, '+
           '        ABS('+temp+'-pe.qtd) QTD, '+
           '        '+prodEmpr+' EMPR '+
-          '    from prod_esto pe '+
-          '    where ('+temp+'-pe.qtd) <> 0 ';
+          '    FROM prod_esto pe '+
+          '    WHERE ('+temp+'-pe.qtd) <> 0 ';
     end;
     //Setar tipo do item
     colItens := colItens + ',tipo';
@@ -793,36 +793,36 @@ begin
     colItens := colItens + ',qtd';
     //Testa se é Update
     if VerificaUpdate('est') = 1 then begin
-      if condUpdateProd <> '' then condUpdateProd := condUpdateProd + ' and ';
-      condUpdateProd := condUpdateProd + 'codi in (select cod_prod from prod_esto where qtd = '+temp+')';
-      if condUpdateProdTrib <> '' then condUpdateProdTrib := condUpdateProdTrib + ' and ';
-      condUpdateProdTrib := condUpdateProdTrib + 'trib_prod_codi in (select cod_prod from prod_esto where qtd = '+temp+')';
-      if condUpdateProdAdic <> '' then condUpdateProdAdic := condUpdateProdAdic + ' and ';
-      condUpdateProdAdic := condUpdateProdAdic + 'adic_prod_codi in (select cod_prod from prod_esto where qtd = '+temp+')';
-      if condUpdateProdCust <> '' then condUpdateProdCust := condUpdateProdCust + ' and ';
-      condUpdateProdCust := condUpdateProdCust + 'cust_prod_codi in (select cod_prod from prod_esto where qtd = '+temp+')';
-      if condUpdateItens <> '' then condUpdateItens := condUpdateItens + ' and ';
-      condUpdateItens := condUpdateItens + 'cod_prod in (select cod_prod from prod_esto where qtd = '+temp+')';
+      if condUpdateProd <> '' then condUpdateProd := condUpdateProd + ' AND ';
+      condUpdateProd := condUpdateProd + 'codi in (SELECT cod_prod FROM prod_esto WHERE qtd = '+temp+')';
+      if condUpdateProdTrib <> '' then condUpdateProdTrib := condUpdateProdTrib + ' AND ';
+      condUpdateProdTrib := condUpdateProdTrib + 'trib_prod_codi in (SELECT cod_prod FROM prod_esto WHERE qtd = '+temp+')';
+      if condUpdateProdAdic <> '' then condUpdateProdAdic := condUpdateProdAdic + ' AND ';
+      condUpdateProdAdic := condUpdateProdAdic + 'adic_prod_codi in (SELECT cod_prod FROM prod_esto WHERE qtd = '+temp+')';
+      if condUpdateProdCust <> '' then condUpdateProdCust := condUpdateProdCust + ' AND ';
+      condUpdateProdCust := condUpdateProdCust + 'cust_prod_codi in (SELECT cod_prod FROM prod_esto WHERE qtd = '+temp+')';
+      if condUpdateItens <> '' then condUpdateItens := condUpdateItens + ' AND ';
+      condUpdateItens := condUpdateItens + 'cod_prod in (SELECT cod_prod FROM prod_esto WHERE qtd = '+temp+')';
     end
     else begin
       {
        Comando para inserir na ITENS quando a diferenca de estoque for diferente de 0
       }
       //Comando Insert na itens - Ainda nao tem condição no WHERE, pois irá usar condUpdateItens concatenado
-      dadosUpdateItens := dadosUpdateItens + ' insert into ITENS (CODI,PRODCOD,NUME,TIPO,EPV,QTD,EMPR) '+
-          '    select '+
+      dadosUpdateItens := dadosUpdateItens + ' INSERT INTO ITENS (CODI,PRODCOD,NUME,TIPO,EPV,QTD,EMPR) '+
+          '    SELECT '+
           '        gen_id(gen_itens_id,1) CODI, '+
           '        '+prodCod+' PRODCOD, '+
           '        gen_id(gen_prod_ajus_id,0)+1 NUME, '+
-          '        case '+
-          '            when ('+temp+'-pe.qtd) > 0 then 5 '+
-          '            when ('+temp+'-pe.qtd) < 0 then 2 '+
-          '        end TIPO, '+
+          '        CASE '+
+          '            WHEN ('+temp+'-pe.qtd) > 0 THEN 5 '+
+          '            WHEN ('+temp+'-pe.qtd) < 0 THEN 2 '+
+          '        END TIPO, '+
           '        ''A'' EPV, '+
           '        ABS('+temp+'-pe.qtd) QTD, '+
           '        '+prodEmpr+' EMPR '+
-          '    from prod_esto pe '+
-          '    where ('+temp+'-pe.qtd) <> 0 ';
+          '    FROM prod_esto pe '+
+          '    WHERE ('+temp+'-pe.qtd) <> 0 ';
     end;
     //Setar tipo do item
     colItens := colItens + ',tipo';
@@ -845,36 +845,36 @@ begin
     colItens := colItens + ',qtd';
     //Testa se é Update
     if VerificaUpdate('max') = 1 then begin
-      if condUpdateProd <> '' then condUpdateProd := condUpdateProd + ' and ';
-      condUpdateProd := condUpdateProd + 'codi in (select cod_prod from prod_esto where qtd_max = '+temp+')';
-      if condUpdateProdTrib <> '' then condUpdateProdTrib := condUpdateProdTrib + ' and ';
-      condUpdateProdTrib := condUpdateProdTrib + 'trib_prod_codi in (select cod_prod from prod_esto where qtd_max = '+temp+')';
-      if condUpdateProdAdic <> '' then condUpdateProdAdic := condUpdateProdAdic + ' and ';
-      condUpdateProdAdic := condUpdateProdAdic + 'adic_prod_codi in (select cod_prod from prod_esto where qtd_max = '+temp+')';
-      if condUpdateProdCust <> '' then condUpdateProdCust := condUpdateProdCust + ' and ';
-      condUpdateProdCust := condUpdateProdCust + 'cust_prod_codi in (select cod_prod from prod_esto where qtd_max = '+temp+')';
-      if condUpdateItens <> '' then condUpdateItens := condUpdateItens + ' and ';
-      condUpdateItens := condUpdateItens + 'cod_prod in (select cod_prod from prod_esto where qtd_max = '+temp+')';
+      if condUpdateProd <> '' then condUpdateProd := condUpdateProd + ' AND ';
+      condUpdateProd := condUpdateProd + 'codi in (SELECT cod_prod FROM prod_esto WHERE qtd_max = '+temp+')';
+      if condUpdateProdTrib <> '' then condUpdateProdTrib := condUpdateProdTrib + ' AND ';
+      condUpdateProdTrib := condUpdateProdTrib + 'trib_prod_codi in (SELECT cod_prod FROM prod_esto WHERE qtd_max = '+temp+')';
+      if condUpdateProdAdic <> '' then condUpdateProdAdic := condUpdateProdAdic + ' AND ';
+      condUpdateProdAdic := condUpdateProdAdic + 'adic_prod_codi in (SELECT cod_prod FROM prod_esto WHERE qtd_max = '+temp+')';
+      if condUpdateProdCust <> '' then condUpdateProdCust := condUpdateProdCust + ' AND ';
+      condUpdateProdCust := condUpdateProdCust + 'cust_prod_codi in (SELECT cod_prod FROM prod_esto WHERE qtd_max = '+temp+')';
+      if condUpdateItens <> '' then condUpdateItens := condUpdateItens + ' AND ';
+      condUpdateItens := condUpdateItens + 'cod_prod in (SELECT cod_prod FROM prod_esto WHERE qtd_max = '+temp+')';
     end
     else begin
       {
        Comando para inserir na ITENS quando a diferenca de estoque for diferente de 0
       }
       //Comando Insert na itens - Ainda nao tem condição no WHERE, pois irá usar condUpdateItens concatenado
-      dadosUpdateItens := dadosUpdateItens + ' insert into ITENS (CODI,PRODCOD,NUME,TIPO,EPV,QTD,EMPR) '+
-          '    select '+
+      dadosUpdateItens := dadosUpdateItens + ' INSERT INTO ITENS (CODI,PRODCOD,NUME,TIPO,EPV,QTD,EMPR) '+
+          '    SELECT '+
           '        gen_id(gen_itens_id,1) CODI, '+
           '        '+prodCod+' PRODCOD, '+
           '        gen_id(gen_prod_ajus_id,0)+1 NUME, '+
-          '        case '+
-          '            when ('+temp+'-pe.qtd_max) > 0 then 4 '+
-          '            when ('+temp+'-pe.qtd_max) < 0 then 1 '+
-          '        end TIPO, '+
+          '        CASE '+
+          '            WHEN ('+temp+'-pe.qtd_max) > 0 THEN 4 '+
+          '            WHEN ('+temp+'-pe.qtd_max) < 0 THEN 1 '+
+          '        END TIPO, '+
           '        ''A'' EPV, '+
           '        ABS('+temp+'-pe.qtd_max) QTD, '+
           '        '+prodEmpr+' EMPR '+
-          '    from prod_esto pe '+
-          '    where ('+temp+'-pe.qtd_max) <> 0 ';
+          '    FROM prod_esto pe '+
+          '    WHERE ('+temp+'-pe.qtd_max) <> 0 ';
     end;
     //Setar tipo do item
     colItens := colItens + ',tipo';
@@ -921,7 +921,7 @@ begin
       temp := (Copy(temp,1,30));
       if temp <> '' then
       begin
-        temp2 := querySelect('select pc.codi from prod_colecao pc where pc.descri= '''+temp+'''');
+        temp2 := querySelect('SELECT pc.codi FROM prod_colecao pc WHERE pc.descri= '''+temp+'''');
         //Se não encontrar a string, cadastrar grupo
         if temp2='' then begin
           if UpperCase( ExtractFileExt(frmPrinc.DBPath.Text) ) = '.TXT' then begin
@@ -929,12 +929,12 @@ begin
               AssignFile(fileTXT, frmPrinc.DBPath.Text);
               if not FileExists(frmPrinc.DBPath.Text) then ReWrite(fileTXT)
               else append(fileTXT);
-              WriteLn(fileTXT, 'insert into prod_colecao (CODI,DESCRI) values (case when (select pc.codi from prod_colecao pc where pc.descri= '''+temp+''') is null then gen_id(gen_prod_colecao_id,1 ) else (select pc.codi from prod_colecao pc where pc.descri= '''+temp+''') end,'''+temp+''');');
+              WriteLn(fileTXT, 'INSERT INTO prod_colecao (CODI,DESCRI) VALUES (CASE WHEN (SELECT pc.codi FROM prod_colecao pc WHERE pc.descri= '''+temp+''') IS NULL THEN gen_id(gen_prod_colecao_id,1 ) ELSE (SELECT pc.codi FROM prod_colecao pc WHERE pc.descri= '''+temp+''') END,'''+temp+''');');
               WriteLn(fileTXT, 'COMMIT WORK;');
               CloseFile(fileTXT);
             end
           else begin
-            queryInsert('insert into prod_colecao (CODI,DESCRI) values (gen_id(gen_prod_colecao_id,1),'''+temp+''');');
+            queryInsert('INSERT INTO prod_colecao (CODI,DESCRI) VALUES (gen_id(gen_prod_colecao_id,1),'''+temp+''');');
           end;
           colProd := colProd + ',codi_colecao';
           dadosProd := dadosProd + ',' + 'gen_id(gen_prod_colecao_id,0)';
@@ -945,16 +945,16 @@ begin
         end;
         //Testa se é Update
         if VerificaUpdate('colecao') = 1 then begin
-          if condUpdateProd <> '' then condUpdateProd := condUpdateProd + ' and ';
-          condUpdateProd := condUpdateProd + 'codi_colecao=(select codi from prod_colecao where DESCRI='+''''+temp+''')';
-          if condUpdateProdTrib <> '' then condUpdateProdTrib := condUpdateProdTrib + ' and ';
-          condUpdateProdTrib := condUpdateProdTrib + 'trib_prod_codi in (select codi from prod where codi_colecao = (select codi from prod_colecao where DESCRI='+''''+temp+'''))';
-          if condUpdateProdAdic <> '' then condUpdateProdAdic := condUpdateProdAdic + ' and ';
-          condUpdateProdAdic := condUpdateProdAdic + 'adic_prod_codi in (select codi from prod where codi_colecao = (select codi from prod_colecao where DESCRI='+''''+temp+'''))';
-          if condUpdateProdCust <> '' then condUpdateProdCust := condUpdateProdCust + ' and ';
-          condUpdateProdCust := condUpdateProdCust + 'cust_prod_codi in (select codi from prod where codi_colecao = (select codi from prod_colecao where DESCRI='+''''+temp+'''))';
-          if condUpdateItens <> '' then condUpdateItens := condUpdateItens + ' and ';
-          condUpdateItens := condUpdateItens + 'cod_prod in (select codi from prod where codi_colecao = (select codi from prod_colecao where DESCRI='+''''+temp+'''))';
+          if condUpdateProd <> '' then condUpdateProd := condUpdateProd + ' AND ';
+          condUpdateProd := condUpdateProd + 'codi_colecao=(SELECT codi FROM prod_colecao WHERE DESCRI='+''''+temp+''')';
+          if condUpdateProdTrib <> '' then condUpdateProdTrib := condUpdateProdTrib + ' AND ';
+          condUpdateProdTrib := condUpdateProdTrib + 'trib_prod_codi in (SELECT codi FROM prod WHERE codi_colecao = (SELECT codi FROM prod_colecao WHERE DESCRI='+''''+temp+'''))';
+          if condUpdateProdAdic <> '' then condUpdateProdAdic := condUpdateProdAdic + ' AND ';
+          condUpdateProdAdic := condUpdateProdAdic + 'adic_prod_codi in (SELECT codi FROM prod WHERE codi_colecao = (SELECT codi FROM prod_colecao WHERE DESCRI='+''''+temp+'''))';
+          if condUpdateProdCust <> '' then condUpdateProdCust := condUpdateProdCust + ' AND ';
+          condUpdateProdCust := condUpdateProdCust + 'cust_prod_codi in (SELECT codi FROM prod WHERE codi_colecao = (SELECT codi FROM prod_colecao WHERE DESCRI='+''''+temp+'''))';
+          if condUpdateItens <> '' then condUpdateItens := condUpdateItens + ' AND ';
+          condUpdateItens := condUpdateItens + 'cod_prod in (SELECT codi FROM prod WHERE codi_colecao = (SELECT codi FROM prod_colecao WHERE DESCRI='+''''+temp+'''))';
         end
         else begin
           if dadosUpdateProd <> '' then dadosUpdateProd := dadosUpdateProd + ', ';
@@ -972,16 +972,16 @@ begin
       dadosProd := dadosProd + ',''' + temp + '''';
       //Testa se é Update
       if VerificaUpdate('descr') = 1 then begin
-        if condUpdateProd <> '' then condUpdateProd := condUpdateProd + ' and ';
+        if condUpdateProd <> '' then condUpdateProd := condUpdateProd + ' AND ';
         condUpdateProd := condUpdateProd + 'descr='+''''+temp+'''';
-        if condUpdateProdTrib <> '' then condUpdateProdTrib := condUpdateProdTrib + ' and ';
-        condUpdateProdTrib := condUpdateProdTrib + 'trib_prod_codi in (select codi from prod where descr = '+''''+temp+''')';
-        if condUpdateProdAdic <> '' then condUpdateProdAdic := condUpdateProdAdic + ' and ';
-        condUpdateProdAdic := condUpdateProdAdic + 'adic_prod_codi in (select codi from prod where descr = '+''''+temp+''')';
-        if condUpdateProdCust <> '' then condUpdateProdCust := condUpdateProdCust + ' and ';
-        condUpdateProdCust := condUpdateProdCust + 'cust_prod_codi in (select codi from prod where descr = '+''''+temp+''')';
-        if condUpdateItens <> '' then condUpdateItens := condUpdateItens + ' and ';
-        condUpdateItens := condUpdateItens + 'cod_prod in (select codi from prod where descr = '+''''+temp+''')';
+        if condUpdateProdTrib <> '' then condUpdateProdTrib := condUpdateProdTrib + ' AND ';
+        condUpdateProdTrib := condUpdateProdTrib + 'trib_prod_codi in (SELECT codi FROM prod WHERE descr = '+''''+temp+''')';
+        if condUpdateProdAdic <> '' then condUpdateProdAdic := condUpdateProdAdic + ' AND ';
+        condUpdateProdAdic := condUpdateProdAdic + 'adic_prod_codi in (SELECT codi FROM prod WHERE descr = '+''''+temp+''')';
+        if condUpdateProdCust <> '' then condUpdateProdCust := condUpdateProdCust + ' AND ';
+        condUpdateProdCust := condUpdateProdCust + 'cust_prod_codi in (SELECT codi FROM prod WHERE descr = '+''''+temp+''')';
+        if condUpdateItens <> '' then condUpdateItens := condUpdateItens + ' AND ';
+        condUpdateItens := condUpdateItens + 'cod_prod in (SELECT codi FROM prod WHERE descr = '+''''+temp+''')';
       end
       else begin
         if dadosUpdateProd <> '' then dadosUpdateProd := dadosUpdateProd + ', ';
@@ -998,16 +998,16 @@ begin
       dadosProd := dadosProd + ',''' + temp + '''';
       //Testa se é Update
       if VerificaUpdate('descr2') = 1 then begin
-        if condUpdateProd <> '' then condUpdateProd := condUpdateProd + ' and ';
+        if condUpdateProd <> '' then condUpdateProd := condUpdateProd + ' AND ';
         condUpdateProd := condUpdateProd + 'descr2='+''''+temp+'''';
-        if condUpdateProdTrib <> '' then condUpdateProdTrib := condUpdateProdTrib + ' and ';
-        condUpdateProdTrib := condUpdateProdTrib + 'trib_prod_codi in (select codi from prod where descr2 = '+''''+temp+''')';
-        if condUpdateProdAdic <> '' then condUpdateProdAdic := condUpdateProdAdic + ' and ';
-        condUpdateProdAdic := condUpdateProdAdic + 'adic_prod_codi in (select codi from prod where descr2 = '+''''+temp+''')';
-        if condUpdateProdCust <> '' then condUpdateProdCust := condUpdateProdCust + ' and ';
-        condUpdateProdCust := condUpdateProdCust + 'cust_prod_codi in (select codi from prod where descr2 = '+''''+temp+''')';
-        if condUpdateItens <> '' then condUpdateItens := condUpdateItens + ' and ';
-        condUpdateItens := condUpdateItens + 'cod_prod in (select codi from prod where descr2 = '+''''+temp+''')';
+        if condUpdateProdTrib <> '' then condUpdateProdTrib := condUpdateProdTrib + ' AND ';
+        condUpdateProdTrib := condUpdateProdTrib + 'trib_prod_codi in (SELECT codi FROM prod WHERE descr2 = '+''''+temp+''')';
+        if condUpdateProdAdic <> '' then condUpdateProdAdic := condUpdateProdAdic + ' AND ';
+        condUpdateProdAdic := condUpdateProdAdic + 'adic_prod_codi in (SELECT codi FROM prod WHERE descr2 = '+''''+temp+''')';
+        if condUpdateProdCust <> '' then condUpdateProdCust := condUpdateProdCust + ' AND ';
+        condUpdateProdCust := condUpdateProdCust + 'cust_prod_codi in (SELECT codi FROM prod WHERE descr2 = '+''''+temp+''')';
+        if condUpdateItens <> '' then condUpdateItens := condUpdateItens + ' AND ';
+        condUpdateItens := condUpdateItens + 'cod_prod in (SELECT codi FROM prod WHERE descr2 = '+''''+temp+''')';
       end
       else begin
         if dadosUpdateProd <> '' then dadosUpdateProd := dadosUpdateProd + ', ';
@@ -1024,16 +1024,16 @@ begin
 
       //Testa se é Update
       if VerificaUpdate('refe') = 1 then begin
-        if condUpdateProd <> '' then condUpdateProd := condUpdateProd + ' and ';
+        if condUpdateProd <> '' then condUpdateProd := condUpdateProd + ' AND ';
         condUpdateProd := condUpdateProd + 'refe='+''''+temp+'''';
-        if condUpdateProdTrib <> '' then condUpdateProdTrib := condUpdateProdTrib + ' and ';
-        condUpdateProdTrib := condUpdateProdTrib + 'trib_prod_codi in (select codi from prod where refe = '+''''+temp+''')';
-        if condUpdateProdAdic <> '' then condUpdateProdAdic := condUpdateProdAdic + ' and ';
-        condUpdateProdAdic := condUpdateProdAdic + 'adic_prod_codi in (select codi from prod where refe = '+''''+temp+''')';
-        if condUpdateProdCust <> '' then condUpdateProdCust := condUpdateProdCust + ' and ';
-        condUpdateProdCust := condUpdateProdCust + 'cust_prod_codi in (select codi from prod where refe = '+''''+temp+''')';
-        if condUpdateItens <> '' then condUpdateItens := condUpdateItens + ' and ';
-        condUpdateItens := condUpdateItens + 'cod_prod in (select codi from prod where refe = '+''''+temp+''')';
+        if condUpdateProdTrib <> '' then condUpdateProdTrib := condUpdateProdTrib + ' AND ';
+        condUpdateProdTrib := condUpdateProdTrib + 'trib_prod_codi in (SELECT codi FROM prod WHERE refe = '+''''+temp+''')';
+        if condUpdateProdAdic <> '' then condUpdateProdAdic := condUpdateProdAdic + ' AND ';
+        condUpdateProdAdic := condUpdateProdAdic + 'adic_prod_codi in (SELECT codi FROM prod WHERE refe = '+''''+temp+''')';
+        if condUpdateProdCust <> '' then condUpdateProdCust := condUpdateProdCust + ' AND ';
+        condUpdateProdCust := condUpdateProdCust + 'cust_prod_codi in (SELECT codi FROM prod WHERE refe = '+''''+temp+''')';
+        if condUpdateItens <> '' then condUpdateItens := condUpdateItens + ' AND ';
+        condUpdateItens := condUpdateItens + 'cod_prod in (SELECT codi FROM prod WHERE refe = '+''''+temp+''')';
       end
       else begin
         if dadosUpdateProd <> '' then dadosUpdateProd := dadosUpdateProd + ', ';
@@ -1050,16 +1050,16 @@ begin
 
       //Testa se é Update
       if VerificaUpdate('refe_original') = 1 then begin
-        if condUpdateProd <> '' then condUpdateProd := condUpdateProd + ' and ';
+        if condUpdateProd <> '' then condUpdateProd := condUpdateProd + ' AND ';
         condUpdateProd := condUpdateProd + 'refe_original='+''''+temp+'''';
-        if condUpdateProdTrib <> '' then condUpdateProdTrib := condUpdateProdTrib + ' and ';
-        condUpdateProdTrib := condUpdateProdTrib + 'trib_prod_codi in (select codi from prod where refe_original = '+''''+temp+''')';
-        if condUpdateProdAdic <> '' then condUpdateProdAdic := condUpdateProdAdic + ' and ';
-        condUpdateProdAdic := condUpdateProdAdic + 'adic_prod_codi in (select codi from prod where refe_original = '+''''+temp+''')';
-        if condUpdateProdCust <> '' then condUpdateProdCust := condUpdateProdCust + ' and ';
-        condUpdateProdCust := condUpdateProdCust + 'cust_prod_codi in (select codi from prod where refe_original = '+''''+temp+''')';
-        if condUpdateItens <> '' then condUpdateItens := condUpdateItens + ' and ';
-        condUpdateItens := condUpdateItens + 'cod_prod in (select codi from prod where refe_original = '+''''+temp+''')';
+        if condUpdateProdTrib <> '' then condUpdateProdTrib := condUpdateProdTrib + ' AND ';
+        condUpdateProdTrib := condUpdateProdTrib + 'trib_prod_codi in (SELECT codi FROM prod WHERE refe_original = '+''''+temp+''')';
+        if condUpdateProdAdic <> '' then condUpdateProdAdic := condUpdateProdAdic + ' AND ';
+        condUpdateProdAdic := condUpdateProdAdic + 'adic_prod_codi in (SELECT codi FROM prod WHERE refe_original = '+''''+temp+''')';
+        if condUpdateProdCust <> '' then condUpdateProdCust := condUpdateProdCust + ' AND ';
+        condUpdateProdCust := condUpdateProdCust + 'cust_prod_codi in (SELECT codi FROM prod WHERE refe_original = '+''''+temp+''')';
+        if condUpdateItens <> '' then condUpdateItens := condUpdateItens + ' AND ';
+        condUpdateItens := condUpdateItens + 'cod_prod in (SELECT codi FROM prod WHERE refe_original = '+''''+temp+''')';
       end
       else begin
         if dadosUpdateProd <> '' then dadosUpdateProd := dadosUpdateProd + ', ';
@@ -1075,16 +1075,16 @@ begin
       dadosProdAdic := dadosProdAdic + ',''' + temp + '''';
       //Testa se é Update
       if VerificaUpdate('localizacao') = 1 then begin
-        if condUpdateProd <> '' then condUpdateProd := condUpdateProd + ' and ';
+        if condUpdateProd <> '' then condUpdateProd := condUpdateProd + ' AND ';
         condUpdateProd := condUpdateProd + 'adic_localizacao='+''''+temp+'''';
-        if condUpdateProdTrib <> '' then condUpdateProdTrib := condUpdateProdTrib + ' and ';
-        condUpdateProdTrib := condUpdateProdTrib + 'trib_prod_codi in (select codi from prod where adic_localizacao = '+''''+temp+''')';
-        if condUpdateProdAdic <> '' then condUpdateProdAdic := condUpdateProdAdic + ' and ';
-        condUpdateProdAdic := condUpdateProdAdic + 'adic_prod_codi in (select codi from prod where adic_localizacao = '+''''+temp+''')';
-        if condUpdateProdCust <> '' then condUpdateProdCust := condUpdateProdCust + ' and ';
-        condUpdateProdCust := condUpdateProdCust + 'cust_prod_codi in (select codi from prod where adic_localizacao = '+''''+temp+''')';
-        if condUpdateItens <> '' then condUpdateItens := condUpdateItens + ' and ';
-        condUpdateItens := condUpdateItens + 'cod_prod in (select codi from prod where adic_localizacao = '+''''+temp+''')';
+        if condUpdateProdTrib <> '' then condUpdateProdTrib := condUpdateProdTrib + ' AND ';
+        condUpdateProdTrib := condUpdateProdTrib + 'trib_prod_codi in (SELECT codi FROM prod WHERE adic_localizacao = '+''''+temp+''')';
+        if condUpdateProdAdic <> '' then condUpdateProdAdic := condUpdateProdAdic + ' AND ';
+        condUpdateProdAdic := condUpdateProdAdic + 'adic_prod_codi in (SELECT codi FROM prod WHERE adic_localizacao = '+''''+temp+''')';
+        if condUpdateProdCust <> '' then condUpdateProdCust := condUpdateProdCust + ' AND ';
+        condUpdateProdCust := condUpdateProdCust + 'cust_prod_codi in (SELECT codi FROM prod WHERE adic_localizacao = '+''''+temp+''')';
+        if condUpdateItens <> '' then condUpdateItens := condUpdateItens + ' AND ';
+        condUpdateItens := condUpdateItens + 'cod_prod in (SELECT codi FROM prod WHERE adic_localizacao = '+''''+temp+''')';
       end
       else begin
         if dadosUpdateProd <> '' then dadosUpdateProd := dadosUpdateProd + ', ';
@@ -1101,16 +1101,16 @@ begin
 
       //Testa se é Update
       if VerificaUpdate('codi_barra') = 1 then begin
-        if condUpdateProd <> '' then condUpdateProd := condUpdateProd + ' and ';
+        if condUpdateProd <> '' then condUpdateProd := condUpdateProd + ' AND ';
         condUpdateProd := condUpdateProd + 'codi_barra='+''''+temp+'''';
-        if condUpdateProdTrib <> '' then condUpdateProdTrib := condUpdateProdTrib + ' and ';
-        condUpdateProdTrib := condUpdateProdTrib + 'trib_prod_codi in (select codi from prod where codi_barra = '+''''+temp+''')';
-        if condUpdateProdAdic <> '' then condUpdateProdAdic := condUpdateProdAdic + ' and ';
-        condUpdateProdAdic := condUpdateProdAdic + 'adic_prod_codi in (select codi from prod where codi_barra = '+''''+temp+''')';
-        if condUpdateProdCust <> '' then condUpdateProdCust := condUpdateProdCust + ' and ';
-        condUpdateProdCust := condUpdateProdCust + 'cust_prod_codi in (select codi from prod where codi_barra = '+''''+temp+''')';
-        if condUpdateItens <> '' then condUpdateItens := condUpdateItens + ' and ';
-        condUpdateItens := condUpdateItens + 'cod_prod in (select codi from prod where codi_barra = '+''''+temp+''')';
+        if condUpdateProdTrib <> '' then condUpdateProdTrib := condUpdateProdTrib + ' AND ';
+        condUpdateProdTrib := condUpdateProdTrib + 'trib_prod_codi in (SELECT codi FROM prod WHERE codi_barra = '+''''+temp+''')';
+        if condUpdateProdAdic <> '' then condUpdateProdAdic := condUpdateProdAdic + ' AND ';
+        condUpdateProdAdic := condUpdateProdAdic + 'adic_prod_codi in (SELECT codi FROM prod WHERE codi_barra = '+''''+temp+''')';
+        if condUpdateProdCust <> '' then condUpdateProdCust := condUpdateProdCust + ' AND ';
+        condUpdateProdCust := condUpdateProdCust + 'cust_prod_codi in (SELECT codi FROM prod WHERE codi_barra = '+''''+temp+''')';
+        if condUpdateItens <> '' then condUpdateItens := condUpdateItens + ' AND ';
+        condUpdateItens := condUpdateItens + 'cod_prod in (SELECT codi FROM prod WHERE codi_barra = '+''''+temp+''')';
       end
       else begin
         if dadosUpdateProd <> '' then dadosUpdateProd := dadosUpdateProd + ', ';
@@ -1127,16 +1127,16 @@ begin
 
       //Testa se é Update
       if VerificaUpdate('codi_barra_com') = 1 then begin
-        if condUpdateProd <> '' then condUpdateProd := condUpdateProd + ' and ';
+        if condUpdateProd <> '' then condUpdateProd := condUpdateProd + ' AND ';
         condUpdateProd := condUpdateProd + 'codi_barra_com='+''''+temp+'''';
-        if condUpdateProdTrib <> '' then condUpdateProdTrib := condUpdateProdTrib + ' and ';
-        condUpdateProdTrib := condUpdateProdTrib + 'trib_prod_codi in (select codi from prod where codi_barra_com = '+''''+temp+''')';
-        if condUpdateProdAdic <> '' then condUpdateProdAdic := condUpdateProdAdic + ' and ';
-        condUpdateProdAdic := condUpdateProdAdic + 'adic_prod_codi in (select codi from prod where codi_barra_com = '+''''+temp+''')';
-        if condUpdateProdCust <> '' then condUpdateProdCust := condUpdateProdCust + ' and ';
-        condUpdateProdCust := condUpdateProdCust + 'cust_prod_codi in (select codi from prod where codi_barra_com = '+''''+temp+''')';
-        if condUpdateItens <> '' then condUpdateItens := condUpdateItens + ' and ';
-        condUpdateItens := condUpdateItens + 'cod_prod in (select codi from prod where codi_barra_com = '+''''+temp+''')';
+        if condUpdateProdTrib <> '' then condUpdateProdTrib := condUpdateProdTrib + ' AND ';
+        condUpdateProdTrib := condUpdateProdTrib + 'trib_prod_codi in (SELECT codi FROM prod WHERE codi_barra_com = '+''''+temp+''')';
+        if condUpdateProdAdic <> '' then condUpdateProdAdic := condUpdateProdAdic + ' AND ';
+        condUpdateProdAdic := condUpdateProdAdic + 'adic_prod_codi in (SELECT codi FROM prod WHERE codi_barra_com = '+''''+temp+''')';
+        if condUpdateProdCust <> '' then condUpdateProdCust := condUpdateProdCust + ' AND ';
+        condUpdateProdCust := condUpdateProdCust + 'cust_prod_codi in (SELECT codi FROM prod WHERE codi_barra_com = '+''''+temp+''')';
+        if condUpdateItens <> '' then condUpdateItens := condUpdateItens + ' AND ';
+        condUpdateItens := condUpdateItens + 'cod_prod in (SELECT codi FROM prod WHERE codi_barra_com = '+''''+temp+''')';
       end
       else begin
         if dadosUpdateProd <> '' then dadosUpdateProd := dadosUpdateProd + ', ';
@@ -1151,16 +1151,16 @@ begin
       dadosProd := dadosProd + ',''' + temp + '''';
       //Testa se é Update
       if VerificaUpdate('obs') = 1 then begin
-        if condUpdateProd <> '' then condUpdateProd := condUpdateProd + ' and ';
+        if condUpdateProd <> '' then condUpdateProd := condUpdateProd + ' AND ';
         condUpdateProd := condUpdateProd + 'obs='+''''+temp+'''';
-        if condUpdateProdTrib <> '' then condUpdateProdTrib := condUpdateProdTrib + ' and ';
-        condUpdateProdTrib := condUpdateProdTrib + 'trib_prod_codi in (select codi from prod where obs = '+''''+temp+''')';
-        if condUpdateProdAdic <> '' then condUpdateProdAdic := condUpdateProdAdic + ' and ';
-        condUpdateProdAdic := condUpdateProdAdic + 'adic_prod_codi in (select codi from prod where obs = '+''''+temp+''')';
-        if condUpdateProdCust <> '' then condUpdateProdCust := condUpdateProdCust + ' and ';
-        condUpdateProdCust := condUpdateProdCust + 'cust_prod_codi in (select codi from prod where obs = '+''''+temp+''')';
-        if condUpdateItens <> '' then condUpdateItens := condUpdateItens + ' and ';
-        condUpdateItens := condUpdateItens + 'cod_prod in (select codi from prod where obs = '+''''+temp+''')';
+        if condUpdateProdTrib <> '' then condUpdateProdTrib := condUpdateProdTrib + ' AND ';
+        condUpdateProdTrib := condUpdateProdTrib + 'trib_prod_codi in (SELECT codi FROM prod WHERE obs = '+''''+temp+''')';
+        if condUpdateProdAdic <> '' then condUpdateProdAdic := condUpdateProdAdic + ' AND ';
+        condUpdateProdAdic := condUpdateProdAdic + 'adic_prod_codi in (SELECT codi FROM prod WHERE obs = '+''''+temp+''')';
+        if condUpdateProdCust <> '' then condUpdateProdCust := condUpdateProdCust + ' AND ';
+        condUpdateProdCust := condUpdateProdCust + 'cust_prod_codi in (SELECT codi FROM prod WHERE obs = '+''''+temp+''')';
+        if condUpdateItens <> '' then condUpdateItens := condUpdateItens + ' AND ';
+        condUpdateItens := condUpdateItens + 'cod_prod in (SELECT codi FROM prod WHERE obs = '+''''+temp+''')';
       end
       else begin
         if dadosUpdateProd <> '' then dadosUpdateProd := dadosUpdateProd + ', ';
@@ -1178,16 +1178,16 @@ begin
       dadosProd := dadosProd + ',''' + UpperCase(RemoveAcento(temp)) + '''';
       //Testa se é Update
       if VerificaUpdate('ncm') = 1 then begin
-        if condUpdateProd <> '' then condUpdateProd := condUpdateProd + ' and ';
+        if condUpdateProd <> '' then condUpdateProd := condUpdateProd + ' AND ';
         condUpdateProd := condUpdateProd + 'ncm='+''''+temp+'''';
-        if condUpdateProdTrib <> '' then condUpdateProdTrib := condUpdateProdTrib + ' and ';
-        condUpdateProdTrib := condUpdateProdTrib + 'trib_prod_codi in (select codi from prod where ncm = '+''''+temp+''')';
-        if condUpdateProdAdic <> '' then condUpdateProdAdic := condUpdateProdAdic + ' and ';
-        condUpdateProdAdic := condUpdateProdAdic + 'adic_prod_codi in (select codi from prod where ncm = '+''''+temp+''')';
-        if condUpdateProdCust <> '' then condUpdateProdCust := condUpdateProdCust + ' and ';
-        condUpdateProdCust := condUpdateProdCust + 'cust_prod_codi in (select codi from prod where ncm = '+''''+temp+''')';
-        if condUpdateItens <> '' then condUpdateItens := condUpdateItens + ' and ';
-        condUpdateItens := condUpdateItens + 'cod_prod in (select codi from prod where ncm = '+''''+temp+''')';
+        if condUpdateProdTrib <> '' then condUpdateProdTrib := condUpdateProdTrib + ' AND ';
+        condUpdateProdTrib := condUpdateProdTrib + 'trib_prod_codi in (SELECT codi FROM prod WHERE ncm = '+''''+temp+''')';
+        if condUpdateProdAdic <> '' then condUpdateProdAdic := condUpdateProdAdic + ' AND ';
+        condUpdateProdAdic := condUpdateProdAdic + 'adic_prod_codi in (SELECT codi FROM prod WHERE ncm = '+''''+temp+''')';
+        if condUpdateProdCust <> '' then condUpdateProdCust := condUpdateProdCust + ' AND ';
+        condUpdateProdCust := condUpdateProdCust + 'cust_prod_codi in (SELECT codi FROM prod WHERE ncm = '+''''+temp+''')';
+        if condUpdateItens <> '' then condUpdateItens := condUpdateItens + ' AND ';
+        condUpdateItens := condUpdateItens + 'cod_prod in (SELECT codi FROM prod WHERE ncm = '+''''+temp+''')';
       end
       else begin
         if dadosUpdateProd <> '' then dadosUpdateProd := dadosUpdateProd + ', ';
@@ -1205,16 +1205,16 @@ begin
       dadosProd := dadosProd + ',''' + UpperCase(RemoveAcento(temp)) + '''';
       //Testa se é Update
       if VerificaUpdate('cest') = 1 then begin
-        if condUpdateProd <> '' then condUpdateProd := condUpdateProd + ' and ';
+        if condUpdateProd <> '' then condUpdateProd := condUpdateProd + ' AND ';
         condUpdateProd := condUpdateProd + 'cest='+''''+temp+'''';
-        if condUpdateProdTrib <> '' then condUpdateProdTrib := condUpdateProdTrib + ' and ';
-        condUpdateProdTrib := condUpdateProdTrib + 'trib_prod_codi in (select codi from prod where cest = '+''''+temp+''')';
-        if condUpdateProdAdic <> '' then condUpdateProdAdic := condUpdateProdAdic + ' and ';
-        condUpdateProdAdic := condUpdateProdAdic + 'adic_prod_codi in (select codi from prod where cest = '+''''+temp+''')';
-        if condUpdateProdCust <> '' then condUpdateProdCust := condUpdateProdCust + ' and ';
-        condUpdateProdCust := condUpdateProdCust + 'cust_prod_codi in (select codi from prod where cest = '+''''+temp+''')';
-        if condUpdateItens <> '' then condUpdateItens := condUpdateItens + ' and ';
-        condUpdateItens := condUpdateItens + 'cod_prod in (select codi from prod where cest = '+''''+temp+''')';
+        if condUpdateProdTrib <> '' then condUpdateProdTrib := condUpdateProdTrib + ' AND ';
+        condUpdateProdTrib := condUpdateProdTrib + 'trib_prod_codi in (SELECT codi FROM prod WHERE cest = '+''''+temp+''')';
+        if condUpdateProdAdic <> '' then condUpdateProdAdic := condUpdateProdAdic + ' AND ';
+        condUpdateProdAdic := condUpdateProdAdic + 'adic_prod_codi in (SELECT codi FROM prod WHERE cest = '+''''+temp+''')';
+        if condUpdateProdCust <> '' then condUpdateProdCust := condUpdateProdCust + ' AND ';
+        condUpdateProdCust := condUpdateProdCust + 'cust_prod_codi in (SELECT codi FROM prod WHERE cest = '+''''+temp+''')';
+        if condUpdateItens <> '' then condUpdateItens := condUpdateItens + ' AND ';
+        condUpdateItens := condUpdateItens + 'cod_prod in (SELECT codi FROM prod WHERE cest = '+''''+temp+''')';
       end
       else begin
         if dadosUpdateProd <> '' then dadosUpdateProd := dadosUpdateProd + ', ';
@@ -1231,16 +1231,16 @@ begin
       dadosProd := dadosProd + ',''' + temp + '''';
       //Testa se é Update
       if VerificaUpdate('unid') = 1 then begin
-        if condUpdateProd <> '' then condUpdateProd := condUpdateProd + ' and ';
+        if condUpdateProd <> '' then condUpdateProd := condUpdateProd + ' AND ';
         condUpdateProd := condUpdateProd + 'unid='+''''+temp+'''';
-        if condUpdateProdTrib <> '' then condUpdateProdTrib := condUpdateProdTrib + ' and ';
-        condUpdateProdTrib := condUpdateProdTrib + 'trib_prod_codi in (select codi from prod where unid = '+''''+temp+''')';
-        if condUpdateProdAdic <> '' then condUpdateProdAdic := condUpdateProdAdic + ' and ';
-        condUpdateProdAdic := condUpdateProdAdic + 'adic_prod_codi in (select codi from prod where unid = '+''''+temp+''')';
-        if condUpdateProdCust <> '' then condUpdateProdCust := condUpdateProdCust + ' and ';
-        condUpdateProdCust := condUpdateProdCust + 'cust_prod_codi in (select codi from prod where unid = '+''''+temp+''')';
-        if condUpdateItens <> '' then condUpdateItens := condUpdateItens + ' and ';
-        condUpdateItens := condUpdateItens + 'cod_prod in (select codi from prod where unid = '+''''+temp+''')';
+        if condUpdateProdTrib <> '' then condUpdateProdTrib := condUpdateProdTrib + ' AND ';
+        condUpdateProdTrib := condUpdateProdTrib + 'trib_prod_codi in (SELECT codi FROM prod WHERE unid = '+''''+temp+''')';
+        if condUpdateProdAdic <> '' then condUpdateProdAdic := condUpdateProdAdic + ' AND ';
+        condUpdateProdAdic := condUpdateProdAdic + 'adic_prod_codi in (SELECT codi FROM prod WHERE unid = '+''''+temp+''')';
+        if condUpdateProdCust <> '' then condUpdateProdCust := condUpdateProdCust + ' AND ';
+        condUpdateProdCust := condUpdateProdCust + 'cust_prod_codi in (SELECT codi FROM prod WHERE unid = '+''''+temp+''')';
+        if condUpdateItens <> '' then condUpdateItens := condUpdateItens + ' AND ';
+        condUpdateItens := condUpdateItens + 'cod_prod in (SELECT codi FROM prod WHERE unid = '+''''+temp+''')';
       end
       else begin
         if dadosUpdateProd <> '' then dadosUpdateProd := dadosUpdateProd + ', ';
@@ -1262,16 +1262,16 @@ begin
       dadosProd := dadosProd + ',' + temp;
       //Testa se é Update
       if VerificaUpdate('pesl') = 1 then begin
-        if condUpdateProd <> '' then condUpdateProd := condUpdateProd + ' and ';
+        if condUpdateProd <> '' then condUpdateProd := condUpdateProd + ' AND ';
         condUpdateProd := condUpdateProd + 'pesl='+''''+temp+'''';
-        if condUpdateProdTrib <> '' then condUpdateProdTrib := condUpdateProdTrib + ' and ';
-        condUpdateProdTrib := condUpdateProdTrib + 'trib_prod_codi in (select codi from prod where pesl = '+''''+temp+''')';
-        if condUpdateProdAdic <> '' then condUpdateProdAdic := condUpdateProdAdic + ' and ';
-        condUpdateProdAdic := condUpdateProdAdic + 'adic_prod_codi in (select codi from prod where pesl = '+''''+temp+''')';
-        if condUpdateProdCust <> '' then condUpdateProdCust := condUpdateProdCust + ' and ';
-        condUpdateProdCust := condUpdateProdCust + 'cust_prod_codi in (select codi from prod where pesl = '+''''+temp+''')';
-        if condUpdateItens <> '' then condUpdateItens := condUpdateItens + ' and ';
-        condUpdateItens := condUpdateItens + 'cod_prod in (select codi from prod where pesl = '+''''+temp+''')';
+        if condUpdateProdTrib <> '' then condUpdateProdTrib := condUpdateProdTrib + ' AND ';
+        condUpdateProdTrib := condUpdateProdTrib + 'trib_prod_codi in (SELECT codi FROM prod WHERE pesl = '+''''+temp+''')';
+        if condUpdateProdAdic <> '' then condUpdateProdAdic := condUpdateProdAdic + ' AND ';
+        condUpdateProdAdic := condUpdateProdAdic + 'adic_prod_codi in (SELECT codi FROM prod WHERE pesl = '+''''+temp+''')';
+        if condUpdateProdCust <> '' then condUpdateProdCust := condUpdateProdCust + ' AND ';
+        condUpdateProdCust := condUpdateProdCust + 'cust_prod_codi in (SELECT codi FROM prod WHERE pesl = '+''''+temp+''')';
+        if condUpdateItens <> '' then condUpdateItens := condUpdateItens + ' AND ';
+        condUpdateItens := condUpdateItens + 'cod_prod in (SELECT codi FROM prod WHERE pesl = '+''''+temp+''')';
       end
       else begin
         if dadosUpdateProd <> '' then dadosUpdateProd := dadosUpdateProd + ', ';
@@ -1293,16 +1293,16 @@ begin
       dadosProd := dadosProd + ',' + temp;
       //Testa se é Update
       if VerificaUpdate('pesb') = 1 then begin
-        if condUpdateProd <> '' then condUpdateProd := condUpdateProd + ' and ';
+        if condUpdateProd <> '' then condUpdateProd := condUpdateProd + ' AND ';
         condUpdateProd := condUpdateProd + 'pesb='+''''+temp+'''';
-        if condUpdateProdTrib <> '' then condUpdateProdTrib := condUpdateProdTrib + ' and ';
-        condUpdateProdTrib := condUpdateProdTrib + 'trib_prod_codi in (select codi from prod where pesb = '+''''+temp+''')';
-        if condUpdateProdAdic <> '' then condUpdateProdAdic := condUpdateProdAdic + ' and ';
-        condUpdateProdAdic := condUpdateProdAdic + 'adic_prod_codi in (select codi from prod where pesb = '+''''+temp+''')';
-        if condUpdateProdCust <> '' then condUpdateProdCust := condUpdateProdCust + ' and ';
-        condUpdateProdCust := condUpdateProdCust + 'cust_prod_codi in (select codi from prod where pesb = '+''''+temp+''')';
-        if condUpdateItens <> '' then condUpdateItens := condUpdateItens + ' and ';
-        condUpdateItens := condUpdateItens + 'cod_prod in (select codi from prod where pesb = '+''''+temp+''')';
+        if condUpdateProdTrib <> '' then condUpdateProdTrib := condUpdateProdTrib + ' AND ';
+        condUpdateProdTrib := condUpdateProdTrib + 'trib_prod_codi in (SELECT codi FROM prod WHERE pesb = '+''''+temp+''')';
+        if condUpdateProdAdic <> '' then condUpdateProdAdic := condUpdateProdAdic + ' AND ';
+        condUpdateProdAdic := condUpdateProdAdic + 'adic_prod_codi in (SELECT codi FROM prod WHERE pesb = '+''''+temp+''')';
+        if condUpdateProdCust <> '' then condUpdateProdCust := condUpdateProdCust + ' AND ';
+        condUpdateProdCust := condUpdateProdCust + 'cust_prod_codi in (SELECT codi FROM prod WHERE pesb = '+''''+temp+''')';
+        if condUpdateItens <> '' then condUpdateItens := condUpdateItens + ' AND ';
+        condUpdateItens := condUpdateItens + 'cod_prod in (SELECT codi FROM prod WHERE pesb = '+''''+temp+''')';
       end
       else begin
         if dadosUpdateProd <> '' then dadosUpdateProd := dadosUpdateProd + ', ';
@@ -1361,16 +1361,16 @@ begin
       end;
       //Testa se é Update
       if VerificaUpdate('custo') = 1 then begin
-        if condUpdateProdCust <> '' then condUpdateProdCust := condUpdateProdCust + ' and ';
+        if condUpdateProdCust <> '' then condUpdateProdCust := condUpdateProdCust + ' AND ';
         condUpdateProdCust := condUpdateProdCust + 'cust_custo='+''''+temp+'''';
-        if condUpdateProdTrib <> '' then condUpdateProdTrib := condUpdateProdTrib + ' and ';
-        condUpdateProdTrib := condUpdateProdTrib + 'trib_prod_codi in (select cust_prod_codi from prod_custos where cust_custo = '+''''+temp+''')';
-        if condUpdateProdAdic <> '' then condUpdateProdAdic := condUpdateProdAdic + ' and ';
-        condUpdateProdAdic := condUpdateProdAdic + 'adic_prod_codi in (select cust_prod_codi from prod_custos where cust_custo = '+''''+temp+''')';
-        if condUpdateProd <> '' then condUpdateProd := condUpdateProd + ' and ';
-        condUpdateProd := condUpdateProd + 'codi in (select cust_prod_codi from prod_custos where cust_custo = '+''''+temp+''')';
-        if condUpdateItens <> '' then condUpdateItens := condUpdateItens + ' and ';
-        condUpdateItens := condUpdateItens + 'cod_prod in (select cust_prod_codi from prod_custos where cust_custo = '+''''+temp+''')';
+        if condUpdateProdTrib <> '' then condUpdateProdTrib := condUpdateProdTrib + ' AND ';
+        condUpdateProdTrib := condUpdateProdTrib + 'trib_prod_codi in (SELECT cust_prod_codi FROM prod_custos WHERE cust_custo = '+''''+temp+''')';
+        if condUpdateProdAdic <> '' then condUpdateProdAdic := condUpdateProdAdic + ' AND ';
+        condUpdateProdAdic := condUpdateProdAdic + 'adic_prod_codi in (SELECT cust_prod_codi FROM prod_custos WHERE cust_custo = '+''''+temp+''')';
+        if condUpdateProd <> '' then condUpdateProd := condUpdateProd + ' AND ';
+        condUpdateProd := condUpdateProd + 'codi in (SELECT cust_prod_codi FROM prod_custos WHERE cust_custo = '+''''+temp+''')';
+        if condUpdateItens <> '' then condUpdateItens := condUpdateItens + ' AND ';
+        condUpdateItens := condUpdateItens + 'cod_prod in (SELECT cust_prod_codi FROM prod_custos WHERE cust_custo = '+''''+temp+''')';
       end
       else begin
         if dadosUpdateProdCust <> '' then dadosUpdateProdCust := dadosUpdateProdCust + ', ';
@@ -1392,16 +1392,16 @@ begin
       dadosProdCust := dadosProdCust + ',' + temp;
       //Testa se é Update
       if VerificaUpdate('custo_medio') = 1 then begin
-        if condUpdateProdCust <> '' then condUpdateProdCust := condUpdateProdCust + ' and ';
+        if condUpdateProdCust <> '' then condUpdateProdCust := condUpdateProdCust + ' AND ';
         condUpdateProdCust := condUpdateProdCust + 'cust_custo_medio='+''''+temp+'''';
-        if condUpdateProdTrib <> '' then condUpdateProdTrib := condUpdateProdTrib + ' and ';
-        condUpdateProdTrib := condUpdateProdTrib + 'trib_prod_codi in (select cust_prod_codi from prod_custos where cust_custo_medio = '+''''+temp+''')';
-        if condUpdateProdAdic <> '' then condUpdateProdAdic := condUpdateProdAdic + ' and ';
-        condUpdateProdAdic := condUpdateProdAdic + 'adic_prod_codi in (select cust_prod_codi from prod_custos where cust_custo_medio = '+''''+temp+''')';
-        if condUpdateProd <> '' then condUpdateProd := condUpdateProd + ' and ';
-        condUpdateProd := condUpdateProd + 'codi in (select cust_prod_codi from prod_custos where cust_custo_medio = '+''''+temp+''')';
-        if condUpdateItens <> '' then condUpdateItens := condUpdateItens + ' and ';
-        condUpdateItens := condUpdateItens + 'cod_prod in (select cust_prod_codi from prod_custos where cust_custo_medio = '+''''+temp+''')';
+        if condUpdateProdTrib <> '' then condUpdateProdTrib := condUpdateProdTrib + ' AND ';
+        condUpdateProdTrib := condUpdateProdTrib + 'trib_prod_codi in (SELECT cust_prod_codi FROM prod_custos WHERE cust_custo_medio = '+''''+temp+''')';
+        if condUpdateProdAdic <> '' then condUpdateProdAdic := condUpdateProdAdic + ' AND ';
+        condUpdateProdAdic := condUpdateProdAdic + 'adic_prod_codi in (SELECT cust_prod_codi FROM prod_custos WHERE cust_custo_medio = '+''''+temp+''')';
+        if condUpdateProd <> '' then condUpdateProd := condUpdateProd + ' AND ';
+        condUpdateProd := condUpdateProd + 'codi in (SELECT cust_prod_codi FROM prod_custos WHERE cust_custo_medio = '+''''+temp+''')';
+        if condUpdateItens <> '' then condUpdateItens := condUpdateItens + ' AND ';
+        condUpdateItens := condUpdateItens + 'cod_prod in (SELECT cust_prod_codi FROM prod_custos WHERE cust_custo_medio = '+''''+temp+''')';
       end
       else begin
         if dadosUpdateProdCust <> '' then dadosUpdateProdCust := dadosUpdateProdCust + ', ';
@@ -1424,16 +1424,16 @@ begin
       dadosProdCust := dadosProdCust + ',' + temp;
       //Testa se é Update
       if VerificaUpdate('ipi') = 1 then begin
-        if condUpdateProdCust <> '' then condUpdateProdCust := condUpdateProdCust + ' and ';
+        if condUpdateProdCust <> '' then condUpdateProdCust := condUpdateProdCust + ' AND ';
         condUpdateProdCust := condUpdateProdCust + 'cust_ipi='+''''+temp+'''';
-        if condUpdateProdTrib <> '' then condUpdateProdTrib := condUpdateProdTrib + ' and ';
-        condUpdateProdTrib := condUpdateProdTrib + 'trib_prod_codi in (select cust_prod_codi from prod_custos where cust_ipi = '+''''+temp+''')';
-        if condUpdateProdAdic <> '' then condUpdateProdAdic := condUpdateProdAdic + ' and ';
-        condUpdateProdAdic := condUpdateProdAdic + 'adic_prod_codi in (select cust_prod_codi from prod_custos where cust_ipi = '+''''+temp+''')';
-        if condUpdateProd <> '' then condUpdateProd := condUpdateProd + ' and ';
-        condUpdateProd := condUpdateProd + 'codi in (select cust_prod_codi from prod_custos where cust_ipi = '+''''+temp+''')';
-        if condUpdateItens <> '' then condUpdateItens := condUpdateItens + ' and ';
-        condUpdateItens := condUpdateItens + 'cod_prod in (select cust_prod_codi from prod_custos where cust_ipi = '+''''+temp+''')';
+        if condUpdateProdTrib <> '' then condUpdateProdTrib := condUpdateProdTrib + ' AND ';
+        condUpdateProdTrib := condUpdateProdTrib + 'trib_prod_codi in (SELECT cust_prod_codi FROM prod_custos WHERE cust_ipi = '+''''+temp+''')';
+        if condUpdateProdAdic <> '' then condUpdateProdAdic := condUpdateProdAdic + ' AND ';
+        condUpdateProdAdic := condUpdateProdAdic + 'adic_prod_codi in (SELECT cust_prod_codi FROM prod_custos WHERE cust_ipi = '+''''+temp+''')';
+        if condUpdateProd <> '' then condUpdateProd := condUpdateProd + ' AND ';
+        condUpdateProd := condUpdateProd + 'codi in (SELECT cust_prod_codi FROM prod_custos WHERE cust_ipi = '+''''+temp+''')';
+        if condUpdateItens <> '' then condUpdateItens := condUpdateItens + ' AND ';
+        condUpdateItens := condUpdateItens + 'cod_prod in (SELECT cust_prod_codi FROM prod_custos WHERE cust_ipi = '+''''+temp+''')';
       end
       else begin
         if dadosUpdateProdCust <> '' then dadosUpdateProdCust := dadosUpdateProdCust + ', ';
@@ -1456,16 +1456,16 @@ begin
       dadosProdCust := dadosProdCust + ',' + temp;
       //Testa se é Update
       if VerificaUpdate('pis') = 1 then begin
-        if condUpdateProdCust <> '' then condUpdateProdCust := condUpdateProdCust + ' and ';
+        if condUpdateProdCust <> '' then condUpdateProdCust := condUpdateProdCust + ' AND ';
         condUpdateProdCust := condUpdateProdCust + 'cust_pis='+''''+temp+'''';
-        if condUpdateProdTrib <> '' then condUpdateProdTrib := condUpdateProdTrib + ' and ';
-        condUpdateProdTrib := condUpdateProdTrib + 'trib_prod_codi in (select cust_prod_codi from prod_custos where cust_pis = '+''''+temp+''')';
-        if condUpdateProdAdic <> '' then condUpdateProdAdic := condUpdateProdAdic + ' and ';
-        condUpdateProdAdic := condUpdateProdAdic + 'adic_prod_codi in (select cust_prod_codi from prod_custos where cust_pis = '+''''+temp+''')';
-        if condUpdateProd <> '' then condUpdateProd := condUpdateProd + ' and ';
-        condUpdateProd := condUpdateProd + 'codi in (select cust_prod_codi from prod_custos where cust_pis = '+''''+temp+''')';
-        if condUpdateItens <> '' then condUpdateItens := condUpdateItens + ' and ';
-        condUpdateItens := condUpdateItens + 'cod_prod in (select cust_prod_codi from prod_custos where cust_pis = '+''''+temp+''')';
+        if condUpdateProdTrib <> '' then condUpdateProdTrib := condUpdateProdTrib + ' AND ';
+        condUpdateProdTrib := condUpdateProdTrib + 'trib_prod_codi in (SELECT cust_prod_codi FROM prod_custos WHERE cust_pis = '+''''+temp+''')';
+        if condUpdateProdAdic <> '' then condUpdateProdAdic := condUpdateProdAdic + ' AND ';
+        condUpdateProdAdic := condUpdateProdAdic + 'adic_prod_codi in (SELECT cust_prod_codi FROM prod_custos WHERE cust_pis = '+''''+temp+''')';
+        if condUpdateProd <> '' then condUpdateProd := condUpdateProd + ' AND ';
+        condUpdateProd := condUpdateProd + 'codi in (SELECT cust_prod_codi FROM prod_custos WHERE cust_pis = '+''''+temp+''')';
+        if condUpdateItens <> '' then condUpdateItens := condUpdateItens + ' AND ';
+        condUpdateItens := condUpdateItens + 'cod_prod in (SELECT cust_prod_codi FROM prod_custos WHERE cust_pis = '+''''+temp+''')';
       end
       else begin
         if dadosUpdateProdCust <> '' then dadosUpdateProdCust := dadosUpdateProdCust + ', ';
@@ -1488,16 +1488,16 @@ begin
       dadosProdCust := dadosProdCust + ',' + temp;
       //Testa se é Update
       if VerificaUpdate('cofins') = 1 then begin
-        if condUpdateProdCust <> '' then condUpdateProdCust := condUpdateProdCust + ' and ';
+        if condUpdateProdCust <> '' then condUpdateProdCust := condUpdateProdCust + ' AND ';
         condUpdateProdCust := condUpdateProdCust + 'cust_cofins='+''''+temp+'''';
-        if condUpdateProdTrib <> '' then condUpdateProdTrib := condUpdateProdTrib + ' and ';
-        condUpdateProdTrib := condUpdateProdTrib + 'trib_prod_codi in (select cust_prod_codi from prod_custos where cust_cofins = '+''''+temp+''')';
-        if condUpdateProdAdic <> '' then condUpdateProdAdic := condUpdateProdAdic + ' and ';
-        condUpdateProdAdic := condUpdateProdAdic + 'adic_prod_codi in (select cust_prod_codi from prod_custos where cust_cofins = '+''''+temp+''')';
-        if condUpdateProd <> '' then condUpdateProd := condUpdateProd + ' and ';
-        condUpdateProd := condUpdateProd + 'codi in (select cust_prod_codi from prod_custos where cust_cofins = '+''''+temp+''')';
-        if condUpdateItens <> '' then condUpdateItens := condUpdateItens + ' and ';
-        condUpdateItens := condUpdateItens + 'cod_prod in (select cust_prod_codi from prod_custos where cust_cofins = '+''''+temp+''')';
+        if condUpdateProdTrib <> '' then condUpdateProdTrib := condUpdateProdTrib + ' AND ';
+        condUpdateProdTrib := condUpdateProdTrib + 'trib_prod_codi in (SELECT cust_prod_codi FROM prod_custos WHERE cust_cofins = '+''''+temp+''')';
+        if condUpdateProdAdic <> '' then condUpdateProdAdic := condUpdateProdAdic + ' AND ';
+        condUpdateProdAdic := condUpdateProdAdic + 'adic_prod_codi in (SELECT cust_prod_codi FROM prod_custos WHERE cust_cofins = '+''''+temp+''')';
+        if condUpdateProd <> '' then condUpdateProd := condUpdateProd + ' AND ';
+        condUpdateProd := condUpdateProd + 'codi in (SELECT cust_prod_codi FROM prod_custos WHERE cust_cofins = '+''''+temp+''')';
+        if condUpdateItens <> '' then condUpdateItens := condUpdateItens + ' AND ';
+        condUpdateItens := condUpdateItens + 'cod_prod in (SELECT cust_prod_codi FROM prod_custos WHERE cust_cofins = '+''''+temp+''')';
       end
       else begin
         if dadosUpdateProdCust <> '' then dadosUpdateProdCust := dadosUpdateProdCust + ', ';
@@ -1520,16 +1520,16 @@ begin
       dadosProdCust := dadosProdCust + ',' + temp;
       //Testa se é Update
       if VerificaUpdate('icms') = 1 then begin
-        if condUpdateProdCust <> '' then condUpdateProdCust := condUpdateProdCust + ' and ';
+        if condUpdateProdCust <> '' then condUpdateProdCust := condUpdateProdCust + ' AND ';
         condUpdateProdCust := condUpdateProdCust + 'cust_icms='+''''+temp+'''';
-        if condUpdateProdTrib <> '' then condUpdateProdTrib := condUpdateProdTrib + ' and ';
-        condUpdateProdTrib := condUpdateProdTrib + 'trib_prod_codi in (select cust_prod_codi from prod_custos where cust_icms = '+''''+temp+''')';
-        if condUpdateProdAdic <> '' then condUpdateProdAdic := condUpdateProdAdic + ' and ';
-        condUpdateProdAdic := condUpdateProdAdic + 'adic_prod_codi in (select cust_prod_codi from prod_custos where cust_icms = '+''''+temp+''')';
-        if condUpdateProd <> '' then condUpdateProd := condUpdateProd + ' and ';
-        condUpdateProd := condUpdateProd + 'codi in (select cust_prod_codi from prod_custos where cust_icms = '+''''+temp+''')';
-        if condUpdateItens <> '' then condUpdateItens := condUpdateItens + ' and ';
-        condUpdateItens := condUpdateItens + 'cod_prod in (select cust_prod_codi from prod_custos where cust_icms = '+''''+temp+''')';
+        if condUpdateProdTrib <> '' then condUpdateProdTrib := condUpdateProdTrib + ' AND ';
+        condUpdateProdTrib := condUpdateProdTrib + 'trib_prod_codi in (SELECT cust_prod_codi FROM prod_custos WHERE cust_icms = '+''''+temp+''')';
+        if condUpdateProdAdic <> '' then condUpdateProdAdic := condUpdateProdAdic + ' AND ';
+        condUpdateProdAdic := condUpdateProdAdic + 'adic_prod_codi in (SELECT cust_prod_codi FROM prod_custos WHERE cust_icms = '+''''+temp+''')';
+        if condUpdateProd <> '' then condUpdateProd := condUpdateProd + ' AND ';
+        condUpdateProd := condUpdateProd + 'codi in (SELECT cust_prod_codi FROM prod_custos WHERE cust_icms = '+''''+temp+''')';
+        if condUpdateItens <> '' then condUpdateItens := condUpdateItens + ' AND ';
+        condUpdateItens := condUpdateItens + 'cod_prod in (SELECT cust_prod_codi FROM prod_custos WHERE cust_icms = '+''''+temp+''')';
       end
       else begin
         if dadosUpdateProdCust <> '' then dadosUpdateProdCust := dadosUpdateProdCust + ', ';
@@ -1552,16 +1552,16 @@ begin
       dadosProdCust := dadosProdCust + ',' + temp;
       //Testa se é Update
       if VerificaUpdate('frete') = 1 then begin
-        if condUpdateProdCust <> '' then condUpdateProdCust := condUpdateProdCust + ' and ';
+        if condUpdateProdCust <> '' then condUpdateProdCust := condUpdateProdCust + ' AND ';
         condUpdateProdCust := condUpdateProdCust + 'cust_frete='+''''+temp+'''';
-        if condUpdateProdTrib <> '' then condUpdateProdTrib := condUpdateProdTrib + ' and ';
-        condUpdateProdTrib := condUpdateProdTrib + 'trib_prod_codi in (select cust_prod_codi from prod_custos where cust_frete = '+''''+temp+''')';
-        if condUpdateProdAdic <> '' then condUpdateProdAdic := condUpdateProdAdic + ' and ';
-        condUpdateProdAdic := condUpdateProdAdic + 'adic_prod_codi in (select cust_prod_codi from prod_custos where cust_frete = '+''''+temp+''')';
-        if condUpdateProd <> '' then condUpdateProd := condUpdateProd + ' and ';
-        condUpdateProd := condUpdateProd + 'codi in (select cust_prod_codi from prod_custos where cust_frete = '+''''+temp+''')';
-        if condUpdateItens <> '' then condUpdateItens := condUpdateItens + ' and ';
-        condUpdateItens := condUpdateItens + 'cod_prod in (select cust_prod_codi from prod_custos where cust_frete = '+''''+temp+''')';
+        if condUpdateProdTrib <> '' then condUpdateProdTrib := condUpdateProdTrib + ' AND ';
+        condUpdateProdTrib := condUpdateProdTrib + 'trib_prod_codi in (SELECT cust_prod_codi FROM prod_custos WHERE cust_frete = '+''''+temp+''')';
+        if condUpdateProdAdic <> '' then condUpdateProdAdic := condUpdateProdAdic + ' AND ';
+        condUpdateProdAdic := condUpdateProdAdic + 'adic_prod_codi in (SELECT cust_prod_codi FROM prod_custos WHERE cust_frete = '+''''+temp+''')';
+        if condUpdateProd <> '' then condUpdateProd := condUpdateProd + ' AND ';
+        condUpdateProd := condUpdateProd + 'codi in (SELECT cust_prod_codi FROM prod_custos WHERE cust_frete = '+''''+temp+''')';
+        if condUpdateItens <> '' then condUpdateItens := condUpdateItens + ' AND ';
+        condUpdateItens := condUpdateItens + 'cod_prod in (SELECT cust_prod_codi FROM prod_custos WHERE cust_frete = '+''''+temp+''')';
       end
       else begin
         if dadosUpdateProdCust <> '' then dadosUpdateProdCust := dadosUpdateProdCust + ', ';
@@ -1583,16 +1583,16 @@ begin
       dadosProdCust := dadosProdCust + ',' + temp;
       //Testa se é Update
       if VerificaUpdate('custo_real') = 1 then begin
-        if condUpdateProdCust <> '' then condUpdateProdCust := condUpdateProdCust + ' and ';
+        if condUpdateProdCust <> '' then condUpdateProdCust := condUpdateProdCust + ' AND ';
         condUpdateProdCust := condUpdateProdCust + 'cust_custo_real='+''''+temp+'''';
-        if condUpdateProdTrib <> '' then condUpdateProdTrib := condUpdateProdTrib + ' and ';
-        condUpdateProdTrib := condUpdateProdTrib + 'trib_prod_codi in (select cust_prod_codi from prod_custos where cust_custo_real = '+''''+temp+''')';
-        if condUpdateProdAdic <> '' then condUpdateProdAdic := condUpdateProdAdic + ' and ';
-        condUpdateProdAdic := condUpdateProdAdic + 'adic_prod_codi in (select cust_prod_codi from prod_custos where cust_custo_real = '+''''+temp+''')';
-        if condUpdateProd <> '' then condUpdateProd := condUpdateProd + ' and ';
-        condUpdateProd := condUpdateProd + 'codi in (select cust_prod_codi from prod_custos where cust_custo_real = '+''''+temp+''')';
-        if condUpdateItens <> '' then condUpdateItens := condUpdateItens + ' and ';
-        condUpdateItens := condUpdateItens + 'cod_prod in (select cust_prod_codi from prod_custos where cust_custo_real = '+''''+temp+''')';
+        if condUpdateProdTrib <> '' then condUpdateProdTrib := condUpdateProdTrib + ' AND ';
+        condUpdateProdTrib := condUpdateProdTrib + 'trib_prod_codi in (SELECT cust_prod_codi FROM prod_custos WHERE cust_custo_real = '+''''+temp+''')';
+        if condUpdateProdAdic <> '' then condUpdateProdAdic := condUpdateProdAdic + ' AND ';
+        condUpdateProdAdic := condUpdateProdAdic + 'adic_prod_codi in (SELECT cust_prod_codi FROM prod_custos WHERE cust_custo_real = '+''''+temp+''')';
+        if condUpdateProd <> '' then condUpdateProd := condUpdateProd + ' AND ';
+        condUpdateProd := condUpdateProd + 'codi in (SELECT cust_prod_codi FROM prod_custos WHERE cust_custo_real = '+''''+temp+''')';
+        if condUpdateItens <> '' then condUpdateItens := condUpdateItens + ' AND ';
+        condUpdateItens := condUpdateItens + 'cod_prod in (SELECT cust_prod_codi FROM prod_custos WHERE cust_custo_real = '+''''+temp+''')';
       end
       else begin
         if dadosUpdateProdCust <> '' then dadosUpdateProdCust := dadosUpdateProdCust + ', ';
@@ -1620,16 +1620,16 @@ begin
       end;
       //Testa se é Update
       if VerificaUpdate('preco_prazo') = 1 then begin
-        if condUpdateProdCust <> '' then condUpdateProdCust := condUpdateProdCust + ' and ';
+        if condUpdateProdCust <> '' then condUpdateProdCust := condUpdateProdCust + ' AND ';
         condUpdateProdCust := condUpdateProdCust + 'cust_preco_prazo='+''''+temp+'''';
-        if condUpdateProdTrib <> '' then condUpdateProdTrib := condUpdateProdTrib + ' and ';
-        condUpdateProdTrib := condUpdateProdTrib + 'trib_prod_codi in (select cust_prod_codi from prod_custos where cust_preco_prazo = '+''''+temp+''')';
-        if condUpdateProdAdic <> '' then condUpdateProdAdic := condUpdateProdAdic + ' and ';
-        condUpdateProdAdic := condUpdateProdAdic + 'adic_prod_codi in (select cust_prod_codi from prod_custos where cust_preco_prazo = '+''''+temp+''')';
-        if condUpdateProd <> '' then condUpdateProd := condUpdateProd + ' and ';
-        condUpdateProd := condUpdateProd + 'codi in (select cust_prod_codi from prod_custos where cust_preco_prazo = '+''''+temp+''')';
-        if condUpdateItens <> '' then condUpdateItens := condUpdateItens + ' and ';
-        condUpdateItens := condUpdateItens + 'cod_prod in (select cust_prod_codi from prod_custos where cust_preco_prazo = '+''''+temp+''')';
+        if condUpdateProdTrib <> '' then condUpdateProdTrib := condUpdateProdTrib + ' AND ';
+        condUpdateProdTrib := condUpdateProdTrib + 'trib_prod_codi in (SELECT cust_prod_codi FROM prod_custos WHERE cust_preco_prazo = '+''''+temp+''')';
+        if condUpdateProdAdic <> '' then condUpdateProdAdic := condUpdateProdAdic + ' AND ';
+        condUpdateProdAdic := condUpdateProdAdic + 'adic_prod_codi in (SELECT cust_prod_codi FROM prod_custos WHERE cust_preco_prazo = '+''''+temp+''')';
+        if condUpdateProd <> '' then condUpdateProd := condUpdateProd + ' AND ';
+        condUpdateProd := condUpdateProd + 'codi in (SELECT cust_prod_codi FROM prod_custos WHERE cust_preco_prazo = '+''''+temp+''')';
+        if condUpdateItens <> '' then condUpdateItens := condUpdateItens + ' AND ';
+        condUpdateItens := condUpdateItens + 'cod_prod in (SELECT cust_prod_codi FROM prod_custos WHERE cust_preco_prazo = '+''''+temp+''')';
       end
       else begin
         if dadosUpdateProdCust <> '' then dadosUpdateProdCust := dadosUpdateProdCust + ', ';
@@ -1657,16 +1657,16 @@ begin
       end;
       //Testa se é Update
       if VerificaUpdate('preco_vista') = 1 then begin
-        if condUpdateProdCust <> '' then condUpdateProdCust := condUpdateProdCust + ' and ';
+        if condUpdateProdCust <> '' then condUpdateProdCust := condUpdateProdCust + ' AND ';
         condUpdateProdCust := condUpdateProdCust + 'cust_preco_vista='+''''+temp+'''';
-        if condUpdateProdTrib <> '' then condUpdateProdTrib := condUpdateProdTrib + ' and ';
-        condUpdateProdTrib := condUpdateProdTrib + 'trib_prod_codi in (select cust_prod_codi from prod_custos where cust_preco_vista = '+''''+temp+''')';
-        if condUpdateProdAdic <> '' then condUpdateProdAdic := condUpdateProdAdic + ' and ';
-        condUpdateProdAdic := condUpdateProdAdic + 'adic_prod_codi in (select cust_prod_codi from prod_custos where cust_preco_vista = '+''''+temp+''')';
-        if condUpdateProd <> '' then condUpdateProd := condUpdateProd + ' and ';
-        condUpdateProd := condUpdateProd + 'codi in (select cust_prod_codi from prod_custos where cust_preco_vista = '+''''+temp+''')';
-        if condUpdateItens <> '' then condUpdateItens := condUpdateItens + ' and ';
-        condUpdateItens := condUpdateItens + 'cod_prod in (select cust_prod_codi from prod_custos where cust_preco_vista = '+''''+temp+''')';
+        if condUpdateProdTrib <> '' then condUpdateProdTrib := condUpdateProdTrib + ' AND ';
+        condUpdateProdTrib := condUpdateProdTrib + 'trib_prod_codi in (SELECT cust_prod_codi FROM prod_custos WHERE cust_preco_vista = '+''''+temp+''')';
+        if condUpdateProdAdic <> '' then condUpdateProdAdic := condUpdateProdAdic + ' AND ';
+        condUpdateProdAdic := condUpdateProdAdic + 'adic_prod_codi in (SELECT cust_prod_codi FROM prod_custos WHERE cust_preco_vista = '+''''+temp+''')';
+        if condUpdateProd <> '' then condUpdateProd := condUpdateProd + ' AND ';
+        condUpdateProd := condUpdateProd + 'codi in (SELECT cust_prod_codi FROM prod_custos WHERE cust_preco_vista = '+''''+temp+''')';
+        if condUpdateItens <> '' then condUpdateItens := condUpdateItens + ' AND ';
+        condUpdateItens := condUpdateItens + 'cod_prod in (SELECT cust_prod_codi FROM prod_custos WHERE cust_preco_vista = '+''''+temp+''')';
       end
       else begin
         if dadosUpdateProdCust <> '' then dadosUpdateProdCust := dadosUpdateProdCust + ', ';
@@ -1697,16 +1697,16 @@ begin
 
       //Testa se é Update
       if VerificaUpdate('margem') = 1 then begin
-        if condUpdateProdCust <> '' then condUpdateProdCust := condUpdateProdCust + ' and ';
+        if condUpdateProdCust <> '' then condUpdateProdCust := condUpdateProdCust + ' AND ';
         condUpdateProdCust := condUpdateProdCust + 'cust_margem1='+''''+temp+'''';
-        if condUpdateProdTrib <> '' then condUpdateProdTrib := condUpdateProdTrib + ' and ';
-        condUpdateProdTrib := condUpdateProdTrib + 'trib_prod_codi in (select cust_prod_codi from prod_custos where cust_margem1 = '+''''+temp+''')';
-        if condUpdateProdAdic <> '' then condUpdateProdAdic := condUpdateProdAdic + ' and ';
-        condUpdateProdAdic := condUpdateProdAdic + 'adic_prod_codi in (select cust_prod_codi from prod_custos where cust_margem1 = '+''''+temp+''')';
-        if condUpdateProd <> '' then condUpdateProd := condUpdateProd + ' and ';
-        condUpdateProd := condUpdateProd + 'codi in (select cust_prod_codi from prod_custos where cust_margem1 = '+''''+temp+''')';
-        if condUpdateItens <> '' then condUpdateItens := condUpdateItens + ' and ';
-        condUpdateItens := condUpdateItens + 'cod_prod in (select cust_prod_codi from prod_custos where cust_margem1 = '+''''+temp+''')';
+        if condUpdateProdTrib <> '' then condUpdateProdTrib := condUpdateProdTrib + ' AND ';
+        condUpdateProdTrib := condUpdateProdTrib + 'trib_prod_codi in (SELECT cust_prod_codi FROM prod_custos WHERE cust_margem1 = '+''''+temp+''')';
+        if condUpdateProdAdic <> '' then condUpdateProdAdic := condUpdateProdAdic + ' AND ';
+        condUpdateProdAdic := condUpdateProdAdic + 'adic_prod_codi in (SELECT cust_prod_codi FROM prod_custos WHERE cust_margem1 = '+''''+temp+''')';
+        if condUpdateProd <> '' then condUpdateProd := condUpdateProd + ' AND ';
+        condUpdateProd := condUpdateProd + 'codi in (SELECT cust_prod_codi FROM prod_custos WHERE cust_margem1 = '+''''+temp+''')';
+        if condUpdateItens <> '' then condUpdateItens := condUpdateItens + ' AND ';
+        condUpdateItens := condUpdateItens + 'cod_prod in (SELECT cust_prod_codi FROM prod_custos WHERE cust_margem1 = '+''''+temp+''')';
       end
       else begin
         if dadosUpdateProdCust <> '' then dadosUpdateProdCust := dadosUpdateProdCust + ', ';
@@ -1733,16 +1733,16 @@ begin
 
       //Testa se é Update
       if VerificaUpdate('csosn') = 1 then begin
-        if condUpdateProdCust <> '' then condUpdateProdCust := condUpdateProdCust + ' and ';
-        condUpdateProdCust := condUpdateProdCust + 'cust_prod_codi in (select trib_prod_codi from prod_tributos where TRIB_SN_CSOSN_ESTADUAL = '+''''+temp+''')';
-        if condUpdateProdTrib <> '' then condUpdateProdTrib := condUpdateProdTrib + ' and ';
+        if condUpdateProdCust <> '' then condUpdateProdCust := condUpdateProdCust + ' AND ';
+        condUpdateProdCust := condUpdateProdCust + 'cust_prod_codi in (SELECT trib_prod_codi FROM prod_tributos WHERE TRIB_SN_CSOSN_ESTADUAL = '+''''+temp+''')';
+        if condUpdateProdTrib <> '' then condUpdateProdTrib := condUpdateProdTrib + ' AND ';
         condUpdateProdTrib := condUpdateProdTrib + 'TRIB_SN_CSOSN_ESTADUAL='+''''+temp+'''';
-        if condUpdateProdAdic <> '' then condUpdateProdAdic := condUpdateProdAdic + ' and ';
-        condUpdateProdAdic := condUpdateProdAdic + 'adic_prod_codi in (select trib_prod_codi from prod_tributos where TRIB_SN_CSOSN_ESTADUAL = '+''''+temp+''')';
-        if condUpdateProd <> '' then condUpdateProd := condUpdateProd + ' and ';
-        condUpdateProd := condUpdateProd + 'codi in (select trib_prod_codi from prod_tributos where TRIB_SN_CSOSN_ESTADUAL = '+''''+temp+''')';
-        if condUpdateItens <> '' then condUpdateItens := condUpdateItens + ' and ';
-        condUpdateItens := condUpdateItens + 'cod_prod in (select trib_prod_codi from prod_tributos where TRIB_SN_CSOSN_ESTADUAL = '+''''+temp+''')';
+        if condUpdateProdAdic <> '' then condUpdateProdAdic := condUpdateProdAdic + ' AND ';
+        condUpdateProdAdic := condUpdateProdAdic + 'adic_prod_codi in (SELECT trib_prod_codi FROM prod_tributos WHERE TRIB_SN_CSOSN_ESTADUAL = '+''''+temp+''')';
+        if condUpdateProd <> '' then condUpdateProd := condUpdateProd + ' AND ';
+        condUpdateProd := condUpdateProd + 'codi in (SELECT trib_prod_codi FROM prod_tributos WHERE TRIB_SN_CSOSN_ESTADUAL = '+''''+temp+''')';
+        if condUpdateItens <> '' then condUpdateItens := condUpdateItens + ' AND ';
+        condUpdateItens := condUpdateItens + 'cod_prod in (SELECT trib_prod_codi FROM prod_tributos WHERE TRIB_SN_CSOSN_ESTADUAL = '+''''+temp+''')';
       end
       else begin
         if dadosUpdateProdTrib <> '' then dadosUpdateProdTrib := dadosUpdateProdTrib + ', ';
@@ -1768,16 +1768,16 @@ begin
 
       //Testa se é Update
       if VerificaUpdate('csosn_esta') = 1 then begin
-        if condUpdateProdCust <> '' then condUpdateProdCust := condUpdateProdCust + ' and ';
-        condUpdateProdCust := condUpdateProdCust + 'cust_prod_codi in (select trib_prod_codi from prod_tributos where TRIB_SN_CSOSN_ESTADUAL = '+''''+temp+''')';
-        if condUpdateProdTrib <> '' then condUpdateProdTrib := condUpdateProdTrib + ' and ';
+        if condUpdateProdCust <> '' then condUpdateProdCust := condUpdateProdCust + ' AND ';
+        condUpdateProdCust := condUpdateProdCust + 'cust_prod_codi in (SELECT trib_prod_codi FROM prod_tributos WHERE TRIB_SN_CSOSN_ESTADUAL = '+''''+temp+''')';
+        if condUpdateProdTrib <> '' then condUpdateProdTrib := condUpdateProdTrib + ' AND ';
         condUpdateProdTrib := condUpdateProdTrib + 'TRIB_SN_CSOSN_ESTADUAL='+''''+temp+'''';
-        if condUpdateProdAdic <> '' then condUpdateProdAdic := condUpdateProdAdic + ' and ';
-        condUpdateProdAdic := condUpdateProdAdic + 'adic_prod_codi in (select trib_prod_codi from prod_tributos where TRIB_SN_CSOSN_ESTADUAL = '+''''+temp+''')';
-        if condUpdateProd <> '' then condUpdateProd := condUpdateProd + ' and ';
-        condUpdateProd := condUpdateProd + 'codi in (select trib_prod_codi from prod_tributos where TRIB_SN_CSOSN_ESTADUAL = '+''''+temp+''')';
-        if condUpdateItens <> '' then condUpdateItens := condUpdateItens + ' and ';
-        condUpdateItens := condUpdateItens + 'cod_prod in (select trib_prod_codi from prod_tributos where TRIB_SN_CSOSN_ESTADUAL = '+''''+temp+''')';
+        if condUpdateProdAdic <> '' then condUpdateProdAdic := condUpdateProdAdic + ' AND ';
+        condUpdateProdAdic := condUpdateProdAdic + 'adic_prod_codi in (SELECT trib_prod_codi FROM prod_tributos WHERE TRIB_SN_CSOSN_ESTADUAL = '+''''+temp+''')';
+        if condUpdateProd <> '' then condUpdateProd := condUpdateProd + ' AND ';
+        condUpdateProd := condUpdateProd + 'codi in (SELECT trib_prod_codi FROM prod_tributos WHERE TRIB_SN_CSOSN_ESTADUAL = '+''''+temp+''')';
+        if condUpdateItens <> '' then condUpdateItens := condUpdateItens + ' AND ';
+        condUpdateItens := condUpdateItens + 'cod_prod in (SELECT trib_prod_codi FROM prod_tributos WHERE TRIB_SN_CSOSN_ESTADUAL = '+''''+temp+''')';
       end
       else begin
         if dadosUpdateProdTrib <> '' then dadosUpdateProdTrib := dadosUpdateProdTrib + ', ';
@@ -1801,16 +1801,16 @@ begin
 
       //Testa se é Update
       if VerificaUpdate('csosn_inter') = 1 then begin
-        if condUpdateProdCust <> '' then condUpdateProdCust := condUpdateProdCust + ' and ';
-        condUpdateProdCust := condUpdateProdCust + 'cust_prod_codi in (select trib_prod_codi from prod_tributos where TRIB_SN_CSOSN_INTERESTADUAL = '+''''+temp+''')';
-        if condUpdateProdTrib <> '' then condUpdateProdTrib := condUpdateProdTrib + ' and ';
+        if condUpdateProdCust <> '' then condUpdateProdCust := condUpdateProdCust + ' AND ';
+        condUpdateProdCust := condUpdateProdCust + 'cust_prod_codi in (SELECT trib_prod_codi FROM prod_tributos WHERE TRIB_SN_CSOSN_INTERESTADUAL = '+''''+temp+''')';
+        if condUpdateProdTrib <> '' then condUpdateProdTrib := condUpdateProdTrib + ' AND ';
         condUpdateProdTrib := condUpdateProdTrib + 'TRIB_SN_CSOSN_INTERESTADUAL='+''''+temp+'''';
-        if condUpdateProdAdic <> '' then condUpdateProdAdic := condUpdateProdAdic + ' and ';
-        condUpdateProdAdic := condUpdateProdAdic + 'adic_prod_codi in (select trib_prod_codi from prod_tributos where TRIB_SN_CSOSN_INTERESTADUAL = '+''''+temp+''')';
-        if condUpdateProd <> '' then condUpdateProd := condUpdateProd + ' and ';
-        condUpdateProd := condUpdateProd + 'codi in (select trib_prod_codi from prod_tributos where TRIB_SN_CSOSN_INTERESTADUAL = '+''''+temp+''')';
-        if condUpdateItens <> '' then condUpdateItens := condUpdateItens + ' and ';
-        condUpdateItens := condUpdateItens + 'cod_prod in (select trib_prod_codi from prod_tributos where TRIB_SN_CSOSN_INTERESTADUAL = '+''''+temp+''')';
+        if condUpdateProdAdic <> '' then condUpdateProdAdic := condUpdateProdAdic + ' AND ';
+        condUpdateProdAdic := condUpdateProdAdic + 'adic_prod_codi in (SELECT trib_prod_codi FROM prod_tributos WHERE TRIB_SN_CSOSN_INTERESTADUAL = '+''''+temp+''')';
+        if condUpdateProd <> '' then condUpdateProd := condUpdateProd + ' AND ';
+        condUpdateProd := condUpdateProd + 'codi in (SELECT trib_prod_codi FROM prod_tributos WHERE TRIB_SN_CSOSN_INTERESTADUAL = '+''''+temp+''')';
+        if condUpdateItens <> '' then condUpdateItens := condUpdateItens + ' AND ';
+        condUpdateItens := condUpdateItens + 'cod_prod in (SELECT trib_prod_codi FROM prod_tributos WHERE TRIB_SN_CSOSN_INTERESTADUAL = '+''''+temp+''')';
       end
       else begin
         if dadosUpdateProdTrib <> '' then dadosUpdateProdTrib := dadosUpdateProdTrib + ', ';
@@ -1838,16 +1838,16 @@ begin
 
       //Testa se é Update
       if VerificaUpdate('cst') = 1 then begin
-        if condUpdateProdCust <> '' then condUpdateProdCust := condUpdateProdCust + ' and ';
-        condUpdateProdCust := condUpdateProdCust + 'cust_prod_codi in (select trib_prod_codi from prod_tributos where TRIB_CST_ICMS_ESTADUAL = '+''''+temp+''')';
-        if condUpdateProdTrib <> '' then condUpdateProdTrib := condUpdateProdTrib + ' and ';
+        if condUpdateProdCust <> '' then condUpdateProdCust := condUpdateProdCust + ' AND ';
+        condUpdateProdCust := condUpdateProdCust + 'cust_prod_codi in (SELECT trib_prod_codi FROM prod_tributos WHERE TRIB_CST_ICMS_ESTADUAL = '+''''+temp+''')';
+        if condUpdateProdTrib <> '' then condUpdateProdTrib := condUpdateProdTrib + ' AND ';
         condUpdateProdTrib := condUpdateProdTrib + 'TRIB_CST_ICMS_ESTADUAL='+''''+temp+'''';
-        if condUpdateProdAdic <> '' then condUpdateProdAdic := condUpdateProdAdic + ' and ';
-        condUpdateProdAdic := condUpdateProdAdic + 'adic_prod_codi in (select trib_prod_codi from prod_tributos where TRIB_CST_ICMS_ESTADUAL = '+''''+temp+''')';
-        if condUpdateProd <> '' then condUpdateProd := condUpdateProd + ' and ';
-        condUpdateProd := condUpdateProd + 'codi in (select trib_prod_codi from prod_tributos where TRIB_CST_ICMS_ESTADUAL = '+''''+temp+''')';
-        if condUpdateItens <> '' then condUpdateItens := condUpdateItens + ' and ';
-        condUpdateItens := condUpdateItens + 'cod_prod in (select trib_prod_codi from prod_tributos where TRIB_CST_ICMS_ESTADUAL = '+''''+temp+''')';
+        if condUpdateProdAdic <> '' then condUpdateProdAdic := condUpdateProdAdic + ' AND ';
+        condUpdateProdAdic := condUpdateProdAdic + 'adic_prod_codi in (SELECT trib_prod_codi FROM prod_tributos WHERE TRIB_CST_ICMS_ESTADUAL = '+''''+temp+''')';
+        if condUpdateProd <> '' then condUpdateProd := condUpdateProd + ' AND ';
+        condUpdateProd := condUpdateProd + 'codi in (SELECT trib_prod_codi FROM prod_tributos WHERE TRIB_CST_ICMS_ESTADUAL = '+''''+temp+''')';
+        if condUpdateItens <> '' then condUpdateItens := condUpdateItens + ' AND ';
+        condUpdateItens := condUpdateItens + 'cod_prod in (SELECT trib_prod_codi FROM prod_tributos WHERE TRIB_CST_ICMS_ESTADUAL = '+''''+temp+''')';
       end
       else begin
         if dadosUpdateProdTrib <> '' then dadosUpdateProdTrib := dadosUpdateProdTrib + ', ';
@@ -1873,16 +1873,16 @@ begin
 
       //Testa se é Update
       if VerificaUpdate('cst_esta') = 1 then begin
-        if condUpdateProdCust <> '' then condUpdateProdCust := condUpdateProdCust + ' and ';
-        condUpdateProdCust := condUpdateProdCust + 'cust_prod_codi in (select trib_prod_codi from prod_tributos where TRIB_CST_ICMS_ESTADUAL = '+''''+temp+''')';
-        if condUpdateProdTrib <> '' then condUpdateProdTrib := condUpdateProdTrib + ' and ';
+        if condUpdateProdCust <> '' then condUpdateProdCust := condUpdateProdCust + ' AND ';
+        condUpdateProdCust := condUpdateProdCust + 'cust_prod_codi in (SELECT trib_prod_codi FROM prod_tributos WHERE TRIB_CST_ICMS_ESTADUAL = '+''''+temp+''')';
+        if condUpdateProdTrib <> '' then condUpdateProdTrib := condUpdateProdTrib + ' AND ';
         condUpdateProdTrib := condUpdateProdTrib + 'TRIB_CST_ICMS_ESTADUAL='+''''+temp+'''';
-        if condUpdateProdAdic <> '' then condUpdateProdAdic := condUpdateProdAdic + ' and ';
-        condUpdateProdAdic := condUpdateProdAdic + 'adic_prod_codi in (select trib_prod_codi from prod_tributos where TRIB_CST_ICMS_ESTADUAL = '+''''+temp+''')';
-        if condUpdateProd <> '' then condUpdateProd := condUpdateProd + ' and ';
-        condUpdateProd := condUpdateProd + 'codi in (select trib_prod_codi from prod_tributos where TRIB_CST_ICMS_ESTADUAL = '+''''+temp+''')';
-        if condUpdateItens <> '' then condUpdateItens := condUpdateItens + ' and ';
-        condUpdateItens := condUpdateItens + 'cod_prod in (select trib_prod_codi from prod_tributos where TRIB_CST_ICMS_ESTADUAL = '+''''+temp+''')';
+        if condUpdateProdAdic <> '' then condUpdateProdAdic := condUpdateProdAdic + ' AND ';
+        condUpdateProdAdic := condUpdateProdAdic + 'adic_prod_codi in (SELECT trib_prod_codi FROM prod_tributos WHERE TRIB_CST_ICMS_ESTADUAL = '+''''+temp+''')';
+        if condUpdateProd <> '' then condUpdateProd := condUpdateProd + ' AND ';
+        condUpdateProd := condUpdateProd + 'codi in (SELECT trib_prod_codi FROM prod_tributos WHERE TRIB_CST_ICMS_ESTADUAL = '+''''+temp+''')';
+        if condUpdateItens <> '' then condUpdateItens := condUpdateItens + ' AND ';
+        condUpdateItens := condUpdateItens + 'cod_prod in (SELECT trib_prod_codi FROM prod_tributos WHERE TRIB_CST_ICMS_ESTADUAL = '+''''+temp+''')';
       end
       else begin
         if dadosUpdateProdTrib <> '' then dadosUpdateProdTrib := dadosUpdateProdTrib + ', ';
@@ -1906,16 +1906,16 @@ begin
 
       //Testa se é Update
       if VerificaUpdate('cst_inter') = 1 then begin
-        if condUpdateProdCust <> '' then condUpdateProdCust := condUpdateProdCust + ' and ';
-        condUpdateProdCust := condUpdateProdCust + 'cust_prod_codi in (select trib_prod_codi from prod_tributos where TRIB_CST_ICMS_INTERESTADUAL = '+''''+temp+''')';
-        if condUpdateProdTrib <> '' then condUpdateProdTrib := condUpdateProdTrib + ' and ';
+        if condUpdateProdCust <> '' then condUpdateProdCust := condUpdateProdCust + ' AND ';
+        condUpdateProdCust := condUpdateProdCust + 'cust_prod_codi in (SELECT trib_prod_codi FROM prod_tributos WHERE TRIB_CST_ICMS_INTERESTADUAL = '+''''+temp+''')';
+        if condUpdateProdTrib <> '' then condUpdateProdTrib := condUpdateProdTrib + ' AND ';
         condUpdateProdTrib := condUpdateProdTrib + 'TRIB_CST_ICMS_INTERESTADUAL='+''''+temp+'''';
-        if condUpdateProdAdic <> '' then condUpdateProdAdic := condUpdateProdAdic + ' and ';
-        condUpdateProdAdic := condUpdateProdAdic + 'adic_prod_codi in (select trib_prod_codi from prod_tributos where TRIB_CST_ICMS_INTERESTADUAL = '+''''+temp+''')';
-        if condUpdateProd <> '' then condUpdateProd := condUpdateProd + ' and ';
-        condUpdateProd := condUpdateProd + 'codi in (select trib_prod_codi from prod_tributos where TRIB_CST_ICMS_INTERESTADUAL = '+''''+temp+''')';
-        if condUpdateItens <> '' then condUpdateItens := condUpdateItens + ' and ';
-        condUpdateItens := condUpdateItens + 'cod_prod in (select trib_prod_codi from prod_tributos where TRIB_CST_ICMS_INTERESTADUAL = '+''''+temp+''')';
+        if condUpdateProdAdic <> '' then condUpdateProdAdic := condUpdateProdAdic + ' AND ';
+        condUpdateProdAdic := condUpdateProdAdic + 'adic_prod_codi in (SELECT trib_prod_codi FROM prod_tributos WHERE TRIB_CST_ICMS_INTERESTADUAL = '+''''+temp+''')';
+        if condUpdateProd <> '' then condUpdateProd := condUpdateProd + ' AND ';
+        condUpdateProd := condUpdateProd + 'codi in (SELECT trib_prod_codi FROM prod_tributos WHERE TRIB_CST_ICMS_INTERESTADUAL = '+''''+temp+''')';
+        if condUpdateItens <> '' then condUpdateItens := condUpdateItens + ' AND ';
+        condUpdateItens := condUpdateItens + 'cod_prod in (SELECT trib_prod_codi FROM prod_tributos WHERE TRIB_CST_ICMS_INTERESTADUAL = '+''''+temp+''')';
       end
       else begin
         if dadosUpdateProdTrib <> '' then dadosUpdateProdTrib := dadosUpdateProdTrib + ', ';
@@ -1939,16 +1939,16 @@ begin
       end;
       //Testa se é Update
       if VerificaUpdate('aliq_icms') = 1 then begin
-        if condUpdateProdCust <> '' then condUpdateProdCust := condUpdateProdCust + ' and ';
-        condUpdateProdCust := condUpdateProdCust + 'cust_prod_codi in (select trib_prod_codi from prod_tributos where TRIB_ALIQ_ICMS_ESTADUAL = '+''''+temp+''')';
-        if condUpdateProdTrib <> '' then condUpdateProdTrib := condUpdateProdTrib + ' and ';
+        if condUpdateProdCust <> '' then condUpdateProdCust := condUpdateProdCust + ' AND ';
+        condUpdateProdCust := condUpdateProdCust + 'cust_prod_codi in (SELECT trib_prod_codi FROM prod_tributos WHERE TRIB_ALIQ_ICMS_ESTADUAL = '+''''+temp+''')';
+        if condUpdateProdTrib <> '' then condUpdateProdTrib := condUpdateProdTrib + ' AND ';
         condUpdateProdTrib := condUpdateProdTrib + 'TRIB_ALIQ_ICMS_ESTADUAL='+''''+temp+'''';
-        if condUpdateProdAdic <> '' then condUpdateProdAdic := condUpdateProdAdic + ' and ';
-        condUpdateProdAdic := condUpdateProdAdic + 'adic_prod_codi in (select trib_prod_codi from prod_tributos where TRIB_ALIQ_ICMS_ESTADUAL = '+''''+temp+''')';
-        if condUpdateProd <> '' then condUpdateProd := condUpdateProd + ' and ';
-        condUpdateProd := condUpdateProd + 'codi in (select trib_prod_codi from prod_tributos where TRIB_ALIQ_ICMS_ESTADUAL = '+''''+temp+''')';
-        if condUpdateItens <> '' then condUpdateItens := condUpdateItens + ' and ';
-        condUpdateItens := condUpdateItens + 'cod_prod in (select trib_prod_codi from prod_tributos where TRIB_ALIQ_ICMS_ESTADUAL = '+''''+temp+''')';
+        if condUpdateProdAdic <> '' then condUpdateProdAdic := condUpdateProdAdic + ' AND ';
+        condUpdateProdAdic := condUpdateProdAdic + 'adic_prod_codi in (SELECT trib_prod_codi FROM prod_tributos WHERE TRIB_ALIQ_ICMS_ESTADUAL = '+''''+temp+''')';
+        if condUpdateProd <> '' then condUpdateProd := condUpdateProd + ' AND ';
+        condUpdateProd := condUpdateProd + 'codi in (SELECT trib_prod_codi FROM prod_tributos WHERE TRIB_ALIQ_ICMS_ESTADUAL = '+''''+temp+''')';
+        if condUpdateItens <> '' then condUpdateItens := condUpdateItens + ' AND ';
+        condUpdateItens := condUpdateItens + 'cod_prod in (SELECT trib_prod_codi FROM prod_tributos WHERE TRIB_ALIQ_ICMS_ESTADUAL = '+''''+temp+''')';
       end
       else begin
         if dadosUpdateProdTrib <> '' then dadosUpdateProdTrib := dadosUpdateProdTrib + ', ';
@@ -1971,16 +1971,16 @@ begin
       end;
       //Testa se é Update
       if VerificaUpdate('redu_esta') = 1 then begin
-        if condUpdateProdCust <> '' then condUpdateProdCust := condUpdateProdCust + ' and ';
-        condUpdateProdCust := condUpdateProdCust + 'cust_prod_codi in (select trib_prod_codi from prod_tributos where TRIB_REDU_ICMS_ESTADUAL = '+''''+temp+''')';
-        if condUpdateProdTrib <> '' then condUpdateProdTrib := condUpdateProdTrib + ' and ';
+        if condUpdateProdCust <> '' then condUpdateProdCust := condUpdateProdCust + ' AND ';
+        condUpdateProdCust := condUpdateProdCust + 'cust_prod_codi in (SELECT trib_prod_codi FROM prod_tributos WHERE TRIB_REDU_ICMS_ESTADUAL = '+''''+temp+''')';
+        if condUpdateProdTrib <> '' then condUpdateProdTrib := condUpdateProdTrib + ' AND ';
         condUpdateProdTrib := condUpdateProdTrib + 'TRIB_REDU_ICMS_ESTADUAL='+''''+temp+'''';
-        if condUpdateProdAdic <> '' then condUpdateProdAdic := condUpdateProdAdic + ' and ';
-        condUpdateProdAdic := condUpdateProdAdic + 'adic_prod_codi in (select trib_prod_codi from prod_tributos where TRIB_REDU_ICMS_ESTADUAL = '+''''+temp+''')';
-        if condUpdateProd <> '' then condUpdateProd := condUpdateProd + ' and ';
-        condUpdateProd := condUpdateProd + 'codi in (select trib_prod_codi from prod_tributos where TRIB_REDU_ICMS_ESTADUAL = '+''''+temp+''')';
-        if condUpdateItens <> '' then condUpdateItens := condUpdateItens + ' and ';
-        condUpdateItens := condUpdateItens + 'cod_prod in (select trib_prod_codi from prod_tributos where TRIB_REDU_ICMS_ESTADUAL = '+''''+temp+''')';
+        if condUpdateProdAdic <> '' then condUpdateProdAdic := condUpdateProdAdic + ' AND ';
+        condUpdateProdAdic := condUpdateProdAdic + 'adic_prod_codi in (SELECT trib_prod_codi FROM prod_tributos WHERE TRIB_REDU_ICMS_ESTADUAL = '+''''+temp+''')';
+        if condUpdateProd <> '' then condUpdateProd := condUpdateProd + ' AND ';
+        condUpdateProd := condUpdateProd + 'codi in (SELECT trib_prod_codi FROM prod_tributos WHERE TRIB_REDU_ICMS_ESTADUAL = '+''''+temp+''')';
+        if condUpdateItens <> '' then condUpdateItens := condUpdateItens + ' AND ';
+        condUpdateItens := condUpdateItens + 'cod_prod in (SELECT trib_prod_codi FROM prod_tributos WHERE TRIB_REDU_ICMS_ESTADUAL = '+''''+temp+''')';
       end
       else begin
         if dadosUpdateProdTrib <> '' then dadosUpdateProdTrib := dadosUpdateProdTrib + ', ';
@@ -2003,16 +2003,16 @@ begin
       end;
       //Testa se é Update
       if VerificaUpdate('redu_inter') = 1 then begin
-        if condUpdateProdCust <> '' then condUpdateProdCust := condUpdateProdCust + ' and ';
-        condUpdateProdCust := condUpdateProdCust + 'cust_prod_codi in (select trib_prod_codi from prod_tributos where TRIB_REDU_ICMS_INTERESTADUAL = '+''''+temp+''')';
-        if condUpdateProdTrib <> '' then condUpdateProdTrib := condUpdateProdTrib + ' and ';
+        if condUpdateProdCust <> '' then condUpdateProdCust := condUpdateProdCust + ' AND ';
+        condUpdateProdCust := condUpdateProdCust + 'cust_prod_codi in (SELECT trib_prod_codi FROM prod_tributos WHERE TRIB_REDU_ICMS_INTERESTADUAL = '+''''+temp+''')';
+        if condUpdateProdTrib <> '' then condUpdateProdTrib := condUpdateProdTrib + ' AND ';
         condUpdateProdTrib := condUpdateProdTrib + 'TRIB_REDU_ICMS_INTERESTADUAL='+''''+temp+'''';
-        if condUpdateProdAdic <> '' then condUpdateProdAdic := condUpdateProdAdic + ' and ';
-        condUpdateProdAdic := condUpdateProdAdic + 'adic_prod_codi in (select trib_prod_codi from prod_tributos where TRIB_REDU_ICMS_INTERESTADUAL = '+''''+temp+''')';
-        if condUpdateProd <> '' then condUpdateProd := condUpdateProd + ' and ';
-        condUpdateProd := condUpdateProd + 'codi in (select trib_prod_codi from prod_tributos where TRIB_REDU_ICMS_INTERESTADUAL = '+''''+temp+''')';
-        if condUpdateItens <> '' then condUpdateItens := condUpdateItens + ' and ';
-        condUpdateItens := condUpdateItens + 'cod_prod in (select trib_prod_codi from prod_tributos where TRIB_REDU_ICMS_INTERESTADUAL = '+''''+temp+''')';
+        if condUpdateProdAdic <> '' then condUpdateProdAdic := condUpdateProdAdic + ' AND ';
+        condUpdateProdAdic := condUpdateProdAdic + 'adic_prod_codi in (SELECT trib_prod_codi FROM prod_tributos WHERE TRIB_REDU_ICMS_INTERESTADUAL = '+''''+temp+''')';
+        if condUpdateProd <> '' then condUpdateProd := condUpdateProd + ' AND ';
+        condUpdateProd := condUpdateProd + 'codi in (SELECT trib_prod_codi FROM prod_tributos WHERE TRIB_REDU_ICMS_INTERESTADUAL = '+''''+temp+''')';
+        if condUpdateItens <> '' then condUpdateItens := condUpdateItens + ' AND ';
+        condUpdateItens := condUpdateItens + 'cod_prod in (SELECT trib_prod_codi FROM prod_tributos WHERE TRIB_REDU_ICMS_INTERESTADUAL = '+''''+temp+''')';
       end
       else begin
         if dadosUpdateProdTrib <> '' then dadosUpdateProdTrib := dadosUpdateProdTrib + ', ';
@@ -2032,16 +2032,16 @@ begin
       end;
       //Testa se é Update
       if VerificaUpdate('cst_ipi') = 1 then begin
-        if condUpdateProdCust <> '' then condUpdateProdCust := condUpdateProdCust + ' and ';
-        condUpdateProdCust := condUpdateProdCust + 'cust_prod_codi in (select trib_prod_codi from prod_tributos where TRIB_CST_IPI = '+''''+temp+''')';
-        if condUpdateProdTrib <> '' then condUpdateProdTrib := condUpdateProdTrib + ' and ';
+        if condUpdateProdCust <> '' then condUpdateProdCust := condUpdateProdCust + ' AND ';
+        condUpdateProdCust := condUpdateProdCust + 'cust_prod_codi in (SELECT trib_prod_codi FROM prod_tributos WHERE TRIB_CST_IPI = '+''''+temp+''')';
+        if condUpdateProdTrib <> '' then condUpdateProdTrib := condUpdateProdTrib + ' AND ';
         condUpdateProdTrib := condUpdateProdTrib + 'TRIB_CST_IPI='+''''+StringGrid1.Cells[i,k]+'''';
-        if condUpdateProdAdic <> '' then condUpdateProdAdic := condUpdateProdAdic + ' and ';
-        condUpdateProdAdic := condUpdateProdAdic + 'adic_prod_codi in (select trib_prod_codi from prod_tributos where TRIB_CST_IPI = '+''''+temp+''')';
-        if condUpdateProd <> '' then condUpdateProd := condUpdateProd + ' and ';
-        condUpdateProd := condUpdateProd + 'codi in (select trib_prod_codi from prod_tributos where TRIB_CST_IPI = '+''''+temp+''')';
-        if condUpdateItens <> '' then condUpdateItens := condUpdateItens + ' and ';
-        condUpdateItens := condUpdateItens + 'cod_prod in (select trib_prod_codi from prod_tributos where TRIB_CST_IPI = '+''''+temp+''')';
+        if condUpdateProdAdic <> '' then condUpdateProdAdic := condUpdateProdAdic + ' AND ';
+        condUpdateProdAdic := condUpdateProdAdic + 'adic_prod_codi in (SELECT trib_prod_codi FROM prod_tributos WHERE TRIB_CST_IPI = '+''''+temp+''')';
+        if condUpdateProd <> '' then condUpdateProd := condUpdateProd + ' AND ';
+        condUpdateProd := condUpdateProd + 'codi in (SELECT trib_prod_codi FROM prod_tributos WHERE TRIB_CST_IPI = '+''''+temp+''')';
+        if condUpdateItens <> '' then condUpdateItens := condUpdateItens + ' AND ';
+        condUpdateItens := condUpdateItens + 'cod_prod in (SELECT trib_prod_codi FROM prod_tributos WHERE TRIB_CST_IPI = '+''''+temp+''')';
       end
       else begin
         if dadosUpdateProdTrib <> '' then dadosUpdateProdTrib := dadosUpdateProdTrib + ', ';
@@ -2063,16 +2063,16 @@ begin
       end;
       //Testa se é Update
       if VerificaUpdate('aliq_ipi') = 1 then begin
-        if condUpdateProdCust <> '' then condUpdateProdCust := condUpdateProdCust + ' and ';
-        condUpdateProdCust := condUpdateProdCust + 'cust_prod_codi in (select trib_prod_codi from prod_tributos where TRIB_ALIQ_IPI = '+''''+temp+''')';
-        if condUpdateProdTrib <> '' then condUpdateProdTrib := condUpdateProdTrib + ' and ';
+        if condUpdateProdCust <> '' then condUpdateProdCust := condUpdateProdCust + ' AND ';
+        condUpdateProdCust := condUpdateProdCust + 'cust_prod_codi in (SELECT trib_prod_codi FROM prod_tributos WHERE TRIB_ALIQ_IPI = '+''''+temp+''')';
+        if condUpdateProdTrib <> '' then condUpdateProdTrib := condUpdateProdTrib + ' AND ';
         condUpdateProdTrib := condUpdateProdTrib + 'TRIB_ALIQ_IPI='+''''+temp+'''';
-        if condUpdateProdAdic <> '' then condUpdateProdAdic := condUpdateProdAdic + ' and ';
-        condUpdateProdAdic := condUpdateProdAdic + 'adic_prod_codi in (select trib_prod_codi from prod_tributos where TRIB_ALIQ_IPI = '+''''+temp+''')';
-        if condUpdateProd <> '' then condUpdateProd := condUpdateProd + ' and ';
-        condUpdateProd := condUpdateProd + 'codi in (select trib_prod_codi from prod_tributos where TRIB_ALIQ_IPI = '+''''+temp+''')';
-        if condUpdateItens <> '' then condUpdateItens := condUpdateItens + ' and ';
-        condUpdateItens := condUpdateItens + 'cod_prod in (select trib_prod_codi from prod_tributos where TRIB_ALIQ_IPI = '+''''+temp+''')';
+        if condUpdateProdAdic <> '' then condUpdateProdAdic := condUpdateProdAdic + ' AND ';
+        condUpdateProdAdic := condUpdateProdAdic + 'adic_prod_codi in (SELECT trib_prod_codi FROM prod_tributos WHERE TRIB_ALIQ_IPI = '+''''+temp+''')';
+        if condUpdateProd <> '' then condUpdateProd := condUpdateProd + ' AND ';
+        condUpdateProd := condUpdateProd + 'codi in (SELECT trib_prod_codi FROM prod_tributos WHERE TRIB_ALIQ_IPI = '+''''+temp+''')';
+        if condUpdateItens <> '' then condUpdateItens := condUpdateItens + ' AND ';
+        condUpdateItens := condUpdateItens + 'cod_prod in (SELECT trib_prod_codi FROM prod_tributos WHERE TRIB_ALIQ_IPI = '+''''+temp+''')';
       end
       else begin
         if dadosUpdateProdTrib <> '' then dadosUpdateProdTrib := dadosUpdateProdTrib + ', ';
@@ -2092,16 +2092,16 @@ begin
       end;
       //Testa se é Update
       if VerificaUpdate('cst_pis') = 1 then begin
-        if condUpdateProdCust <> '' then condUpdateProdCust := condUpdateProdCust + ' and ';
-        condUpdateProdCust := condUpdateProdCust + 'cust_prod_codi in (select trib_prod_codi from prod_tributos where TRIB_CST_PIS = '+''''+temp+''')';
-        if condUpdateProdTrib <> '' then condUpdateProdTrib := condUpdateProdTrib + ' and ';
+        if condUpdateProdCust <> '' then condUpdateProdCust := condUpdateProdCust + ' AND ';
+        condUpdateProdCust := condUpdateProdCust + 'cust_prod_codi in (SELECT trib_prod_codi FROM prod_tributos WHERE TRIB_CST_PIS = '+''''+temp+''')';
+        if condUpdateProdTrib <> '' then condUpdateProdTrib := condUpdateProdTrib + ' AND ';
         condUpdateProdTrib := condUpdateProdTrib + 'TRIB_CST_PIS='+''''+StringGrid1.Cells[i,k]+'''';
-        if condUpdateProdAdic <> '' then condUpdateProdAdic := condUpdateProdAdic + ' and ';
-        condUpdateProdAdic := condUpdateProdAdic + 'adic_prod_codi in (select trib_prod_codi from prod_tributos where TRIB_CST_PIS = '+''''+temp+''')';
-        if condUpdateProd <> '' then condUpdateProd := condUpdateProd + ' and ';
-        condUpdateProd := condUpdateProd + 'codi in (select trib_prod_codi from prod_tributos where TRIB_CST_PIS = '+''''+temp+''')';
-        if condUpdateItens <> '' then condUpdateItens := condUpdateItens + ' and ';
-        condUpdateItens := condUpdateItens + 'cod_prod in (select trib_prod_codi from prod_tributos where TRIB_CST_PIS = '+''''+temp+''')';
+        if condUpdateProdAdic <> '' then condUpdateProdAdic := condUpdateProdAdic + ' AND ';
+        condUpdateProdAdic := condUpdateProdAdic + 'adic_prod_codi in (SELECT trib_prod_codi FROM prod_tributos WHERE TRIB_CST_PIS = '+''''+temp+''')';
+        if condUpdateProd <> '' then condUpdateProd := condUpdateProd + ' AND ';
+        condUpdateProd := condUpdateProd + 'codi in (SELECT trib_prod_codi FROM prod_tributos WHERE TRIB_CST_PIS = '+''''+temp+''')';
+        if condUpdateItens <> '' then condUpdateItens := condUpdateItens + ' AND ';
+        condUpdateItens := condUpdateItens + 'cod_prod in (SELECT trib_prod_codi FROM prod_tributos WHERE TRIB_CST_PIS = '+''''+temp+''')';
       end
       else begin
         if dadosUpdateProdTrib <> '' then dadosUpdateProdTrib := dadosUpdateProdTrib + ', ';
@@ -2124,16 +2124,16 @@ begin
       end;
       //Testa se é Update
       if VerificaUpdate('aliq_pis') = 1 then begin
-        if condUpdateProdCust <> '' then condUpdateProdCust := condUpdateProdCust + ' and ';
-        condUpdateProdCust := condUpdateProdCust + 'cust_prod_codi in (select trib_prod_codi from prod_tributos where TRIB_ALIQ_PIS = '+''''+temp+''')';
-        if condUpdateProdTrib <> '' then condUpdateProdTrib := condUpdateProdTrib + ' and ';
+        if condUpdateProdCust <> '' then condUpdateProdCust := condUpdateProdCust + ' AND ';
+        condUpdateProdCust := condUpdateProdCust + 'cust_prod_codi in (SELECT trib_prod_codi FROM prod_tributos WHERE TRIB_ALIQ_PIS = '+''''+temp+''')';
+        if condUpdateProdTrib <> '' then condUpdateProdTrib := condUpdateProdTrib + ' AND ';
         condUpdateProdTrib := condUpdateProdTrib + 'TRIB_ALIQ_PIS='+''''+temp+'''';
-        if condUpdateProdAdic <> '' then condUpdateProdAdic := condUpdateProdAdic + ' and ';
-        condUpdateProdAdic := condUpdateProdAdic + 'adic_prod_codi in (select trib_prod_codi from prod_tributos where TRIB_ALIQ_PIS = '+''''+temp+''')';
-        if condUpdateProd <> '' then condUpdateProd := condUpdateProd + ' and ';
-        condUpdateProd := condUpdateProd + 'codi in (select trib_prod_codi from prod_tributos where TRIB_ALIQ_PIS = '+''''+temp+''')';
-        if condUpdateItens <> '' then condUpdateItens := condUpdateItens + ' and ';
-        condUpdateItens := condUpdateItens + 'cod_prod in (select trib_prod_codi from prod_tributos where TRIB_ALIQ_PIS = '+''''+temp+''')';
+        if condUpdateProdAdic <> '' then condUpdateProdAdic := condUpdateProdAdic + ' AND ';
+        condUpdateProdAdic := condUpdateProdAdic + 'adic_prod_codi in (SELECT trib_prod_codi FROM prod_tributos WHERE TRIB_ALIQ_PIS = '+''''+temp+''')';
+        if condUpdateProd <> '' then condUpdateProd := condUpdateProd + ' AND ';
+        condUpdateProd := condUpdateProd + 'codi in (SELECT trib_prod_codi FROM prod_tributos WHERE TRIB_ALIQ_PIS = '+''''+temp+''')';
+        if condUpdateItens <> '' then condUpdateItens := condUpdateItens + ' AND ';
+        condUpdateItens := condUpdateItens + 'cod_prod in (SELECT trib_prod_codi FROM prod_tributos WHERE TRIB_ALIQ_PIS = '+''''+temp+''')';
       end
       else begin
         if dadosUpdateProdTrib <> '' then dadosUpdateProdTrib := dadosUpdateProdTrib + ', ';
@@ -2153,16 +2153,16 @@ begin
       end;
       //Testa se é Update
       if VerificaUpdate('cst_cofins') = 1 then begin
-        if condUpdateProdCust <> '' then condUpdateProdCust := condUpdateProdCust + ' and ';
-        condUpdateProdCust := condUpdateProdCust + 'cust_prod_codi in (select trib_prod_codi from prod_tributos where TRIB_CST_COFINS = '+''''+temp+''')';
-        if condUpdateProdTrib <> '' then condUpdateProdTrib := condUpdateProdTrib + ' and ';
+        if condUpdateProdCust <> '' then condUpdateProdCust := condUpdateProdCust + ' AND ';
+        condUpdateProdCust := condUpdateProdCust + 'cust_prod_codi in (SELECT trib_prod_codi FROM prod_tributos WHERE TRIB_CST_COFINS = '+''''+temp+''')';
+        if condUpdateProdTrib <> '' then condUpdateProdTrib := condUpdateProdTrib + ' AND ';
         condUpdateProdTrib := condUpdateProdTrib + 'TRIB_CST_COFINS='+''''+StringGrid1.Cells[i,k]+'''';
-        if condUpdateProdAdic <> '' then condUpdateProdAdic := condUpdateProdAdic + ' and ';
-        condUpdateProdAdic := condUpdateProdAdic + 'adic_prod_codi in (select trib_prod_codi from prod_tributos where TRIB_CST_COFINS = '+''''+temp+''')';
-        if condUpdateProd <> '' then condUpdateProd := condUpdateProd + ' and ';
-        condUpdateProd := condUpdateProd + 'codi in (select trib_prod_codi from prod_tributos where TRIB_CST_COFINS = '+''''+temp+''')';
-        if condUpdateItens <> '' then condUpdateItens := condUpdateItens + ' and ';
-        condUpdateItens := condUpdateItens + 'cod_prod in (select trib_prod_codi from prod_tributos where TRIB_CST_COFINS = '+''''+temp+''')';
+        if condUpdateProdAdic <> '' then condUpdateProdAdic := condUpdateProdAdic + ' AND ';
+        condUpdateProdAdic := condUpdateProdAdic + 'adic_prod_codi in (SELECT trib_prod_codi FROM prod_tributos WHERE TRIB_CST_COFINS = '+''''+temp+''')';
+        if condUpdateProd <> '' then condUpdateProd := condUpdateProd + ' AND ';
+        condUpdateProd := condUpdateProd + 'codi in (SELECT trib_prod_codi FROM prod_tributos WHERE TRIB_CST_COFINS = '+''''+temp+''')';
+        if condUpdateItens <> '' then condUpdateItens := condUpdateItens + ' AND ';
+        condUpdateItens := condUpdateItens + 'cod_prod in (SELECT trib_prod_codi FROM prod_tributos WHERE TRIB_CST_COFINS = '+''''+temp+''')';
       end
       else begin
         if dadosUpdateProdTrib <> '' then dadosUpdateProdTrib := dadosUpdateProdTrib + ', ';
@@ -2185,16 +2185,16 @@ begin
       end;
       //Testa se é Update
       if VerificaUpdate('aliq_cofins') = 1 then begin
-        if condUpdateProdCust <> '' then condUpdateProdCust := condUpdateProdCust + ' and ';
-        condUpdateProdCust := condUpdateProdCust + 'cust_prod_codi in (select trib_prod_codi from prod_tributos where TRIB_ALIQ_COFINS = '+''''+temp+''')';
-        if condUpdateProdTrib <> '' then condUpdateProdTrib := condUpdateProdTrib + ' and ';
+        if condUpdateProdCust <> '' then condUpdateProdCust := condUpdateProdCust + ' AND ';
+        condUpdateProdCust := condUpdateProdCust + 'cust_prod_codi in (SELECT trib_prod_codi FROM prod_tributos WHERE TRIB_ALIQ_COFINS = '+''''+temp+''')';
+        if condUpdateProdTrib <> '' then condUpdateProdTrib := condUpdateProdTrib + ' AND ';
         condUpdateProdTrib := condUpdateProdTrib + 'TRIB_ALIQ_COFINS='+''''+temp+'''';
-        if condUpdateProdAdic <> '' then condUpdateProdAdic := condUpdateProdAdic + ' and ';
-        condUpdateProdAdic := condUpdateProdAdic + 'adic_prod_codi in (select trib_prod_codi from prod_tributos where TRIB_ALIQ_COFINS = '+''''+temp+''')';
-        if condUpdateProd <> '' then condUpdateProd := condUpdateProd + ' and ';
-        condUpdateProd := condUpdateProd + 'codi in (select trib_prod_codi from prod_tributos where TRIB_ALIQ_COFINS = '+''''+temp+''')';
-        if condUpdateItens <> '' then condUpdateItens := condUpdateItens + ' and ';
-        condUpdateItens := condUpdateItens + 'cod_prod in (select trib_prod_codi from prod_tributos where TRIB_ALIQ_COFINS = '+''''+temp+''')';
+        if condUpdateProdAdic <> '' then condUpdateProdAdic := condUpdateProdAdic + ' AND ';
+        condUpdateProdAdic := condUpdateProdAdic + 'adic_prod_codi in (SELECT trib_prod_codi FROM prod_tributos WHERE TRIB_ALIQ_COFINS = '+''''+temp+''')';
+        if condUpdateProd <> '' then condUpdateProd := condUpdateProd + ' AND ';
+        condUpdateProd := condUpdateProd + 'codi in (SELECT trib_prod_codi FROM prod_tributos WHERE TRIB_ALIQ_COFINS = '+''''+temp+''')';
+        if condUpdateItens <> '' then condUpdateItens := condUpdateItens + ' AND ';
+        condUpdateItens := condUpdateItens + 'cod_prod in (SELECT trib_prod_codi FROM prod_tributos WHERE TRIB_ALIQ_COFINS = '+''''+temp+''')';
       end
       else begin
         if dadosUpdateProdTrib <> '' then dadosUpdateProdTrib := dadosUpdateProdTrib + ', ';
@@ -2241,16 +2241,16 @@ begin
       end;
       //Testa se é Update
       if VerificaUpdate('ativo') = 1 then begin
-        if condUpdateProd <> '' then condUpdateProd := condUpdateProd + ' and ';
+        if condUpdateProd <> '' then condUpdateProd := condUpdateProd + ' AND ';
         condUpdateProd := condUpdateProd + 'ATIVO='+''''+temp+'''';
-        if condUpdateProdTrib <> '' then condUpdateProdTrib := condUpdateProdTrib + ' and ';
-        condUpdateProdTrib := condUpdateProdTrib + 'trib_prod_codi in (select codi from prod where ATIVO = '+''''+temp+''')';
-        if condUpdateProdAdic <> '' then condUpdateProdAdic := condUpdateProdAdic + ' and ';
-        condUpdateProdAdic := condUpdateProdAdic + 'adic_prod_codi in (select codi from prod where ATIVO = '+''''+temp+''')';
-        if condUpdateProdCust <> '' then condUpdateProdCust := condUpdateProdCust + ' and ';
-        condUpdateProdCust := condUpdateProdCust + 'cust_prod_codi in (select codi from prod where ATIVO = '+''''+temp+''')';
-        if condUpdateItens <> '' then condUpdateItens := condUpdateItens + ' and ';
-        condUpdateItens := condUpdateItens + 'cod_prod in (select codi from prod where ATIVO = '+''''+temp+''')';
+        if condUpdateProdTrib <> '' then condUpdateProdTrib := condUpdateProdTrib + ' AND ';
+        condUpdateProdTrib := condUpdateProdTrib + 'trib_prod_codi in (SELECT codi FROM prod WHERE ATIVO = '+''''+temp+''')';
+        if condUpdateProdAdic <> '' then condUpdateProdAdic := condUpdateProdAdic + ' AND ';
+        condUpdateProdAdic := condUpdateProdAdic + 'adic_prod_codi in (SELECT codi FROM prod WHERE ATIVO = '+''''+temp+''')';
+        if condUpdateProdCust <> '' then condUpdateProdCust := condUpdateProdCust + ' AND ';
+        condUpdateProdCust := condUpdateProdCust + 'cust_prod_codi in (SELECT codi FROM prod WHERE ATIVO = '+''''+temp+''')';
+        if condUpdateItens <> '' then condUpdateItens := condUpdateItens + ' AND ';
+        condUpdateItens := condUpdateItens + 'cod_prod in (SELECT codi FROM prod WHERE ATIVO = '+''''+temp+''')';
       end
       else begin
         if dadosUpdateProd <> '' then dadosUpdateProd := dadosUpdateProd + ', ';
@@ -2289,7 +2289,7 @@ begin
 
           //Executar INSERTs
           frmImportando.atualizaStatus('Inserindo dados na tabela PROD.');
-          SQL.CommandText := 'insert into prod ('+ colProd +') values ' + '(' + dadosProd + ');';
+          SQL.CommandText := 'INSERT INTO prod ('+ colProd +') VALUES ' + '(' + dadosProd + ');';
           SQL.ExecSQL;
 
           //Criar registros em todas as empresas
@@ -2313,37 +2313,37 @@ begin
             //Testa se é a empresa onde o produto foi cadastrado
             if i = StrToInt(temp) then begin
               frmImportando.atualizaStatus('Inserindo dados na tabela PROD_TRIBUTOS.');
-              SQL.CommandText := 'insert into prod_tributos ('+ colProdTrib +') values ' + '(' + dadosProdTrib + ');';
+              SQL.CommandText := 'INSERT INTO prod_tributos ('+ colProdTrib +') VALUES ' + '(' + dadosProdTrib + ');';
               SQL.ExecSQL;
               frmImportando.atualizaStatus('Inserindo dados na tabela PROD_ADICIONAIS.');
-              SQL.CommandText := 'insert into prod_adicionais ('+ colProdAdic +') values ' + '(' + dadosProdAdic + ');';
+              SQL.CommandText := 'INSERT INTO prod_adicionais ('+ colProdAdic +') VALUES ' + '(' + dadosProdAdic + ');';
               SQL.ExecSQL;
               frmImportando.atualizaStatus('Inserindo dados na tabela PROD_CUSTOS.');
-              SQL.CommandText := 'insert into prod_custos ('+ colProdCust +') values ' + '(' + dadosProdCust + ');';
+              SQL.CommandText := 'INSERT INTO prod_custos ('+ colProdCust +') VALUES ' + '(' + dadosProdCust + ');';
               SQL.ExecSQL;
               frmImportando.atualizaStatus('Inserindo dados na tabela MVA.');
-              SQL.CommandText := 'insert into mva ('+ colMVA +') values ' + '(' + dadosMVA + ');';
+              SQL.CommandText := 'INSERT INTO mva ('+ colMVA +') VALUES ' + '(' + dadosMVA + ');';
               SQL.ExecSQL;
               frmImportando.atualizaStatus('Inserindo dados na tabela ITENS.');
-              SQL.CommandText := 'insert into itens ('+ colItens +') values ' + '(' + dadosItens + ');';
+              SQL.CommandText := 'INSERT INTO itens ('+ colItens +') VALUES ' + '(' + dadosItens + ');';
               SQL.ExecSQL;
               frmImportando.atualizaStatus('Inserindo dados na tabela PROD_FORN.');
-              SQL.CommandText := 'insert into prod_forn ('+ colProdForn +') values ' + '(' + dadosProdForn + ');';
+              SQL.CommandText := 'INSERT INTO prod_forn ('+ colProdForn +') VALUES ' + '(' + dadosProdForn + ');';
               SQL.ExecSQL;
             end
             //Se não, cria registro em branco na outra empresa
             else begin
               frmImportando.atualizaStatus('Inserindo registro na tabela PROD_TRIBUTOS para Empresa '+IntToStr(i));
-              SQL.CommandText := 'insert into prod_tributos ('+ colRegistroProdTrib + ',trib_empr) values ' + '(' + dadosRegistroProdTrib + ','+IntToStr(i)+');';
+              SQL.CommandText := 'INSERT INTO prod_tributos ('+ colRegistroProdTrib + ',trib_empr) VALUES ' + '(' + dadosRegistroProdTrib + ','+IntToStr(i)+');';
               SQL.ExecSQL;
               frmImportando.atualizaStatus('Inserindo registro na tabela PROD_ADICIONAIS para Empresa '+IntToStr(i));
-              SQL.CommandText := 'insert into prod_adicionais ('+ colRegistroProdAdic +',adic_empr) values ' + '(' + dadosRegistroProdAdic + ','+IntToStr(i)+ ');';
+              SQL.CommandText := 'INSERT INTO prod_adicionais ('+ colRegistroProdAdic +',adic_empr) VALUES ' + '(' + dadosRegistroProdAdic + ','+IntToStr(i)+ ');';
               SQL.ExecSQL;
               frmImportando.atualizaStatus('Inserindo registro na tabela PROD_CUSTOS para Empresa '+IntToStr(i));
-              SQL.CommandText := 'insert into prod_custos ('+ colRegistroProdCust +',cust_empr) values ' + '(' + dadosRegistroProdCust + ','+IntToStr(i)+ ');';
+              SQL.CommandText := 'INSERT INTO prod_custos ('+ colRegistroProdCust +',cust_empr) VALUES ' + '(' + dadosRegistroProdCust + ','+IntToStr(i)+ ');';
               SQL.ExecSQL;
               frmImportando.atualizaStatus('Inserindo registro na tabela MVA para Empresa '+IntToStr(i));
-              SQL.CommandText := 'insert into mva ('+ colRegistroMVA +',mva_empr) values ' + '(' + dadosRegistroMVA + ','+IntToStr(i)+ ');';
+              SQL.CommandText := 'INSERT INTO mva ('+ colRegistroMVA +',mva_empr) VALUES ' + '(' + dadosRegistroMVA + ','+IntToStr(i)+ ');';
               SQL.ExecSQL;
             end;
           end;
@@ -2353,23 +2353,23 @@ begin
         else begin
           //Executar UPDATE
           if dadosUpdateProd <> '' then begin
-            SQL.CommandText := 'update prod set '+ dadosUpdateProd +' where ' + condUpdateProd + ';';
+            SQL.CommandText := 'UPDATE prod SET '+ dadosUpdateProd +' WHERE ' + condUpdateProd + ';';
             SQL.ExecSQL;
           end;
           if dadosUpdateProdTrib <> '' then begin
-            SQL.CommandText := 'update prod_tributos set '+ dadosUpdateProdTrib +' where ' + condUpdateProdTrib + ';';
+            SQL.CommandText := 'UPDATE prod_tributos SET '+ dadosUpdateProdTrib +' WHERE ' + condUpdateProdTrib + ';';
             SQL.ExecSQL;
           end;
           if dadosUpdateProdAdic <> '' then begin
-            SQL.CommandText := 'update prod_adicionais set '+ dadosUpdateProdAdic +' where ' + condUpdateProdAdic + ';';
+            SQL.CommandText := 'UPDATE prod_adicionais SET '+ dadosUpdateProdAdic +' WHERE ' + condUpdateProdAdic + ';';
             SQL.ExecSQL;
           end;
           if dadosUpdateProdCust <> '' then begin
-            SQL.CommandText := 'update prod_custos set '+ dadosUpdateProdCust +' where ' + condUpdateProdCust + ';';
+            SQL.CommandText := 'UPDATE prod_custos SET '+ dadosUpdateProdCust +' WHERE ' + condUpdateProdCust + ';';
             SQL.ExecSQL;
           end;
           if dadosUpdateItens <> '' then begin
-            SQL.CommandText := dadosUpdateItens +' and ' + condUpdateItens + ';';
+            SQL.CommandText := dadosUpdateItens +' AND ' + condUpdateItens + ';';
             SQL.ExecSQL;
           end;
         end;
@@ -2406,7 +2406,7 @@ begin
         if colUpdateCount <= 0 then begin
 
           frmImportando.atualizaStatus('Inserindo dados na tabela PROD.');
-          WriteLn(fileTXT, 'insert into prod ('+ colProd +') values ' + '(' + dadosProd + ');');
+          WriteLn(fileTXT, 'INSERT INTO prod ('+ colProd +') VALUES ' + '(' + dadosProd + ');');
           WriteLn(fileTXT, 'COMMIT WORK;');
 
           //Criar registros em todas as empresas
@@ -2430,37 +2430,37 @@ begin
             //Testa se é a empresa onde o produto foi cadastrado
             if i = StrToInt(temp) then begin
               frmImportando.atualizaStatus('Inserindo dados na tabela PROD_TRIBUTOS.');
-              WriteLn(fileTXT, 'insert into prod_tributos ('+ colProdTrib +') values ' + '(' + dadosProdTrib + ');');
+              WriteLn(fileTXT, 'INSERT INTO prod_tributos ('+ colProdTrib +') VALUES ' + '(' + dadosProdTrib + ');');
               WriteLn(fileTXT, 'COMMIT WORK;');
               frmImportando.atualizaStatus('Inserindo dados na tabela PROD_ADICIONAIS.');
-              WriteLn(fileTXT, 'insert into prod_adicionais ('+ colProdAdic +') values ' + '(' + dadosProdAdic + ');');
+              WriteLn(fileTXT, 'INSERT INTO prod_adicionais ('+ colProdAdic +') VALUES ' + '(' + dadosProdAdic + ');');
               WriteLn(fileTXT, 'COMMIT WORK;');
               frmImportando.atualizaStatus('Inserindo dados na tabela PROD_CUSTOS.');
-              WriteLn(fileTXT, 'insert into prod_custos ('+ colProdCust +') values ' + '(' + dadosProdCust + ');');
+              WriteLn(fileTXT, 'INSERT INTO prod_custos ('+ colProdCust +') VALUES ' + '(' + dadosProdCust + ');');
               WriteLn(fileTXT, 'COMMIT WORK;');
               frmImportando.atualizaStatus('Inserindo dados na tabela MVA.');
-              WriteLn(fileTXT, 'insert into mva ('+ colMVA +') values ' + '(' + dadosMVA + ');');
+              WriteLn(fileTXT, 'INSERT INTO mva ('+ colMVA +') VALUES ' + '(' + dadosMVA + ');');
               WriteLn(fileTXT, 'COMMIT WORK;');
               frmImportando.atualizaStatus('Inserindo dados na tabela ITENS.');
-              WriteLn(fileTXT, 'insert into itens ('+ colItens +') values ' + '(' + dadosItens + ');');
+              WriteLn(fileTXT, 'INSERT INTO itens ('+ colItens +') VALUES ' + '(' + dadosItens + ');');
               WriteLn(fileTXT, 'COMMIT WORK;');
               frmImportando.atualizaStatus('Inserindo dados na tabela PROD_FORN.');
-              WriteLn(fileTXT, 'insert into prod_forn ('+ colProdForn +') values ' + '(' + dadosProdForn + ');');
+              WriteLn(fileTXT, 'INSERT INTO prod_forn ('+ colProdForn +') VALUES ' + '(' + dadosProdForn + ');');
               WriteLn(fileTXT, 'COMMIT WORK;');
             end
             //Se não, cria registro em branco na outra empresa
             else begin
               frmImportando.atualizaStatus('Inserindo registro na tabela PROD_TRIBUTOS para Empresa '+IntToStr(i));
-              WriteLn(fileTXT, 'insert into prod_tributos ('+ colRegistroProdTrib + ',trib_empr) values ' + '(' + dadosRegistroProdTrib + ','+IntToStr(i)+');');
+              WriteLn(fileTXT, 'INSERT INTO prod_tributos ('+ colRegistroProdTrib + ',trib_empr) VALUES ' + '(' + dadosRegistroProdTrib + ','+IntToStr(i)+');');
               WriteLn(fileTXT, 'COMMIT WORK;');
               frmImportando.atualizaStatus('Inserindo registro na tabela PROD_ADICIONAIS para Empresa '+IntToStr(i));
-              WriteLn(fileTXT, 'insert into prod_adicionais ('+ colRegistroProdAdic +',adic_empr) values ' + '(' + dadosRegistroProdAdic + ','+IntToStr(i)+ ');');
+              WriteLn(fileTXT, 'INSERT INTO prod_adicionais ('+ colRegistroProdAdic +',adic_empr) VALUES ' + '(' + dadosRegistroProdAdic + ','+IntToStr(i)+ ');');
               WriteLn(fileTXT, 'COMMIT WORK;');
               frmImportando.atualizaStatus('Inserindo registro na tabela PROD_CUSTOS para Empresa '+IntToStr(i));
-              WriteLn(fileTXT, 'insert into prod_custos ('+ colRegistroProdCust +',cust_empr) values ' + '(' + dadosRegistroProdCust + ','+IntToStr(i)+ ');');
+              WriteLn(fileTXT, 'INSERT INTO prod_custos ('+ colRegistroProdCust +',cust_empr) VALUES ' + '(' + dadosRegistroProdCust + ','+IntToStr(i)+ ');');
               WriteLn(fileTXT, 'COMMIT WORK;');
               frmImportando.atualizaStatus('Inserindo registro na tabela MVA para Empresa '+IntToStr(i));
-              WriteLn(fileTXT, 'insert into mva ('+ colRegistroMVA +',mva_empr) values ' + '(' + dadosRegistroMVA + ','+IntToStr(i)+ ');');
+              WriteLn(fileTXT, 'INSERT INTO mva ('+ colRegistroMVA +',mva_empr) VALUES ' + '(' + dadosRegistroMVA + ','+IntToStr(i)+ ');');
               WriteLn(fileTXT, 'COMMIT WORK;');
             end;
           end;
@@ -2472,23 +2472,23 @@ begin
 
           //Executar UPDATE
           if dadosUpdateProd <> '' then begin
-            WriteLn(fileTXT, 'update prod set '+ dadosUpdateProd +' where ' + condUpdateProd + ';');
+            WriteLn(fileTXT, 'UPDATE prod SET '+ dadosUpdateProd +' WHERE ' + condUpdateProd + ';');
             WriteLn(fileTXT, 'COMMIT WORK;');
           end;
           if dadosUpdateProdTrib <> '' then begin
-            WriteLn(fileTXT, 'update prod_tributos set '+ dadosUpdateProdTrib +' where ' + condUpdateProdTrib + ';');
+            WriteLn(fileTXT, 'UPDATE prod_tributos SET '+ dadosUpdateProdTrib +' WHERE ' + condUpdateProdTrib + ';');
             WriteLn(fileTXT, 'COMMIT WORK;');
           end;
           if dadosUpdateProdAdic <> '' then begin
-            WriteLn(fileTXT, 'update prod_adicionais set '+ dadosUpdateProdAdic +' where ' + condUpdateProdAdic + ';');
+            WriteLn(fileTXT, 'UPDATE prod_adicionais SET '+ dadosUpdateProdAdic +' WHERE ' + condUpdateProdAdic + ';');
             WriteLn(fileTXT, 'COMMIT WORK;');
           end;
           if dadosUpdateProdCust <> '' then begin
-            WriteLn(fileTXT, 'update prod_custos set '+ dadosUpdateProdCust +' where ' + condUpdateProdCust + ';');
+            WriteLn(fileTXT, 'UPDATE prod_custos SET '+ dadosUpdateProdCust +' WHERE ' + condUpdateProdCust + ';');
             WriteLn(fileTXT, 'COMMIT WORK;');
           end;
           if dadosUpdateItens <> '' then begin
-            WriteLn(fileTXT, dadosUpdateItens +' and ' + condUpdateItens + ';');
+            WriteLn(fileTXT, dadosUpdateItens +' AND ' + condUpdateItens + ';');
             WriteLn(fileTXT, 'COMMIT WORK;');
           end;
         end;

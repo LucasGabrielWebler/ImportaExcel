@@ -121,7 +121,7 @@ begin
     end
     else begin
       //Se for números, considera como código
-      temp2 := IntToStr(frmPrinc.getCodiClieForn('(select c.nome from clieforn c where c.codi = '+temp+')'));
+      temp2 := IntToStr(frmPrinc.getCodiClieForn('(SELECT c.nome FROM clieforn c WHERE c.codi = '+temp+')'));
       //Antes buscamos se existe o código cadastrado, se não encontrar colocamos o generator mesmo
       if temp2='0' then begin
         colTituR := colTituR + ',clie';
@@ -398,13 +398,13 @@ begin
 
         //Executar INSERT
         frmImportando.atualizaStatus('Inserindo dados na tabela TITUR.');
-        SQL.CommandText := 'insert into titur ('+ colTituR +') values ' + '(' + dadosTituR + ');';
+        SQL.CommandText := 'INSERT INTO titur ('+ colTituR +') VALUES ' + '(' + dadosTituR + ');';
         SQL.ExecSQL;
 
         if saldo <= 0.0 then begin
           //Inserir na BTITUP
           frmImportando.atualizaStatus('Inserindo dados na tabela BTITUR.');
-          SQL.CommandText := 'insert into btitur ('+ colBTitu +') values ' + '(' + dadosBTitu +');';
+          SQL.CommandText := 'INSERT INTO btitur ('+ colBTitu +') VALUES ' + '(' + dadosBTitu +');';
           SQL.ExecSQL;
         end;
 
@@ -436,14 +436,14 @@ begin
         frmImportando.atualizaStatus('Comandos da TITUR.');
         WriteLn(fileTXT, '----------Comandos da TITUR----------');
 
-        WriteLn(fileTXT, 'insert into titur ('+ colTituR +') values ' + '(' + dadosTituR + ');');
+        WriteLn(fileTXT, 'INSERT INTO titur ('+ colTituR +') VALUES ' + '(' + dadosTituR + ');');
         WriteLn(fileTXT, 'COMMIT WORK;');
 
         if saldo <= 0.0 then begin
           //Inserir na BTITUP
           frmImportando.atualizaStatus('Comandos BTITUR.');
           WriteLn(fileTXT, '----------Comandos da BTITUR----------');
-          WriteLn(fileTXT, 'insert into btitur ('+ colBTitu +') values ' + '(' + dadosBTitu +');');
+          WriteLn(fileTXT, 'INSERT INTO btitur ('+ colBTitu +') VALUES ' + '(' + dadosBTitu +');');
           WriteLn(fileTXT, 'COMMIT WORK;');
         end;
       except
