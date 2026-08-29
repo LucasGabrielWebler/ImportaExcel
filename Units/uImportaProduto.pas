@@ -1730,6 +1730,8 @@ begin
       dadosProdTrib := dadosProdTrib + ',''' + temp + '''';
       colProdTrib := colProdTrib + ',TRIB_SN_CSOSN_INTER_CF';
       dadosProdTrib := dadosProdTrib + ',''' + temp + '''';
+      colProdTrib := colProdTrib + ',TRIB_SN_CSOSN_ESTA_PRODUTOR';
+      dadosProdTrib := dadosProdTrib + ',''' + temp + '''';
 
       //Testa se é Update
       if VerificaUpdate('csosn') = 1 then begin
@@ -1750,6 +1752,7 @@ begin
         dadosUpdateProdTrib := dadosUpdateProdTrib + ',TRIB_SN_CSOSN_INTERESTADUAL=' + '''' + temp + '''';
         dadosUpdateProdTrib := dadosUpdateProdTrib + ',TRIB_SN_CSOSN_ESTA_CF=' + '''' + temp + '''';
         dadosUpdateProdTrib := dadosUpdateProdTrib + ',TRIB_SN_CSOSN_INTER_CF=' + '''' + temp + '''';
+        dadosUpdateProdTrib := dadosUpdateProdTrib + ',TRIB_SN_CSOSN_ESTA_PRODUTOR=' + '''' + temp + '''';
       end;
     end
     //CSOSN ESTADUAL
@@ -1764,6 +1767,8 @@ begin
       colProdTrib := colProdTrib + ',TRIB_SN_CSOSN_ESTADUAL';
       dadosProdTrib := dadosProdTrib + ',''' + temp + '''';
       colProdTrib := colProdTrib + ',TRIB_SN_CSOSN_ESTA_CF';
+      dadosProdTrib := dadosProdTrib + ',''' + temp + '''';
+      colProdTrib := colProdTrib + ',TRIB_SN_CSOSN_ESTA_PRODUTOR';
       dadosProdTrib := dadosProdTrib + ',''' + temp + '''';
 
       //Testa se é Update
@@ -1783,6 +1788,7 @@ begin
         if dadosUpdateProdTrib <> '' then dadosUpdateProdTrib := dadosUpdateProdTrib + ', ';
         dadosUpdateProdTrib := dadosUpdateProdTrib + 'TRIB_SN_CSOSN_ESTADUAL=' + '''' + temp + '''';
         dadosUpdateProdTrib := dadosUpdateProdTrib + ',TRIB_SN_CSOSN_ESTA_CF=' + '''' + temp + '''';
+        dadosUpdateProdTrib := dadosUpdateProdTrib + ',TRIB_SN_CSOSN_ESTA_PRODUTOR=' + '''' + temp + '''';
       end;
     end
     //CSOSN INTERESTADUAL
