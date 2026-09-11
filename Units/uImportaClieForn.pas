@@ -463,7 +463,7 @@ begin
       end
       else begin
         colClieForn := colClieForn + ',rg';
-        dadosClieForn := dadosClieForn + ',''' + 'ISENTO' + '''';
+        dadosClieForn := dadosClieForn + ',''' + '' + '''';
       end;
     end
     //INSC (INSCRICAO ESTADUAL-IE)
@@ -490,7 +490,7 @@ begin
       end
       else begin
         colClieForn := colClieForn + ',insc';
-        dadosClieForn := dadosClieForn + ',''' + 'ISENTO' + '''';
+        dadosClieForn := dadosClieForn + ',''' + '' + '''';
       end;
     end
     //INSCR_PRODUTOR (INSCRICAO DE PRODUTOR RURAL)
@@ -517,7 +517,7 @@ begin
       end
       else begin
         colClieForn := colClieForn + ',inscr_produtor';
-        dadosClieForn := dadosClieForn + ',''' + 'ISENTO' + '''';
+        dadosClieForn := dadosClieForn + ',''' + '' + '''';
       end;
     end
     //ENDE (ENDERECO)
