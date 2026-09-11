@@ -1841,6 +1841,8 @@ begin
       dadosProdTrib := dadosProdTrib + ',''' + temp + '''';
       colProdTrib := colProdTrib + ',TRIB_CST_ICMS_INTER_CF';
       dadosProdTrib := dadosProdTrib + ',''' + temp + '''';
+      colProdTrib := colProdTrib + ',TRIB_CST_ICMS_ESTA_PRODUTOR';
+      dadosProdTrib := dadosProdTrib + ',''' + temp + '''';
 
       //Testa se é Update
       if VerificaUpdate('cst') = 1 then begin
@@ -1861,6 +1863,7 @@ begin
         dadosUpdateProdTrib := dadosUpdateProdTrib + ',TRIB_CST_ICMS_INTERESTADUAL=' + '''' + temp + '''';
         dadosUpdateProdTrib := dadosUpdateProdTrib + ',TRIB_CST_ICMS_ESTA_CF=' + '''' + temp + '''';
         dadosUpdateProdTrib := dadosUpdateProdTrib + ',TRIB_CST_ICMS_INTER_CF=' + '''' + temp + '''';
+        dadosUpdateProdTrib := dadosUpdateProdTrib + ',TRIB_CST_ICMS_ESTA_PRODUTOR=' + '''' + temp + '''';
       end;
     end
     //CST ESTADUAL
@@ -1876,6 +1879,9 @@ begin
       dadosProdTrib := dadosProdTrib + ',''' + temp + '''';
       colProdTrib := colProdTrib + ',TRIB_CST_ICMS_ESTA_CF';
       dadosProdTrib := dadosProdTrib + ',''' + temp + '''';
+      colProdTrib := colProdTrib + ',TRIB_CST_ICMS_ESTA_PRODUTOR';
+      dadosProdTrib := dadosProdTrib + ',''' + temp + '''';
+
 
       //Testa se é Update
       if VerificaUpdate('cst_esta') = 1 then begin
@@ -1894,6 +1900,7 @@ begin
         if dadosUpdateProdTrib <> '' then dadosUpdateProdTrib := dadosUpdateProdTrib + ', ';
         dadosUpdateProdTrib := dadosUpdateProdTrib + 'TRIB_CST_ICMS_ESTADUAL=' + '''' + temp + '''';
         dadosUpdateProdTrib := dadosUpdateProdTrib + ',TRIB_CST_ICMS_ESTA_CF=' + '''' + temp + '''';
+        dadosUpdateProdTrib := dadosUpdateProdTrib + ',TRIB_CST_ICMS_ESTA_PRODUTOR=' + '''' + temp + '''';
       end;
     end
     //CST INTERESTADUAL
