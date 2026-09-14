@@ -2058,7 +2058,7 @@ begin
       end
       else begin
         if dadosUpdateProdTrib <> '' then dadosUpdateProdTrib := dadosUpdateProdTrib + ', ';
-        dadosUpdateProdTrib := dadosUpdateProdTrib + ',TRIB_CST_IPI=' + '''' + StringGrid1.Cells[i,k] + '''';
+        dadosUpdateProdTrib := dadosUpdateProdTrib + 'TRIB_CST_IPI=' + '''' + StringGrid1.Cells[i,k] + '''';
       end;
     end
     //ALIQ_IPI (Alíquota de IPI)
