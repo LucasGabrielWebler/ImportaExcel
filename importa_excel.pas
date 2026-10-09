@@ -55,6 +55,7 @@ type
     btnTXT: TBitBtn;
     edtTableName: TEdit;
     btnSalvar: TBitBtn;
+    BtnDestinoPadrao: TButton;
 
     function quantidadeEmpresas(colEmpr: Integer): Integer;
     procedure btnAbrirOrigemClick(Sender: TObject);
@@ -89,6 +90,7 @@ type
     procedure SelectImportChange(Sender: TObject);
     procedure mnuProcurarClick(Sender: TObject);
     procedure mnuDividirClick(Sender: TObject);
+    procedure BtnDestinoPadraoClick(Sender: TObject);
 
   private
     { Private declarations }
@@ -159,6 +161,7 @@ var
 begin
   if opnDadosDestino.Execute then
   begin
+    conDestino.Connected := False;
     arquivo := ExtractFilePath(Application.ExeName);
     DBPath.Text := opnDadosDestino.FileName;
     conDestino.Params.Values['DataBase'] := DBPath.Text;
@@ -1036,6 +1039,29 @@ begin
 
 end;
 
+
+procedure TfrmPrinc.BtnDestinoPadraoClick(Sender: TObject);
+var
+  informacaoPadrao: string;
+begin
+  informacaoPadrao := DBPath.Text;
+
+  conDestino.Connected := False;
+  DBPath.Text := 'C:\ADMERP\DADOS.FDB';
+  conDestino.Params.Values['DataBase'] := DBPath.Text;
+
+  try
+    conDestino.Connected := True;
+    ShowMessage('Conectado ao banco de destino');
+  except
+    on E: Exception do
+    begin
+      DBPath.Text := informacaoPadrao;
+      conDestino.Params.Values['DataBase'] := informacaoPadrao;
+      ShowMessage('Erro ao conectar: ' + E.Message);
+    end;
+  end;
+end;
 
 //Função para salvar StringGrid em um arquivo Excel
 function SaveAsExcelFile(stringGrid: TstringGrid; FileName: string): Boolean;

@@ -588,6 +588,15 @@ object frmPrinc: TfrmPrinc
       OnClick = btnSalvarClick
     end
   end
+  object BtnDestinoPadrao: TButton
+    Left = 508
+    Top = 38
+    Width = 145
+    Height = 25
+    Caption = 'USAR CAMINHO PADR'#195'O'
+    TabOrder = 2
+    OnClick = BtnDestinoPadraoClick
+  end
   object opnDadosOrigem: TOpenDialog
     Options = [ofEnableSizing]
     Left = 542
