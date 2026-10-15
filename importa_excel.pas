@@ -634,11 +634,13 @@ begin
 
       //Produtos: criar a PROD_AJUS antes das movimentações na ITENS,
       //assim o NUME dos itens (gen_id(gen_prod_ajus_id,0)) é o código deste ajuste
+      //No Update só cria se alguma coluna de estoque gerar movimentação
+      //(coluna de estoque marcada como Update é apenas condição, não movimenta)
       if (SelectImport.Text = 'Produtos') and
          ((colUpdateCount <= 0) or
-          (BuscaColuna(StringGrid1,'qtd') <> -1) or
-          (BuscaColuna(StringGrid1,'est') <> -1) or
-          (BuscaColuna(StringGrid1,'max') <> -1)) then
+          ((BuscaColuna(StringGrid1,'qtd') <> -1) and (VerificaUpdate('qtd') = 0)) or
+          ((BuscaColuna(StringGrid1,'est') <> -1) and (VerificaUpdate('est') = 0)) or
+          ((BuscaColuna(StringGrid1,'max') <> -1) and (VerificaUpdate('max') = 0))) then
       begin
         frmImportando.atualizaStatus('Inserindo dados na tabela PROD_AJUS.');
         if UpperCase( ExtractFileExt(DBPath.Text) ) = '.FDB' then begin

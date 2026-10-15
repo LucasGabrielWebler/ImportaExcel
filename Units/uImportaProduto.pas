@@ -55,6 +55,10 @@ end;
 
 //Adiciona um comando de movimentação de estoque para o UPDATE
 //Sem condição no WHERE, pois irá usar condUpdateItens concatenado
+//PRODCOD e EMPR vêm da própria PROD_ESTO (pe.cod_prod, pe.cod_empr): cada produto/empresa
+//é ajustado pelo seu estoque. Funciona também quando a chave (ex.: REFE) encontra mais de um produto.
+//Com coluna EMPR: condUpdateItens filtra a empresa informada.
+//Sem coluna EMPR: ajusta o estoque em todas as empresas.
 procedure cImportaProduto.AdicionaItemUpdate(sql: String);
 begin
   SetLength(sqlUpdateItens, Length(sqlUpdateItens)+1);
@@ -156,29 +160,18 @@ begin
 //            colRegistroMVA := colRegistroMVA + ',mva_empr';
 //            dadosRegistroMVA := dadosRegistroMVA + ',''' + UpperCase(RemoveAcento(prodEmpr)) + '''';
 
-    //Testa se é Update
-    if VerificaUpdate('empr') = 1 then begin
-      if condUpdateProd <> '' then condUpdateProd := condUpdateProd + ' AND ';
-      condUpdateProd := condUpdateProd + 'empr=' + '''' + UpperCase(RemoveAcento(prodEmpr)) + '''';
-      if condUpdateProdTrib <> '' then condUpdateProdTrib := condUpdateProdTrib + ' AND ';
-      condUpdateProdTrib := condUpdateProdTrib + 'trib_empr=' + '''' + UpperCase(RemoveAcento(prodEmpr)) + '''';
-      if condUpdateProdAdic <> '' then condUpdateProdAdic := condUpdateProdAdic + ' AND ';
-      condUpdateProdAdic := condUpdateProdAdic + 'adic_empr=' + '''' + UpperCase(RemoveAcento(prodEmpr)) + '''';
-      if condUpdateProdCust <> '' then condUpdateProdCust := condUpdateProdCust + ' AND ';
-      condUpdateProdCust := condUpdateProdCust + 'cust_empr=' + '''' + UpperCase(RemoveAcento(prodEmpr)) + '''';
-      if condUpdateItens <> '' then condUpdateItens := condUpdateItens + ' AND ';
-      condUpdateItens := condUpdateItens + 'cod_empr=' + '''' + UpperCase(RemoveAcento(prodEmpr)) + '''';
-    end
-    else begin
-      if dadosUpdateProd <> '' then dadosUpdateProd := dadosUpdateProd + ', ';
-      dadosUpdateProd := dadosUpdateProd + 'empr=' + '''' + UpperCase(RemoveAcento(prodEmpr)) + '''';
-      if dadosUpdateProdTrib <> '' then dadosUpdateProdTrib := dadosUpdateProdTrib + ', ';
-      dadosUpdateProdTrib := dadosUpdateProdTrib + 'trib_empr=' + '''' + UpperCase(RemoveAcento(prodEmpr)) + '''';
-      if dadosUpdateProdAdic <> '' then dadosUpdateProdAdic := dadosUpdateProdAdic + ', ';
-      dadosUpdateProdAdic := dadosUpdateProdAdic + 'adic_empr' + '''' + UpperCase(RemoveAcento(prodEmpr)) + '''';
-      if dadosUpdateProdCust <> '' then dadosUpdateProdCust := dadosUpdateProdCust + ', ';
-      dadosUpdateProdCust := dadosUpdateProdCust + 'cust_empr=' + '''' + UpperCase(RemoveAcento(prodEmpr)) + '''';
-    end;
+    //No Update a empresa é sempre condição (mesmo sem marcar como Update),
+    //para alterar somente os registros da empresa informada e não trocar a empresa dos registros
+    if condUpdateProd <> '' then condUpdateProd := condUpdateProd + ' AND ';
+    condUpdateProd := condUpdateProd + 'empr=' + '''' + UpperCase(RemoveAcento(prodEmpr)) + '''';
+    if condUpdateProdTrib <> '' then condUpdateProdTrib := condUpdateProdTrib + ' AND ';
+    condUpdateProdTrib := condUpdateProdTrib + 'trib_empr=' + '''' + UpperCase(RemoveAcento(prodEmpr)) + '''';
+    if condUpdateProdAdic <> '' then condUpdateProdAdic := condUpdateProdAdic + ' AND ';
+    condUpdateProdAdic := condUpdateProdAdic + 'adic_empr=' + '''' + UpperCase(RemoveAcento(prodEmpr)) + '''';
+    if condUpdateProdCust <> '' then condUpdateProdCust := condUpdateProdCust + ' AND ';
+    condUpdateProdCust := condUpdateProdCust + 'cust_empr=' + '''' + UpperCase(RemoveAcento(prodEmpr)) + '''';
+    if condUpdateItens <> '' then condUpdateItens := condUpdateItens + ' AND ';
+    condUpdateItens := condUpdateItens + 'cod_empr=' + '''' + UpperCase(RemoveAcento(prodEmpr)) + '''';
   end
   else begin
     prodEmpr := '1';
@@ -291,7 +284,7 @@ begin
       if dadosUpdateProdTrib <> '' then dadosUpdateProdTrib := dadosUpdateProdTrib + ', ';
       dadosUpdateProdTrib := dadosUpdateProdTrib + 'trib_prod_codi=' + '''' + UpperCase(RemoveAcento(prodCod)) + '''';
       if dadosUpdateProdAdic <> '' then dadosUpdateProdAdic := dadosUpdateProdAdic + ', ';
-      dadosUpdateProdAdic := dadosUpdateProdAdic + 'adic_prod_codi' + '''' + UpperCase(RemoveAcento(prodCod)) + '''';
+      dadosUpdateProdAdic := dadosUpdateProdAdic + 'adic_prod_codi=' + '''' + UpperCase(RemoveAcento(prodCod)) + '''';
       if dadosUpdateProdCust <> '' then dadosUpdateProdCust := dadosUpdateProdCust + ', ';
       dadosUpdateProdCust := dadosUpdateProdCust + 'cust_prod_codi=' + '''' + UpperCase(RemoveAcento(prodCod)) + '''';
     end;
@@ -777,20 +770,35 @@ begin
       }
       //Comando Insert na itens - Ainda nao tem condição no WHERE, pois irá usar condUpdateItens concatenado
       //NUME: PROD_AJUS já foi criada no inicio da importação
+      //QTD no Update: igual ao ajuste do ERP, calcula fiscal (QTD .5/.2) e físico (QTD_MAX .4/.1) separados
       AdicionaItemUpdate('INSERT INTO ITENS (CODI,PRODCOD,NUME,TIPO,EPV,QTD,EMPR) '+
           '    SELECT '+
           '        gen_id(gen_itens_id,1) CODI, '+
-          '        '+prodCod+' PRODCOD, '+
+          '        pe.cod_prod PRODCOD, '+
           '        gen_id(gen_prod_ajus_id,0) NUME, '+
           '        CASE '+
-          '            WHEN ('+temp+'-pe.qtd) > 0 THEN 6 '+
-          '            WHEN ('+temp+'-pe.qtd) < 0 THEN 3 '+
+          '            WHEN ('+temp+'-pe.qtd) > 0 THEN 5 '+
+          '            WHEN ('+temp+'-pe.qtd) < 0 THEN 2 '+
           '        END TIPO, '+
           '        ''A'' EPV, '+
           '        ABS('+temp+'-pe.qtd) QTD, '+
-          '        '+prodEmpr+' EMPR '+
+          '        pe.cod_empr EMPR '+
           '    FROM prod_esto pe '+
           '    WHERE ('+temp+'-pe.qtd) <> 0 ');
+      AdicionaItemUpdate('INSERT INTO ITENS (CODI,PRODCOD,NUME,TIPO,EPV,QTD,EMPR) '+
+          '    SELECT '+
+          '        gen_id(gen_itens_id,1) CODI, '+
+          '        pe.cod_prod PRODCOD, '+
+          '        gen_id(gen_prod_ajus_id,0) NUME, '+
+          '        CASE '+
+          '            WHEN ('+temp+'-pe.qtd_max) > 0 THEN 4 '+
+          '            WHEN ('+temp+'-pe.qtd_max) < 0 THEN 1 '+
+          '        END TIPO, '+
+          '        ''A'' EPV, '+
+          '        ABS('+temp+'-pe.qtd_max) QTD, '+
+          '        pe.cod_empr EMPR '+
+          '    FROM prod_esto pe '+
+          '    WHERE ('+temp+'-pe.qtd_max) <> 0 ');
     end;
   end;
 
@@ -830,7 +838,7 @@ begin
       AdicionaItemUpdate('INSERT INTO ITENS (CODI,PRODCOD,NUME,TIPO,EPV,QTD,EMPR) '+
           '    SELECT '+
           '        gen_id(gen_itens_id,1) CODI, '+
-          '        '+prodCod+' PRODCOD, '+
+          '        pe.cod_prod PRODCOD, '+
           '        gen_id(gen_prod_ajus_id,0) NUME, '+
           '        CASE '+
           '            WHEN ('+temp+'-pe.qtd) > 0 THEN 5 '+
@@ -838,7 +846,7 @@ begin
           '        END TIPO, '+
           '        ''A'' EPV, '+
           '        ABS('+temp+'-pe.qtd) QTD, '+
-          '        '+prodEmpr+' EMPR '+
+          '        pe.cod_empr EMPR '+
           '    FROM prod_esto pe '+
           '    WHERE ('+temp+'-pe.qtd) <> 0 ');
     end;
@@ -880,7 +888,7 @@ begin
       AdicionaItemUpdate('INSERT INTO ITENS (CODI,PRODCOD,NUME,TIPO,EPV,QTD,EMPR) '+
           '    SELECT '+
           '        gen_id(gen_itens_id,1) CODI, '+
-          '        '+prodCod+' PRODCOD, '+
+          '        pe.cod_prod PRODCOD, '+
           '        gen_id(gen_prod_ajus_id,0) NUME, '+
           '        CASE '+
           '            WHEN ('+temp+'-pe.qtd_max) > 0 THEN 4 '+
@@ -888,7 +896,7 @@ begin
           '        END TIPO, '+
           '        ''A'' EPV, '+
           '        ABS('+temp+'-pe.qtd_max) QTD, '+
-          '        '+prodEmpr+' EMPR '+
+          '        pe.cod_empr EMPR '+
           '    FROM prod_esto pe '+
           '    WHERE ('+temp+'-pe.qtd_max) <> 0 ');
     end;
