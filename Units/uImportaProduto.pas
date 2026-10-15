@@ -13,7 +13,9 @@ type
       colProdTrib, dadosProdTrib, condUpdateProdTrib, dadosUpdateProdTrib, colRegistroProdTrib, dadosRegistroProdTrib: String;
       colProdAdic, dadosProdAdic, condUpdateProdAdic, dadosUpdateProdAdic, colRegistroProdAdic, dadosRegistroProdAdic: String;
       colProdCust, dadosProdCust, condUpdateProdCust, dadosUpdateProdCust, colRegistroProdCust, dadosRegistroProdCust: String;
-      colItens, dadosItens, condUpdateItens, dadosUpdateItens: String;
+      colItens, dadosItens, condUpdateItens: String;
+      //Movimentações de estoque: uma linha na ITENS para cada coluna QTD/EST/MAX
+      qtdItens, tipoItens, sqlUpdateItens: array of String;
       colMVA, dadosMVA, colRegistroMVA, dadosRegistroMVA: String;
       colProdForn, dadosProdForn: String;
       prodCod, prodEmpr: string;
@@ -24,6 +26,8 @@ type
       constructor ImportaRegistro(numReg: Integer; Grid: TStringGrid);
       procedure CarregaColunas;
       procedure Gravar;
+      procedure AdicionaItem(qtd, tipo: String);
+      procedure AdicionaItemUpdate(sql: String);
   end;
 
 implementation
@@ -38,6 +42,23 @@ begin
 
   CarregaColunas;
   Gravar;
+end;
+
+//Adiciona uma movimentação de estoque (INSERT na ITENS)
+procedure cImportaProduto.AdicionaItem(qtd, tipo: String);
+begin
+  SetLength(qtdItens, Length(qtdItens)+1);
+  SetLength(tipoItens, Length(tipoItens)+1);
+  qtdItens[High(qtdItens)] := qtd;
+  tipoItens[High(tipoItens)] := tipo;
+end;
+
+//Adiciona um comando de movimentação de estoque para o UPDATE
+//Sem condição no WHERE, pois irá usar condUpdateItens concatenado
+procedure cImportaProduto.AdicionaItemUpdate(sql: String);
+begin
+  SetLength(sqlUpdateItens, Length(sqlUpdateItens)+1);
+  sqlUpdateItens[High(sqlUpdateItens)] := sql;
 end;
 
 procedure cImportaProduto.CarregaColunas;
@@ -77,7 +98,9 @@ begin
   dadosUpdateProdTrib := '';
   dadosUpdateProdAdic := '';
   dadosUpdateProdCust := '';
-  dadosUpdateItens := '';
+  SetLength(qtdItens, 0);
+  SetLength(tipoItens, 0);
+  SetLength(sqlUpdateItens, 0);
   condUpdateProd := '';
   condUpdateProdTrib := '';
   condUpdateProdAdic := '';
@@ -155,8 +178,6 @@ begin
       dadosUpdateProdAdic := dadosUpdateProdAdic + 'adic_empr' + '''' + UpperCase(RemoveAcento(prodEmpr)) + '''';
       if dadosUpdateProdCust <> '' then dadosUpdateProdCust := dadosUpdateProdCust + ', ';
       dadosUpdateProdCust := dadosUpdateProdCust + 'cust_empr=' + '''' + UpperCase(RemoveAcento(prodEmpr)) + '''';
-      if dadosUpdateItens <> '' then dadosUpdateItens := dadosUpdateItens + ', ';
-      dadosUpdateItens := dadosUpdateItens + 'empr=' + '''' + UpperCase(RemoveAcento(prodEmpr)) + '''';
     end;
   end
   else begin
@@ -273,8 +294,6 @@ begin
       dadosUpdateProdAdic := dadosUpdateProdAdic + 'adic_prod_codi' + '''' + UpperCase(RemoveAcento(prodCod)) + '''';
       if dadosUpdateProdCust <> '' then dadosUpdateProdCust := dadosUpdateProdCust + ', ';
       dadosUpdateProdCust := dadosUpdateProdCust + 'cust_prod_codi=' + '''' + UpperCase(RemoveAcento(prodCod)) + '''';
-      if dadosUpdateItens <> '' then dadosUpdateItens := dadosUpdateItens + ', ';
-      dadosUpdateItens := dadosUpdateItens + 'prodcod=' + '''' + UpperCase(RemoveAcento(prodCod)) + '''';
     end;
   end
   else begin
@@ -737,8 +756,8 @@ begin
       temp := StringGrid1.Cells[i,k];
     end;
     temp := corrigeFloat(temp);
-    dadosItens := dadosItens + ',' + temp;
-    colItens := colItens + ',qtd';
+    //Movimentação de estoque .6 (QTD e QTD_MAX)
+    AdicionaItem(temp, '6');
     //Testa se é Update
     if VerificaUpdate('qtd') = 1 then begin
       if condUpdateProd <> '' then condUpdateProd := condUpdateProd + ' AND ';
@@ -757,11 +776,12 @@ begin
        Comando para inserir na ITENS quando a diferenca de estoque for diferente de 0
       }
       //Comando Insert na itens - Ainda nao tem condição no WHERE, pois irá usar condUpdateItens concatenado
-      dadosUpdateItens := dadosUpdateItens + ' INSERT INTO ITENS (CODI,PRODCOD,NUME,TIPO,EPV,QTD,EMPR) '+
+      //NUME: PROD_AJUS já foi criada no inicio da importação
+      AdicionaItemUpdate('INSERT INTO ITENS (CODI,PRODCOD,NUME,TIPO,EPV,QTD,EMPR) '+
           '    SELECT '+
           '        gen_id(gen_itens_id,1) CODI, '+
           '        '+prodCod+' PRODCOD, '+
-          '        gen_id(gen_prod_ajus_id,0)+1 NUME, '+
+          '        gen_id(gen_prod_ajus_id,0) NUME, '+
           '        CASE '+
           '            WHEN ('+temp+'-pe.qtd) > 0 THEN 6 '+
           '            WHEN ('+temp+'-pe.qtd) < 0 THEN 3 '+
@@ -770,11 +790,8 @@ begin
           '        ABS('+temp+'-pe.qtd) QTD, '+
           '        '+prodEmpr+' EMPR '+
           '    FROM prod_esto pe '+
-          '    WHERE ('+temp+'-pe.qtd) <> 0 ';
+          '    WHERE ('+temp+'-pe.qtd) <> 0 ');
     end;
-    //Setar tipo do item
-    colItens := colItens + ',tipo';
-    dadosItens := dadosItens + ',''' + '6' + '''';
   end;
 
   //EST
@@ -789,8 +806,8 @@ begin
       temp := StringGrid1.Cells[i,k];
     end;
     temp := corrigeFloat(temp);
-    dadosItens := dadosItens + ',' + temp;
-    colItens := colItens + ',qtd';
+    //Movimentação de estoque .5 (somente QTD)
+    AdicionaItem(temp, '5');
     //Testa se é Update
     if VerificaUpdate('est') = 1 then begin
       if condUpdateProd <> '' then condUpdateProd := condUpdateProd + ' AND ';
@@ -809,11 +826,12 @@ begin
        Comando para inserir na ITENS quando a diferenca de estoque for diferente de 0
       }
       //Comando Insert na itens - Ainda nao tem condição no WHERE, pois irá usar condUpdateItens concatenado
-      dadosUpdateItens := dadosUpdateItens + ' INSERT INTO ITENS (CODI,PRODCOD,NUME,TIPO,EPV,QTD,EMPR) '+
+      //NUME: PROD_AJUS já foi criada no inicio da importação
+      AdicionaItemUpdate('INSERT INTO ITENS (CODI,PRODCOD,NUME,TIPO,EPV,QTD,EMPR) '+
           '    SELECT '+
           '        gen_id(gen_itens_id,1) CODI, '+
           '        '+prodCod+' PRODCOD, '+
-          '        gen_id(gen_prod_ajus_id,0)+1 NUME, '+
+          '        gen_id(gen_prod_ajus_id,0) NUME, '+
           '        CASE '+
           '            WHEN ('+temp+'-pe.qtd) > 0 THEN 5 '+
           '            WHEN ('+temp+'-pe.qtd) < 0 THEN 2 '+
@@ -822,11 +840,8 @@ begin
           '        ABS('+temp+'-pe.qtd) QTD, '+
           '        '+prodEmpr+' EMPR '+
           '    FROM prod_esto pe '+
-          '    WHERE ('+temp+'-pe.qtd) <> 0 ';
+          '    WHERE ('+temp+'-pe.qtd) <> 0 ');
     end;
-    //Setar tipo do item
-    colItens := colItens + ',tipo';
-    dadosItens := dadosItens + ',''' + '5' + '''';
   end;
 
   //MAX
@@ -841,8 +856,8 @@ begin
       temp := StringGrid1.Cells[i,k];
     end;
     temp := corrigeFloat(temp);
-    dadosItens := dadosItens + ',' + temp;
-    colItens := colItens + ',qtd';
+    //Movimentação de estoque .4 (somente QTD_MAX)
+    AdicionaItem(temp, '4');
     //Testa se é Update
     if VerificaUpdate('max') = 1 then begin
       if condUpdateProd <> '' then condUpdateProd := condUpdateProd + ' AND ';
@@ -861,11 +876,12 @@ begin
        Comando para inserir na ITENS quando a diferenca de estoque for diferente de 0
       }
       //Comando Insert na itens - Ainda nao tem condição no WHERE, pois irá usar condUpdateItens concatenado
-      dadosUpdateItens := dadosUpdateItens + ' INSERT INTO ITENS (CODI,PRODCOD,NUME,TIPO,EPV,QTD,EMPR) '+
+      //NUME: PROD_AJUS já foi criada no inicio da importação
+      AdicionaItemUpdate('INSERT INTO ITENS (CODI,PRODCOD,NUME,TIPO,EPV,QTD,EMPR) '+
           '    SELECT '+
           '        gen_id(gen_itens_id,1) CODI, '+
           '        '+prodCod+' PRODCOD, '+
-          '        gen_id(gen_prod_ajus_id,0)+1 NUME, '+
+          '        gen_id(gen_prod_ajus_id,0) NUME, '+
           '        CASE '+
           '            WHEN ('+temp+'-pe.qtd_max) > 0 THEN 4 '+
           '            WHEN ('+temp+'-pe.qtd_max) < 0 THEN 1 '+
@@ -874,24 +890,18 @@ begin
           '        ABS('+temp+'-pe.qtd_max) QTD, '+
           '        '+prodEmpr+' EMPR '+
           '    FROM prod_esto pe '+
-          '    WHERE ('+temp+'-pe.qtd_max) <> 0 ';
+          '    WHERE ('+temp+'-pe.qtd_max) <> 0 ');
     end;
-    //Setar tipo do item
-    colItens := colItens + ',tipo';
-    dadosItens := dadosItens + ',''' + '4' + '''';
   end;
 
   //Se não tiver informação de estoque, coloca padrões
   if (BuscaColuna(StringGrid1,'qtd')=-1) and (BuscaColuna(StringGrid1,'est')=-1) and (BuscaColuna(StringGrid1,'max')=-1) then begin
-    colItens := colItens + ',qtd';
-    dadosItens := dadosItens + ',''' + '0' + '''';
-    //Setar tipo do item
-    colItens := colItens + ',tipo';
-    dadosItens := dadosItens + ',''' + '6' + '''';
+    AdicionaItem('0', '6');
   end;
-  //Campos adicionais para a itens
+  //Campos adicionais para a itens (qtd e tipo são adicionados por movimentação no Gravar)
   colItens := colItens + ',epv';
   dadosItens := dadosItens + ',''' + 'A' + '''';
+  //NUME: código da PROD_AJUS criada no inicio da importação
   colItens := colItens + ',nume';
   dadosItens := dadosItens + ',' + 'gen_id(gen_prod_ajus_id,0)';
 
@@ -2280,7 +2290,7 @@ procedure cImportaProduto.Gravar;
 var
   fileTXT: TextFile;
   SQL: TSQLDataSet;
-  i, j: Integer;
+  i, j, m: Integer;
   temp: string;
 begin
   //Sair se estiver em erro
@@ -2338,8 +2348,11 @@ begin
               SQL.CommandText := 'INSERT INTO mva ('+ colMVA +') VALUES ' + '(' + dadosMVA + ');';
               SQL.ExecSQL;
               frmImportando.atualizaStatus('Inserindo dados na tabela ITENS.');
-              SQL.CommandText := 'INSERT INTO itens ('+ colItens +') VALUES ' + '(' + dadosItens + ');';
-              SQL.ExecSQL;
+              //Uma linha na ITENS para cada movimentação (QTD .6, EST .5, MAX .4)
+              for m := 0 to High(qtdItens) do begin
+                SQL.CommandText := 'INSERT INTO itens ('+ colItens +',qtd,tipo) VALUES ' + '(' + dadosItens + ',' + qtdItens[m] + ',''' + tipoItens[m] + ''');';
+                SQL.ExecSQL;
+              end;
               frmImportando.atualizaStatus('Inserindo dados na tabela PROD_FORN.');
               SQL.CommandText := 'INSERT INTO prod_forn ('+ colProdForn +') VALUES ' + '(' + dadosProdForn + ');';
               SQL.ExecSQL;
@@ -2381,8 +2394,9 @@ begin
             SQL.CommandText := 'UPDATE prod_custos SET '+ dadosUpdateProdCust +' WHERE ' + condUpdateProdCust + ';';
             SQL.ExecSQL;
           end;
-          if dadosUpdateItens <> '' then begin
-            SQL.CommandText := dadosUpdateItens +' AND ' + condUpdateItens + ';';
+          //Um comando para cada movimentação de estoque
+          for m := 0 to High(sqlUpdateItens) do begin
+            SQL.CommandText := sqlUpdateItens[m] +' AND ' + condUpdateItens + ';';
             SQL.ExecSQL;
           end;
         end;
@@ -2455,8 +2469,11 @@ begin
               WriteLn(fileTXT, 'INSERT INTO mva ('+ colMVA +') VALUES ' + '(' + dadosMVA + ');');
               WriteLn(fileTXT, 'COMMIT WORK;');
               frmImportando.atualizaStatus('Inserindo dados na tabela ITENS.');
-              WriteLn(fileTXT, 'INSERT INTO itens ('+ colItens +') VALUES ' + '(' + dadosItens + ');');
-              WriteLn(fileTXT, 'COMMIT WORK;');
+              //Uma linha na ITENS para cada movimentação (QTD .6, EST .5, MAX .4)
+              for m := 0 to High(qtdItens) do begin
+                WriteLn(fileTXT, 'INSERT INTO itens ('+ colItens +',qtd,tipo) VALUES ' + '(' + dadosItens + ',' + qtdItens[m] + ',''' + tipoItens[m] + ''');');
+                WriteLn(fileTXT, 'COMMIT WORK;');
+              end;
               frmImportando.atualizaStatus('Inserindo dados na tabela PROD_FORN.');
               WriteLn(fileTXT, 'INSERT INTO prod_forn ('+ colProdForn +') VALUES ' + '(' + dadosProdForn + ');');
               WriteLn(fileTXT, 'COMMIT WORK;');
@@ -2500,8 +2517,9 @@ begin
             WriteLn(fileTXT, 'UPDATE prod_custos SET '+ dadosUpdateProdCust +' WHERE ' + condUpdateProdCust + ';');
             WriteLn(fileTXT, 'COMMIT WORK;');
           end;
-          if dadosUpdateItens <> '' then begin
-            WriteLn(fileTXT, dadosUpdateItens +' AND ' + condUpdateItens + ';');
+          //Um comando para cada movimentação de estoque
+          for m := 0 to High(sqlUpdateItens) do begin
+            WriteLn(fileTXT, sqlUpdateItens[m] +' AND ' + condUpdateItens + ';');
             WriteLn(fileTXT, 'COMMIT WORK;');
           end;
         end;

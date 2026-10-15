@@ -632,6 +632,42 @@ begin
       end
       else qtdEmpr := 1;
 
+      //Produtos: criar a PROD_AJUS antes das movimentações na ITENS,
+      //assim o NUME dos itens (gen_id(gen_prod_ajus_id,0)) é o código deste ajuste
+      if (SelectImport.Text = 'Produtos') and
+         ((colUpdateCount <= 0) or
+          (BuscaColuna(StringGrid1,'qtd') <> -1) or
+          (BuscaColuna(StringGrid1,'est') <> -1) or
+          (BuscaColuna(StringGrid1,'max') <> -1)) then
+      begin
+        frmImportando.atualizaStatus('Inserindo dados na tabela PROD_AJUS.');
+        if UpperCase( ExtractFileExt(DBPath.Text) ) = '.FDB' then begin
+          conDestino.Open;
+          SQL := TSQLDataSet.Create(Nil);
+          try
+            SQL.SQLConnection := conDestino;
+            SQL.CommandText := 'INSERT INTO prod_ajus (codi,data,obs) VALUES (gen_id(gen_prod_ajus_id,1),CURRENT_DATE,''IMPORTADO PELO IMPORTA EXCEL'');';
+            SQL.ExecSQL;
+          finally
+            SQL.Free;
+            conDestino.Close;
+          end;
+        end
+        else if (UpperCase( ExtractFileExt(DBPath.Text) ) = '.TXT') or
+                (UpperCase( ExtractFileExt(DBPath.Text) ) = '.SQL')
+        then begin
+          AssignFile(fileTXT, DBPath.Text);
+          if not FileExists(DBPath.Text) then ReWrite(fileTXT)
+          else append(fileTXT);
+          try
+            WriteLn(fileTXT, '----------Comandos da PROD_AJUS----------');
+            WriteLn(fileTXT, 'INSERT INTO prod_ajus (codi,data,obs) VALUES (gen_id(gen_prod_ajus_id,1),CURRENT_DATE,''IMPORTADO PELO IMPORTA EXCEL'');');
+            WriteLn(fileTXT, 'COMMIT WORK;');
+          finally
+            CloseFile(fileTXT);
+          end;
+        end;
+      end;
 
       for k := StrToInt(StartLine.Text) to StringGrid1.RowCount-1 do
       begin
@@ -802,19 +838,11 @@ begin
             //Atualizar MARGEM2
             SQL.CommandText := 'UPDATE prod_custos pc SET pc.cust_margem2 = (CAST(pc.cust_preco_vista as numeric (18,2))/CAST(pc.cust_preco_prazo as numeric (18,2)) -1)*100 WHERE CAST(pc.cust_preco_prazo as numeric (18,2))>0;';
             SQL.ExecSQL;
-            //Criar registro na PROD_AJUS
-            frmImportando.atualizaStatus('Inserindo dados na tabela PROD_AJUS.');
-            SQL.CommandText := 'INSERT INTO prod_ajus (codi,data) VALUES (gen_id(gen_prod_ajus_id,1),CURRENT_DATE);';
-            SQL.ExecSQL;
+            //PROD_AJUS é criada antes da importação dos registros
           end
           //Se for UPDATE
           else begin
-            if (colUpdateCount > 0) and (BuscaColuna(StringGrid1,'qtd') <> -1) then begin
-              //Criar registro na PROD_AJUS somente se for feito update na QTD da Itens
-              frmImportando.atualizaStatus('Inserindo dados na tabela PROD_AJUS.');
-              SQL.CommandText := 'INSERT INTO prod_ajus (codi,data) VALUES (gen_id(gen_prod_ajus_id,1),CURRENT_DATE);';
-              SQL.ExecSQL;
-            end;
+            //PROD_AJUS é criada antes da importação dos registros
 
             //Verificar se existe coluna margem, recalcular preços
             i:=BuscaColuna(StringGrid1,'margem');
@@ -945,20 +973,12 @@ begin
             //Atualizar MARGEM2
             WriteLn(fileTXT, 'UPDATE prod_custos pc SET pc.cust_margem2 = (CAST(pc.cust_preco_vista as numeric (18,2))/CAST(pc.cust_preco_prazo as numeric (18,2)) -1)*100 WHERE CAST(pc.cust_preco_prazo as numeric (18,2))>0;');
             WriteLn(fileTXT, 'COMMIT WORK;');
-            //Criar registro na PROD_AJUS
-            frmImportando.atualizaStatus('Inserindo dados na tabela PROD_AJUS.');
-            WriteLn(fileTXT, 'INSERT INTO prod_ajus (codi,data) VALUES (gen_id(gen_prod_ajus_id,1),CURRENT_DATE);');
-            WriteLn(fileTXT, 'COMMIT WORK;');
+            //PROD_AJUS é criada antes da importação dos registros
           end
 
           //Se for UPDATE
           else begin
-            if (colUpdateCount > 0) and (BuscaColuna(StringGrid1,'qtd') <> -1) then begin
-              //Criar registro na PROD_AJUS somente se for feito update na QTD da Itens
-              frmImportando.atualizaStatus('Inserindo dados na tabela PROD_AJUS.');
-              WriteLn(fileTXT, 'INSERT INTO prod_ajus (codi,data) VALUES (gen_id(gen_prod_ajus_id,1),CURRENT_DATE);');
-              WriteLn(fileTXT, 'COMMIT WORK;');
-            end;
+            //PROD_AJUS é criada antes da importação dos registros
 
             //Verificar se existe coluna margem, recalcular preços
             i:=BuscaColuna(StringGrid1,'margem');
