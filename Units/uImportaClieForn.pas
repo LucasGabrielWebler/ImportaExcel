@@ -144,38 +144,40 @@ begin
       //Se for letras, buscar código.
       if not (IsNumeric(temp)) then
       begin
-        temp2 := querySelect('SELECT g.codi FROM grupo_cliente g WHERE g.descr = '''+temp+'''');
-        //Se não encontrar a string, cadastrar sub grupo
-        if temp2='' then begin
-          if UpperCase( ExtractFileExt(frmPrinc.DBPath.Text) ) = '.TXT' then begin
-            //Carregar arquivo TXT
-            AssignFile(fileTXT, frmPrinc.DBPath.Text);
-            if not FileExists(frmPrinc.DBPath.Text) then ReWrite(fileTXT)
-            else append(fileTXT);
-            WriteLn(fileTXT, 'INSERT INTO grupo_cliente (CODI,DESCR,COMISSAO) VALUES (CASE WHEN (SELECT gc.codi FROM grupo_cliente gc WHERE gc.descr='''+temp+''') IS NULL THEN gen_id(gen_grupo_cliente_id,1 ) ELSE (SELECT gc.codi FROM grupo_cliente gc WHERE gc.descr='''+temp+''') END,'''+temp+''',1);');
-            WriteLn(fileTXT, 'COMMIT WORK;');
-            CloseFile(fileTXT);
-          end
-          else begin
-            queryInsert('INSERT INTO grupo_cliente (CODI,DESCR,COMISSAO) VALUES (gen_id(gen_grupo_cliente_id,1),'''+temp+''',1);');
-          end;
-          colClieForn := colClieForn + ',codi_grupo_clie';
-          dadosClieForn := dadosClieForn + ',' + 'gen_id(gen_grupo_cliente_id,0)';
+        //Arquivo TXT/SQL: cadastra o grupo somente se ainda não existir e o código
+        //é buscado pela descrição na execução do script
+        if (UpperCase( ExtractFileExt(frmPrinc.DBPath.Text) ) = '.TXT') or
+           (UpperCase( ExtractFileExt(frmPrinc.DBPath.Text) ) = '.SQL') then
+        begin
+          AssignFile(fileTXT, frmPrinc.DBPath.Text);
+          if not FileExists(frmPrinc.DBPath.Text) then ReWrite(fileTXT)
+          else append(fileTXT);
+          WriteLn(fileTXT, 'INSERT INTO grupo_cliente (CODI,DESCR,COMISSAO) SELECT gen_id(gen_grupo_cliente_id,1),'''+temp+''',1 FROM RDB$DATABASE WHERE NOT EXISTS (SELECT 1 FROM grupo_cliente gc WHERE gc.descr='''+temp+''');');
+          WriteLn(fileTXT, 'COMMIT WORK;');
+          CloseFile(fileTXT);
+          temp2 := '(SELECT FIRST 1 gc.codi FROM grupo_cliente gc WHERE gc.descr='''+temp+''')';
         end
+        //Banco FDB: busca o código pela descrição, se não encontrar cadastra o grupo e busca novamente
         else begin
-          colClieForn := colClieForn + ',codi_grupo_clie';
-          dadosClieForn := dadosClieForn + ',''' + temp2 + '''';
-          //Testa se é Update
-          if VerificaUpdate('grupo') = 1 then begin
-            ShowMessage('Só é possível utilizar o código do grupo como Update, não da pra usar a descrição.');
-            Exit;
-          end
-          else begin
-            if dadosUpdateClieForn <> '' then dadosUpdateClieForn := dadosUpdateClieForn + ', ';
-            dadosUpdateClieForn := dadosUpdateClieForn + 'grupo=' + '''' + temp + '''';
+          temp2 := querySelect('SELECT g.codi FROM grupo_cliente g WHERE g.descr = '''+temp+'''');
+          if temp2='' then begin
+            queryInsert('INSERT INTO grupo_cliente (CODI,DESCR,COMISSAO) VALUES (gen_id(gen_grupo_cliente_id,1),'''+temp+''',1);');
+            temp2 := querySelect('SELECT g.codi FROM grupo_cliente g WHERE g.descr = '''+temp+'''');
           end;
+          temp2 := '''' + temp2 + '''';
         end;
 
+        colClieForn := colClieForn + ',codi_grupo_clie';
+        dadosClieForn := dadosClieForn + ',' + temp2;
+        //Testa se é Update
+        if VerificaUpdate('grupo') = 1 then begin
+          ShowMessage('Só é possível utilizar o código do grupo como Update, não da pra usar a descrição.');
+          Exit;
+        end
+        else begin
+          if dadosUpdateClieForn <> '' then dadosUpdateClieForn := dadosUpdateClieForn + ', ';
+          dadosUpdateClieForn := dadosUpdateClieForn + 'codi_grupo_clie=' + temp2;
+        end;
       end
       else begin
         //Se for números, considera como código
@@ -391,14 +393,18 @@ begin
         else begin
           if dadosUpdateClieForn <> '' then dadosUpdateClieForn := dadosUpdateClieForn + ', ';
           dadosUpdateClieForn := dadosUpdateClieForn + 'cnpj=' + '''' + temp2 + '''';
-          dadosUpdateClieForn := dadosUpdateClieForn + ',tipo=' + '''' + 'F' + '''';
+          dadosUpdateClieForn := dadosUpdateClieForn + ',tipo=' + '''' + 'J' + '''';
         end;
       end
       else
       begin
-        //CPF NULL
+        //Inclusão: vazio grava '0' (padrão do ERP), senão grava no CPF o valor que veio, com tipo F
+        temp2 := Copy(Trim(StringGrid1.Cells[i,k]),1,16);
+        if temp2 = '' then temp2 := '0';
+        temp2 := stringreplace(temp2, '''', '''''',[rfReplaceAll, rfIgnoreCase]);
         colClieForn := colClieForn + ',cpf';
-        dadosClieForn := dadosClieForn + ',' + 'null';
+        dadosClieForn := dadosClieForn + ',''' + temp2 + '''';
+        //Update: CPF NULL
         //Testa se é Update
         if VerificaUpdate('cpf_cnpj') = 1 then begin
           if condUpdateClieForn <> '' then condUpdateClieForn := condUpdateClieForn + ' AND ';
@@ -409,25 +415,23 @@ begin
           dadosUpdateClieForn := dadosUpdateClieForn + 'cpf=' + 'null';
         end;
 
-        //CNPJ null
-        //Trazer em branco
+        //Inclusão: CNPJ '0' (padrão do ERP) / Update: CNPJ null
         colClieForn := colClieForn + ',cnpj';
-        dadosClieForn := dadosClieForn + ',' + 'null';
+        dadosClieForn := dadosClieForn + ',''' + '0' + '''';
         //Testa se é Update
         if VerificaUpdate('cpf_cnpj') = 1 then begin
           if condUpdateClieForn <> '' then condUpdateClieForn := condUpdateClieForn + ' AND ';
-          condUpdateClieForn := condUpdateClieForn + 'cnpj if null';
+          condUpdateClieForn := condUpdateClieForn + 'cnpj IS NULL';
         end
         else begin
           if dadosUpdateClieForn <> '' then dadosUpdateClieForn := dadosUpdateClieForn + ', ';
           dadosUpdateClieForn := dadosUpdateClieForn + 'cnpj=' + 'null';
         end;
 
-        //TIPO null
-        //Trazer em branco
         //Setar tipo (Fisca ou Juridica)
+        //Inclusão: tipo F / Update: tipo null
         colClieForn := colClieForn + ',tipo';
-        dadosClieForn := dadosClieForn + ',' + 'null';
+        dadosClieForn := dadosClieForn + ',''' + 'F' + '''';
         //Testa se é Update
         if VerificaUpdate('cpf_cnpj') = 1 then begin
           if condUpdateClieForn <> '' then condUpdateClieForn := condUpdateClieForn + ' AND ';
@@ -435,7 +439,7 @@ begin
         end
         else begin
           if dadosUpdateClieForn <> '' then dadosUpdateClieForn := dadosUpdateClieForn + ', ';
-          dadosUpdateClieForn := dadosUpdateClieForn + ',tipo=' + 'null';
+          dadosUpdateClieForn := dadosUpdateClieForn + 'tipo=' + 'null';
         end;
       end;
     end
