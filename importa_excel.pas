@@ -123,6 +123,13 @@ uses
   uImportaClieForn, uImportaProduto, uImportaGrupo, uImportaSubGrupo,
   uImportaMarca, uImportaTituP, uImportaTituR, uImportaCUSTOM;
 
+const
+  //Recálculo das margens dos produtos (sem estouro numérico e com o sinal correto)
+  //MARGEM1: margem do preço a prazo sobre o custo real (negativa quando o preço é menor que o custo)
+  SQL_MARGEM1 = 'UPDATE prod_custos pc SET pc.cust_margem1 = CAST((pc.cust_preco_prazo - pc.cust_custo_real)*100 AS NUMERIC(18,2)) / pc.cust_custo_real WHERE pc.cust_preco_prazo > 0 AND pc.cust_custo_real > 0;';
+  //MARGEM2: desconto do preço a vista sobre o preço a prazo (negativa quando a vista é maior)
+  SQL_MARGEM2 = 'UPDATE prod_custos pc SET pc.cust_margem2 = CAST((pc.cust_preco_prazo - pc.cust_preco_vista)*100 AS NUMERIC(18,2)) / pc.cust_preco_prazo WHERE pc.cust_preco_prazo > 0;';
+
 //Função para definir a quantidade de empresas
 function TfrmPrinc.quantidadeEmpresas(colEmpr: Integer): Integer;
 var
@@ -130,10 +137,16 @@ var
 begin
   max := 1;
   for i := StrToInt(StartLine.Text) to StringGrid1.RowCount-1 do begin
-    if StrToInt(StringGrid1.Cells[colEmpr,i]) > max  then begin
-      max := StrToInt(StringGrid1.Cells[colEmpr,i]);
+    //Vazio ou inválido conta como empresa 1 (o valor inválido para a importação na própria linha)
+    if StrToIntDef(Trim(StringGrid1.Cells[colEmpr,i]),1) > max  then begin
+      max := StrToIntDef(Trim(StringGrid1.Cells[colEmpr,i]),1);
     end;
   end;
+  //Banco FDB: não passar da maior empresa cadastrada
+  //(empresa inexistente para a importação somente na própria linha)
+  if UpperCase( ExtractFileExt(DBPath.Text) ) = '.FDB' then
+    if max > StrToIntDef(querySelect('SELECT MAX(codi) FROM dados_empre'), 1) then
+      max := StrToIntDef(querySelect('SELECT MAX(codi) FROM dados_empre'), 1);
   Result := max;
 end;
 
@@ -608,6 +621,20 @@ begin
     Exit;
   end;
 
+  //Se for Produtos, não pode usar CSOSN/CST junto com as colunas separadas (estadual/interestadual)
+  if (SelectImport.Text = 'Produtos') and (BuscaColuna(StringGrid1,'csosn') <> -1) and
+     ((BuscaColuna(StringGrid1,'csosn_esta') <> -1) or (BuscaColuna(StringGrid1,'csosn_inter') <> -1)) then
+  begin
+    ShowMessage('Utilize a coluna CSOSN ou as colunas CSOSN_ESTA/CSOSN_INTER, não as duas formas juntas.');
+    Exit;
+  end;
+  if (SelectImport.Text = 'Produtos') and (BuscaColuna(StringGrid1,'cst') <> -1) and
+     ((BuscaColuna(StringGrid1,'cst_esta') <> -1) or (BuscaColuna(StringGrid1,'cst_inter') <> -1)) then
+  begin
+    ShowMessage('Utilize a coluna CST ou as colunas CST_ESTA/CST_INTER, não as duas formas juntas.');
+    Exit;
+  end;
+
 
   //Status se esta OK ou se tem erro, setado como OK
   status := 1;
@@ -826,28 +853,12 @@ begin
 
           //Se for INSERT
           if colUpdateCount <= 0 then begin
-            //Verificar se existe coluna margem, recalcular preços
-            i:=BuscaColuna(StringGrid1,'margem');
-            if (i<>-1) then
-            begin
-              frmImportando.atualizaStatus('Ajustando Preços.');
-              SQL.CommandText := 'UPDATE prod_custos pc SET pc.cust_preco_prazo = pc.cust_custo_real+(pc.cust_custo_real * pc.cust_margem1 /100) WHERE pc.cust_custo_real>0;';
-              SQL.ExecSQL;
-              SQL.CommandText := 'UPDATE prod_custos pc SET pc.cust_preco_vista = pc.cust_preco_prazo;';
-              SQL.ExecSQL;
-            end
-            //Se não existir coluna margem, recalcular margem
-            else begin
-              //Atualizar MARGEM1
-              frmImportando.atualizaStatus('Ajustando MARGENS.');
-              SQL.CommandText := 'UPDATE prod_custos pc SET pc.cust_margem1= ABS(pc.cust_preco_prazo - pc.cust_custo_real)/pc.cust_custo_real WHERE pc.cust_custo_real>0;';
-              SQL.ExecSQL;
-              SQL.CommandText := 'UPDATE prod_custos pc SET pc.cust_margem1 = pc.cust_margem1 * 100;';
-              SQL.ExecSQL;
-            end;
-
-            //Atualizar MARGEM2
-            SQL.CommandText := 'UPDATE prod_custos pc SET pc.cust_margem2 = (CAST(pc.cust_preco_vista as numeric (18,2))/CAST(pc.cust_preco_prazo as numeric (18,2)) -1)*100 WHERE CAST(pc.cust_preco_prazo as numeric (18,2))>0;';
+            //Recalcular as margens de toda a base pelos preços (o preço pela MARGEM já foi
+            //calculado somente nos produtos da planilha, sem alterar o preço a vista informado)
+            frmImportando.atualizaStatus('Ajustando MARGENS.');
+            SQL.CommandText := SQL_MARGEM1;
+            SQL.ExecSQL;
+            SQL.CommandText := SQL_MARGEM2;
             SQL.ExecSQL;
             //PROD_AJUS é criada antes da importação dos registros
           end
@@ -855,38 +866,17 @@ begin
           else begin
             //PROD_AJUS é criada antes da importação dos registros
 
-            //Verificar se existe coluna margem, recalcular preços
-            i:=BuscaColuna(StringGrid1,'margem');
-            if (i<>-1) then
+            //Recalcular as margens se a planilha tiver custo, preço ou margem
+            //(o preço pela MARGEM já foi calculado somente nos produtos da planilha)
+            if (BuscaColuna(StringGrid1,'margem') <> -1) or (BuscaColuna(StringGrid1,'preco_prazo') <> -1) or
+               (BuscaColuna(StringGrid1,'preco_vista') <> -1) or (BuscaColuna(StringGrid1,'custo_real') <> -1) or
+               (BuscaColuna(StringGrid1,'custo') <> -1) then
             begin
-              frmImportando.atualizaStatus('Ajustando Preços.');
-              SQL.CommandText := 'UPDATE prod_custos pc SET pc.cust_preco_prazo = pc.cust_custo_real+(pc.cust_custo_real * pc.cust_margem1 /100) WHERE pc.cust_custo_real>0;';
+              frmImportando.atualizaStatus('Ajustando MARGENS.');
+              SQL.CommandText := SQL_MARGEM1;
               SQL.ExecSQL;
-              SQL.CommandText := 'UPDATE prod_custos pc SET pc.cust_preco_vista = pc.cust_preco_prazo;';
-              SQL.ExecSQL;;
-            end
-            //Se não existir coluna margem, ve se tem alguma coluna de preço e recalcular margem
-            else begin
-              //Preço A PRAZO
-              i:=BuscaColuna(StringGrid1,'preco_prazo');
-              if (i<>-1) then
-              begin
-                //Atualizar MARGEM1
-                frmImportando.atualizaStatus('Ajustando MARGEM 1.');
-                SQL.CommandText := 'UPDATE prod_custos pc SET pc.cust_margem1= ABS(pc.cust_preco_prazo - pc.cust_custo_real)/pc.cust_custo_real WHERE pc.cust_custo_real>0;';
-                SQL.ExecSQL;
-                SQL.CommandText := 'UPDATE prod_custos pc SET pc.cust_margem1 = pc.cust_margem1 * 100;';
-                SQL.ExecSQL;
-              end;
-              //Preço A VISTA
-              i:=BuscaColuna(StringGrid1,'preco_vista');
-              if (i<>-1) then
-              begin
-                //Atualizar MARGEM2
-                frmImportando.atualizaStatus('Ajustando MARGEM 2.');
-                SQL.CommandText := 'UPDATE prod_custos pc SET pc.cust_margem2= (pc.cust_preco_prazo - pc.cust_preco_vista)*100/pc.cust_preco_prazo WHERE pc.cust_preco_prazo>0;';
-                SQL.ExecSQL;
-              end;
+              SQL.CommandText := SQL_MARGEM2;
+              SQL.ExecSQL;
             end;
           end;
 
@@ -961,28 +951,12 @@ begin
             WriteLn(fileTXT, 'SELECT gen_id(gen_prod_id, ABS((SELECT MAX(CODI) FROM prod) - (SELECT gen_id(gen_prod_id,0) FROM RDB$DATABASE)) ) FROM RDB$DATABASE;');
             WriteLn(fileTXT, 'COMMIT WORK;');
 
-            //Verificar se existe coluna margem, recalcular preços
-            i:=BuscaColuna(StringGrid1,'margem');
-            if (i<>-1) then
-            begin
-              frmImportando.atualizaStatus('Ajustando Preços.');
-              WriteLn(fileTXT, 'UPDATE prod_custos pc SET pc.cust_preco_prazo = pc.cust_custo_real+(pc.cust_custo_real * pc.cust_margem1 /100) WHERE pc.cust_custo_real>0;');
-              WriteLn(fileTXT, 'COMMIT WORK;');
-              WriteLn(fileTXT, 'UPDATE prod_custos pc SET pc.cust_preco_vista = pc.cust_preco_prazo;');
-              WriteLn(fileTXT, 'COMMIT WORK;');
-            end
-            //Se não existir coluna margem, recalcular margem
-            else begin
-              //Atualizar MARGEM1
-              frmImportando.atualizaStatus('Ajustando MARGENS.');
-              WriteLn(fileTXT, 'UPDATE prod_custos pc SET pc.cust_margem1= ABS(pc.cust_preco_prazo - pc.cust_custo_real)/pc.cust_custo_real WHERE pc.cust_custo_real>0;');
-              WriteLn(fileTXT, 'COMMIT WORK;');
-              WriteLn(fileTXT, 'UPDATE prod_custos pc SET pc.cust_margem1 = pc.cust_margem1 * 100;');
-              WriteLn(fileTXT, 'COMMIT WORK;');
-            end;
-
-            //Atualizar MARGEM2
-            WriteLn(fileTXT, 'UPDATE prod_custos pc SET pc.cust_margem2 = (CAST(pc.cust_preco_vista as numeric (18,2))/CAST(pc.cust_preco_prazo as numeric (18,2)) -1)*100 WHERE CAST(pc.cust_preco_prazo as numeric (18,2))>0;');
+            //Recalcular as margens de toda a base pelos preços (o preço pela MARGEM já foi
+            //calculado somente nos produtos da planilha, sem alterar o preço a vista informado)
+            frmImportando.atualizaStatus('Ajustando MARGENS.');
+            WriteLn(fileTXT, SQL_MARGEM1);
+            WriteLn(fileTXT, 'COMMIT WORK;');
+            WriteLn(fileTXT, SQL_MARGEM2);
             WriteLn(fileTXT, 'COMMIT WORK;');
             //PROD_AJUS é criada antes da importação dos registros
           end
@@ -991,38 +965,17 @@ begin
           else begin
             //PROD_AJUS é criada antes da importação dos registros
 
-            //Verificar se existe coluna margem, recalcular preços
-            i:=BuscaColuna(StringGrid1,'margem');
-            if (i<>-1) then
+            //Recalcular as margens se a planilha tiver custo, preço ou margem
+            //(o preço pela MARGEM já foi calculado somente nos produtos da planilha)
+            if (BuscaColuna(StringGrid1,'margem') <> -1) or (BuscaColuna(StringGrid1,'preco_prazo') <> -1) or
+               (BuscaColuna(StringGrid1,'preco_vista') <> -1) or (BuscaColuna(StringGrid1,'custo_real') <> -1) or
+               (BuscaColuna(StringGrid1,'custo') <> -1) then
             begin
-              frmImportando.atualizaStatus('Ajustando Preços.');
-              WriteLn(fileTXT, 'UPDATE prod_custos pc SET pc.cust_preco_prazo = pc.cust_custo_real+(pc.cust_custo_real * pc.cust_margem1 /100) WHERE pc.cust_custo_real>0;');
+              frmImportando.atualizaStatus('Ajustando MARGENS.');
+              WriteLn(fileTXT, SQL_MARGEM1);
               WriteLn(fileTXT, 'COMMIT WORK;');
-              WriteLn(fileTXT, 'UPDATE prod_custos pc SET pc.cust_preco_vista = pc.cust_preco_prazo;');
+              WriteLn(fileTXT, SQL_MARGEM2);
               WriteLn(fileTXT, 'COMMIT WORK;');
-            end
-            //Se não existir coluna margem, ve se tem alguma coluna de preço e recalcular margem
-            else begin
-              //Preço A PRAZO
-              i:=BuscaColuna(StringGrid1,'preco_prazo');
-              if (i<>-1) then
-              begin
-                //Atualizar MARGEM1
-                frmImportando.atualizaStatus('Ajustando MARGEM 1.');
-                WriteLn(fileTXT, 'UPDATE prod_custos pc SET pc.cust_margem1= ABS(pc.cust_preco_prazo - pc.cust_custo_real)/pc.cust_custo_real WHERE pc.cust_custo_real>0;');
-                WriteLn(fileTXT, 'COMMIT WORK;');
-                WriteLn(fileTXT, 'UPDATE prod_custos pc SET pc.cust_margem1 = pc.cust_margem1 * 100;');
-                WriteLn(fileTXT, 'COMMIT WORK;');
-              end;
-              //Preço A VISTA
-              i:=BuscaColuna(StringGrid1,'preco_vista');
-              if (i<>-1) then
-              begin
-                //Atualizar MARGEM2
-                frmImportando.atualizaStatus('Ajustando MARGEM 2.');
-                WriteLn(fileTXT, 'UPDATE prod_custos pc SET pc.cust_margem2= (pc.cust_preco_prazo - pc.cust_preco_vista)*100/pc.cust_preco_prazo WHERE pc.cust_preco_prazo>0;');
-                WriteLn(fileTXT, 'COMMIT WORK;');
-              end;
             end;
           end;
         end
