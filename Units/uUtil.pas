@@ -16,6 +16,14 @@ uses
   function querySelect(sql: String): String;
   function IsNumeric(S : String) : Boolean;
   function PrimeiraMaiuscula(texto: string) : string;
+  function TextoSQL(texto: string; tamanho: Integer): string;
+  function NumeroSQL(texto: string): string;
+  function DataValida(data: string): Boolean;
+  function AnoQuatroDigitos(ano: string): string;
+
+  //Validação dos valores da linha (a importação para na linha com erro)
+  procedure RegistraErro(coluna, valor, motivo: string);
+  function Corta(texto: string; tamanho: Integer; coluna: string): string;
 
   //Funções para GRID
   procedure DeleteRow(Grid: TStringGrid; ARow: Integer);
@@ -33,6 +41,10 @@ uses
   function XlsHeaderLoad(AGrid: TStringGrid; AXLSFile: string): Boolean;
   function Xls_To_StringGrid(AGrid: TStringGrid; AXLSFile: string): Boolean;
   function VerificaUpdate(coluna: String): Integer;
+
+var
+  //Erros de valores da linha que está sendo importada
+  errosLinha: TStringList;
 
 implementation
 
@@ -228,6 +240,79 @@ end;
 function PrimeiraMaiuscula(texto: string) : string;
 begin
   Result := UpperCase(Copy(texto,1,1)) + LowerCase(Copy(texto,2,Length(texto)-1));
+end;
+
+
+//Função para preparar texto para o SQL: corta no tamanho do campo e duplica os apóstrofos
+function TextoSQL(texto: string; tamanho: Integer): string;
+begin
+  Result := stringreplace(Copy(texto,1,tamanho), '''', '''''',[rfReplaceAll]);
+end;
+
+
+//Função para converter número da planilha para o SQL (2.500,50 / 2500.50 / 2500)
+//Retorna vazio se não for um número válido
+function NumeroSQL(texto: string): string;
+var
+  valor: Double;
+  formato: TFormatSettings;
+begin
+  Result := '';
+  texto := Trim(texto);
+  if texto = '' then Exit;
+  texto := corrigeFloat(texto);
+  formato := TFormatSettings.Create;
+  formato.DecimalSeparator := '.';
+  formato.ThousandSeparator := ',';
+  if TryStrToFloat(texto, valor, formato) then
+    Result := texto;
+end;
+
+
+//Função para validar data da planilha já sem separadores (ddmmaaaa ou ddmmaa)
+function DataValida(data: string): Boolean;
+var
+  d: TDateTime;
+  c: Char;
+begin
+  Result := False;
+  if Length(data) >= 8 then data := Copy(data,1,8)
+  else if Length(data) <> 6 then Exit;
+  for c in data do
+    if not CharInSet(c, ['0'..'9']) then Exit;
+  if Length(data) = 8 then
+    Result := TryEncodeDate(StrToInt(Copy(data,5,4)), StrToInt(Copy(data,3,2)), StrToInt(Copy(data,1,2)), d)
+  else
+    Result := TryEncodeDate(StrToInt(AnoQuatroDigitos(Copy(data,5,2))), StrToInt(Copy(data,3,2)), StrToInt(Copy(data,1,2)), d);
+end;
+
+
+//Função para completar o ano de 2 dígitos (aa) com o século
+//Ano maior que o ano atual é do século passado (ex.: em 2026, 85 = 1985 e 10 = 2010)
+function AnoQuatroDigitos(ano: string): string;
+begin
+  if StrToInt(ano) > StrToInt(FormatDateTime('yy', Date)) then
+    Result := '19' + ano
+  else
+    Result := '20' + ano;
+end;
+
+
+//Registra um valor inválido da linha que está sendo importada
+procedure RegistraErro(coluna, valor, motivo: string);
+begin
+  //Mostra no máximo 60 caracteres do valor na mensagem
+  if Length(valor) > 60 then valor := Copy(valor,1,60) + '...';
+  errosLinha.Add(UpperCase(coluna) + ': ' + motivo + ' [' + valor + ']');
+end;
+
+
+//Corta o texto no tamanho do campo, registrando erro se for maior
+function Corta(texto: string; tamanho: Integer; coluna: string): string;
+begin
+  Result := Copy(texto,1,tamanho);
+  if Length(texto) > tamanho then
+    RegistraErro(coluna, texto, 'texto maior que ' + IntToStr(tamanho) + ' caracteres');
 end;
 
 
@@ -692,5 +777,11 @@ begin
     end;
   end;
 end;
+
+initialization
+  errosLinha := TStringList.Create;
+
+finalization
+  errosLinha.Free;
 
 end.

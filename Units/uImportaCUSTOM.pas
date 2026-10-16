@@ -140,8 +140,7 @@ begin
         begin
           ShowMessage('Erro SQL: '+e.message+sLineBreak+SQL.CommandText);
           status := 0;
-          SQL.Free;
-          frmPrinc.conDestino.Close;
+          //SQL e conexão são liberados no finally
           Exit;
         end;
       end;
@@ -182,7 +181,7 @@ begin
         begin
           ShowMessage('Erro TXT: '+e.message);
           status := 0;
-          CloseFile(fileTXT);
+          //Arquivo é fechado no finally
           Exit;
         end;
       end;

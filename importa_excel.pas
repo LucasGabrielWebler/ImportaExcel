@@ -282,7 +282,8 @@ var
 begin
   if (UpperCase( ExtractFileExt(frmPrinc.DBPath.Text) ) = '.TXT') or
      (UpperCase( ExtractFileExt(frmPrinc.DBPath.Text) ) = '.SQL')
-  then Result := '(SELECT CID_CODI FROM CIDADE WHERE CID_DESC = '''+Cidade+''' AND CID_UF = '''+UF+''')'
+  //Arquivo TXT/SQL: subconsulta resolvida na execução do script (apóstrofo duplicado para o SQL)
+  then Result := '(SELECT FIRST 1 CID_CODI FROM CIDADE WHERE CID_DESC = '''+stringreplace(Cidade, '''', '''''',[rfReplaceAll])+''' AND CID_UF = '''+UF+''')'
   else
   begin
     try
@@ -596,6 +597,14 @@ begin
   if (SelectImport.Text = 'CUSTOM') and (edtTableName.Text = '') then
   begin
     ShowMessage('Informe o nome da Tabela para importação CUSTOM.');
+    Exit;
+  end;
+
+  //Se for Clie/Forn, não pode usar CPF_CNPJ junto com as colunas CPF ou CNPJ
+  if (SelectImport.Text = 'Clie/Forn') and (BuscaColuna(StringGrid1,'cpf_cnpj') <> -1) and
+     ((BuscaColuna(StringGrid1,'cpf') <> -1) or (BuscaColuna(StringGrid1,'cnpj') <> -1)) then
+  begin
+    ShowMessage('Utilize a coluna CPF_CNPJ ou as colunas CPF/CNPJ, não as duas formas juntas.');
     Exit;
   end;
 
