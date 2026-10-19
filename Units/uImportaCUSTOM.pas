@@ -22,7 +22,7 @@ type
 implementation
 
 uses
-  importa_excel, importando;
+  System.StrUtils, importa_excel, importando;
 
 constructor cImportaCUSTOM.ImportaRegistro(numReg: Integer; Grid: TStringGrid);
 begin
@@ -92,7 +92,7 @@ begin
     end
     else begin
       if dadosUpdate <> '' then dadosUpdate := dadosUpdate + ', ';
-      dadosUpdate := dadosUpdate + StringGrid1.Cells[i,0] + '=' + QuotedStr(StringGrid1.Cells[i,k]);
+      dadosUpdate := dadosUpdate + StringGrid1.Cells[i,0] + '=' + IfThen(StringGrid1.Cells[i,k] = '', 'null', QuotedStr(StringGrid1.Cells[i,k]));
     end;
   end;
 end;
@@ -112,8 +112,8 @@ begin
     try
       try
         //Abrir conexoes
-        frmPrinc.conDestino.Open;
         SQL := TSQLDataSet.Create(Nil);
+        frmPrinc.conDestino.Open;
         SQL.SQLConnection := frmPrinc.conDestino;
 
         //Se for INSERT
@@ -172,6 +172,8 @@ begin
         end
         //Se for UPDATE
         else begin
+          if dadosUpdate = '' then Exit;
+
           //Executar UPDATE
           WriteLn(fileTXT, 'UPDATE '+frmPrinc.edtTableName.Text+' SET '+ dadosUpdate +' WHERE ' + condUpdate + ';');
           WriteLn(fileTXT, 'COMMIT WORK;');

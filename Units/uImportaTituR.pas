@@ -3,20 +3,30 @@ unit uImportaTituR;
 interface
 
 uses
-  System.SysUtils, Vcl.Grids, Vcl.Dialogs, Data.SqlExpr,
+  System.SysUtils, System.Classes, System.StrUtils, System.UITypes, Vcl.Grids, Vcl.Dialogs, Data.SqlExpr,
   uUtil;
 
 type
   cImportaTituR = class
     private
-      colTituR, dadosTituR, condUpdateTituR, dadosUpdateTituR: string;
-      colBTitu, dadosBTitu, condUpdateBTitu, dadosUpdateBTitu: string;
-      saldo: Double;
+      colTituR, dadosTituR: string;
+      colBTitu, dadosBTitu: string;
+      cadastroForn: string;
+      codi, empr, forn: string;
+      quitado: Boolean;
+      function Celula(coluna: string): string;
+      function Inteiro(coluna, padrao: string): string;
+      function Numero(coluna: string): string;
+      function DataSQL(coluna: string; futuro: Boolean): string;
+      function CodigoClieForn(valor: string): string;
+      function CodigoTitulo(valor: string): string;
+      procedure Adiciona(coluna, valor: string; baixa: Boolean);
 
     public
       k: Integer;
       StringGrid1: TStringGrid;
       constructor ImportaRegistro(numReg: Integer; Grid: TStringGrid);
+      class procedure Inicia;
       procedure CarregaColunas;
       procedure Gravar;
   end;
@@ -25,6 +35,19 @@ implementation
 
 uses
   importa_excel, importando;
+
+const
+  TABELA = 'titur';
+  TABELA_BAIXA = 'btitur';
+  COLUNA_CF = 'clie';
+  NOME_CF = 'cliente';
+  OPER_PADRAO = '002';
+
+var
+  //Títulos gravados nesta importação (código|cliente|empresa), para não repetir o código no TXT/SQL
+  titulosGravados: TStringList;
+  //Usuário escolheu "Cadastrar todos" para os clientes informados pelo nome
+  cadastrarTodos: Boolean;
 
 constructor cImportaTituR.ImportaRegistro(numReg: Integer; Grid: TStringGrid);
 begin
@@ -35,10 +58,293 @@ begin
   Gravar;
 end;
 
+//Chave (código|cliente|empresa) de um INSERT de título já gravado no arquivo TXT/SQL
+//O INSERT começa sempre com (codi,cliente,empr,...)
+function ChaveInsert(linha: string): string;
+var
+  p, n, nivel: Integer;
+  aspas: Boolean;
+  partes: array[0..2] of string;
+begin
+  Result := '';
+  p := Pos('VALUES (', UpperCase(linha));
+  if p = 0 then Exit;
+  linha := Copy(linha, p + 8, MaxInt);
+  n := 0;
+  nivel := 0;
+  aspas := False;
+  for p := 1 to Length(linha) do
+  begin
+    if linha[p] = '''' then aspas := not aspas
+    else if not aspas then
+    begin
+      if linha[p] = '(' then Inc(nivel)
+      else if linha[p] = ')' then Dec(nivel)
+      else if (linha[p] = ',') and (nivel = 0) then
+      begin
+        Inc(n);
+        if n > 2 then Break;
+        Continue;
+      end;
+    end;
+    partes[n] := partes[n] + linha[p];
+  end;
+  if n <= 2 then Exit;
+  //Código sem as aspas do SQL
+  partes[0] := stringreplace(Copy(partes[0], 2, Length(partes[0])-2), '''''', '''',[rfReplaceAll]);
+  Result := partes[0] + '|' + partes[1] + '|' + partes[2];
+end;
+
+//Chamado no início de cada importação
+class procedure cImportaTituR.Inicia;
+var
+  arquivo: TStringList;
+  i: Integer;
+  chave: string;
+begin
+  titulosGravados.Clear;
+  cadastrarTodos := False;
+
+  //TXT/SQL: títulos que já estão no arquivo (importação continuada a partir de uma linha)
+  if ((UpperCase( ExtractFileExt(frmPrinc.DBPath.Text) ) = '.TXT') or
+      (UpperCase( ExtractFileExt(frmPrinc.DBPath.Text) ) = '.SQL')) and
+     FileExists(frmPrinc.DBPath.Text) then
+  begin
+    arquivo := TStringList.Create;
+    try
+      arquivo.LoadFromFile(frmPrinc.DBPath.Text);
+      for i := 0 to arquivo.Count-1 do
+        if StartsText('INSERT INTO ' + TABELA + ' (', arquivo[i]) then
+        begin
+          chave := ChaveInsert(arquivo[i]);
+          if chave <> '' then titulosGravados.Add(chave);
+        end;
+    finally
+      arquivo.Free;
+    end;
+  end;
+end;
+
+//Valor da célula da coluna na linha atual ('' se a coluna não existir)
+function cImportaTituR.Celula(coluna: string): string;
+var
+  i: Integer;
+begin
+  Result := '';
+  i := BuscaColuna(StringGrid1, coluna);
+  if i <> -1 then Result := Trim(StringGrid1.Cells[i,k]);
+end;
+
+//Código inteiro da coluna; vazio ou sem a coluna assume o padrão
+function cImportaTituR.Inteiro(coluna, padrao: string): string;
+begin
+  Result := Celula(coluna);
+  if Result = '' then Result := padrao
+  else if not IsNumeric(Result) then
+    RegistraErro(coluna, Result, 'código numérico inválido')
+  else
+    //Sem zeros à esquerda (01 = 1)
+    Result := IntToStr(StrToInt(Result));
+end;
+
+//Valor numérico da coluna para o SQL (aceita R$ e 2.500,50 / 2500.50); vazio é erro
+function cImportaTituR.Numero(coluna: string): string;
+var
+  valor: string;
+begin
+  valor := Celula(coluna);
+  Result := NumeroSQL(stringreplace(valor, 'R$', '',[rfReplaceAll, rfIgnoreCase]));
+  if valor = '' then
+    RegistraErro(coluna, valor, 'valor não informado')
+  else if Result = '' then
+    RegistraErro(coluna, valor, 'valor numérico inválido');
+end;
+
+//Data da coluna para o SQL ('dd.mm.aaaa'); vazio retorna ''
+//Aceita dd/mm/aaaa, d/m/aa, dd-mm-aaaa, dd.mm.aaaa, aaaa-mm-dd, ddmmaaaa e ddmmaa
+//Ano com 2 dígitos: futuro = True sempre 20aa (vencimento), senão segue AnoQuatroDigitos
+function cImportaTituR.DataSQL(coluna: string; futuro: Boolean): string;
+var
+  original, temp, dia, mes, ano: string;
+  partes: TStringList;
+  d: TDateTime;
+  c: Char;
+begin
+  Result := '';
+  original := Celula(coluna);
+  if original = '' then Exit;
+
+  //Desconsidera a hora (01/02/2026 00:00:00)
+  temp := original;
+  if Pos(' ', temp) > 0 then temp := Copy(temp, 1, Pos(' ', temp)-1);
+  temp := stringreplace(temp, '-', '/',[rfReplaceAll]);
+  temp := stringreplace(temp, '.', '/',[rfReplaceAll]);
+
+  if Pos('/', temp) > 0 then
+  begin
+    partes := TStringList.Create;
+    try
+      partes.Delimiter := '/';
+      partes.StrictDelimiter := True;
+      partes.DelimitedText := temp;
+      if partes.Count <> 3 then temp := ''
+      else if Length(partes[0]) = 4 then
+        temp := Format('%2s%2s%s', [partes[2], partes[1], partes[0]])
+      else
+        temp := Format('%2s%2s%s', [partes[0], partes[1], partes[2]]);
+      temp := stringreplace(temp, ' ', '0',[rfReplaceAll]);
+    finally
+      partes.Free;
+    end;
+  end;
+
+  for c in temp do
+    if not CharInSet(c, ['0'..'9']) then temp := '';
+
+  dia := Copy(temp,1,2);
+  mes := Copy(temp,3,2);
+  ano := Copy(temp,5,4);
+  if Length(temp) = 6 then
+  begin
+    if futuro then ano := '20' + ano
+    else ano := AnoQuatroDigitos(ano);
+  end
+  else if Length(temp) <> 8 then ano := '';
+
+  if (ano = '') or (StrToInt(ano) < 1900) or (StrToInt(ano) > 2099) or not TryEncodeDate(StrToInt(ano), StrToInt(mes), StrToInt(dia), d) then
+    RegistraErro(coluna, original, 'data inválida')
+  else
+    Result := '''' + dia + '.' + mes + '.' + ano + '''';
+end;
+
+//Código do cliente para o SQL: pelo código ou pelo nome
+//Nome não encontrado: pergunta se deseja cadastrar ou corrigir a planilha
+function cImportaTituR.CodigoClieForn(valor: string): string;
+var
+  nome: string;
+  bancoFDB: Boolean;
+  resposta: Integer;
+begin
+  Result := '';
+  bancoFDB := UpperCase( ExtractFileExt(frmPrinc.DBPath.Text) ) = '.FDB';
+  if valor = '' then
+  begin
+    RegistraErro(COLUNA_CF, valor, NOME_CF + ' não informado');
+    Exit;
+  end;
+
+  //Números: código do cliente
+  if IsNumeric(valor) then
+  begin
+    valor := IntToStr(StrToInt(valor));
+    if bancoFDB and (querySelect('SELECT codi FROM clieforn WHERE codi = ' + valor) = '') then
+      RegistraErro(COLUNA_CF, valor, 'código de ' + NOME_CF + ' não encontrado')
+    else
+      Result := valor;
+    Exit;
+  end;
+
+  //Número com decimais (1.0, 1,5) não é código nem nome
+  if NumeroSQL(valor) <> '' then
+  begin
+    RegistraErro(COLUNA_CF, valor, 'código numérico inválido');
+    Exit;
+  end;
+
+  //Texto: nome do cliente (maiúsculas com acento, como no cadastro)
+  nome := TextoSQL(Corta(AnsiUpperCase(valor), 60, COLUNA_CF), MaxInt);
+  if errosLinha.Count > 0 then Exit;
+  if bancoFDB then
+  begin
+    Result := querySelect('SELECT FIRST 1 codi FROM clieforn WHERE nome = ''' + nome + '''');
+    if Result <> '' then Exit;
+  end;
+
+  if not cadastrarTodos then
+  begin
+    if bancoFDB then
+      resposta := Mensagem('Linha ' + IntToStr(k) + ': ' + NOME_CF + ' "' + AnsiUpperCase(valor) + '" não encontrado.' + sLineBreak + sLineBreak +
+        'Cadastrar: cadastra o ' + NOME_CF + ' com este nome.' + sLineBreak +
+        'Corrigir: para a importação nesta linha para informar um código ou nome já cadastrado.',
+        mtConfirmation, [mbYes, mbNo, mbYesToAll], ['Cadastrar', 'Corrigir', 'Cadastrar todos'], NOME_CF + ' não encontrado')
+    else
+      resposta := Mensagem('Linha ' + IntToStr(k) + ': ' + NOME_CF + ' "' + AnsiUpperCase(valor) + '" informado pelo nome.' + sLineBreak +
+        'No arquivo TXT/SQL não é possível conferir se ele já existe.' + sLineBreak + sLineBreak +
+        'Cadastrar: o script cadastra o ' + NOME_CF + ' caso não exista.' + sLineBreak +
+        'Corrigir: para a importação nesta linha para informar o código.',
+        mtConfirmation, [mbYes, mbNo, mbYesToAll], ['Cadastrar', 'Corrigir', 'Cadastrar todos'], NOME_CF + ' pelo nome');
+    if resposta = mrYesToAll then cadastrarTodos := True
+    else if resposta <> mrYes then
+    begin
+      Result := '';
+      RegistraErro(COLUNA_CF, valor, NOME_CF + ' não cadastrado (informe um código ou nome já cadastrado)');
+      Exit;
+    end;
+  end;
+
+  if bancoFDB then
+  begin
+    Result := IntToStr(frmPrinc.cadastraClieForn('nome', '''' + nome + ''''));
+    if Result = '-1' then
+    begin
+      Result := '';
+      RegistraErro(COLUNA_CF, valor, 'erro ao cadastrar o ' + NOME_CF);
+    end;
+  end
+  else begin
+    //TXT/SQL: cadastra somente se não existir e busca o código pelo nome na execução do script
+    cadastroForn := 'INSERT INTO clieforn (nome) SELECT ''' + nome + ''' FROM rdb$database' +
+      ' WHERE NOT EXISTS (SELECT 1 FROM clieforn WHERE nome = ''' + nome + ''');';
+    Result := '(SELECT FIRST 1 codi FROM clieforn WHERE nome = ''' + nome + ''')';
+  end;
+end;
+
+//Código do título: se já existir para o mesmo cliente e empresa, acrescenta /1, /2...
+function cImportaTituR.CodigoTitulo(valor: string): string;
+var
+  n: Integer;
+
+  function Existe(codigo: string): Boolean;
+  begin
+    Result := titulosGravados.IndexOf(codigo + '|' + forn + '|' + empr) <> -1;
+    if (not Result) and (UpperCase( ExtractFileExt(frmPrinc.DBPath.Text) ) = '.FDB') then
+      Result := querySelect('SELECT codi FROM ' + TABELA + ' WHERE codi = ''' + TextoSQL(codigo, MaxInt) +
+        ''' AND ' + COLUNA_CF + ' = ' + forn + ' AND empr = ' + empr) <> '';
+  end;
+
+begin
+  Result := valor;
+  if Length(valor) > 15 then
+  begin
+    RegistraErro('codi', valor, 'texto maior que 15 caracteres');
+    Exit;
+  end;
+  n := 0;
+  while Existe(Result) do
+  begin
+    Inc(n);
+    Result := valor + '/' + IntToStr(n);
+  end;
+  if Length(Result) > 15 then
+    RegistraErro('codi', valor, 'código já existe para este ' + NOME_CF + ' e não há espaço para acrescentar /' + IntToStr(n));
+end;
+
+//Adiciona a coluna no INSERT do título e, se baixa = True, no INSERT da baixa
+procedure cImportaTituR.Adiciona(coluna, valor: string; baixa: Boolean);
+begin
+  colTituR := colTituR + ',' + coluna;
+  dadosTituR := dadosTituR + ',' + valor;
+  if baixa then
+  begin
+    colBTitu := colBTitu + ',' + coluna;
+    dadosBTitu := dadosBTitu + ',' + valor;
+  end;
+end;
+
 procedure cImportaTituR.CarregaColunas;
 var
-  i, l, j, count: Integer;
-  temp, temp2: string;
+  valo, sald, venc, dataBaixa, hist, oper: string;
+  formato: TFormatSettings;
 begin
   frmImportando.atualizaStatus('Títulos a Receber '+IntToStr(k));
 
@@ -46,339 +352,100 @@ begin
   dadosTituR := '';
   colBTitu := '';
   dadosBTitu := '';
+  cadastroForn := '';
+  quitado := False;
+  errosLinha.Clear;
 
-  //Carregar informações para importar
+  //Carregar informações para importar (valores inválidos param a importação nesta linha)
   //-------------------------------------------------------
 
-  //CODI (CODIGO)
-  i:=BuscaColuna(StringGrid1,'codi');
-  if (i<>-1) then
-  begin
-    StringGrid1.Cells[i,k] := stringreplace(StringGrid1.Cells[i,k], '.', '',[rfReplaceAll, rfIgnoreCase]);
-    StringGrid1.Cells[i,k] := (Copy(StringGrid1.Cells[i,k],1,15));
-    l := Length(StringGrid1.Cells[i,k]);
-    //Testar se ja existir o código do título e inserir uma barra.
-    count := 0;
-    while (frmPrinc.temCodTituloR(StringGrid1.Cells[i,k]) = True) do
-    begin
-      for j := 1 to count do
-      begin
-        StringGrid1.Cells[i,k] := stringreplace(StringGrid1.Cells[i,k], '/'+IntToStr(j), '',[rfReplaceAll, rfIgnoreCase]);
-        StringGrid1.Cells[i,k] := (Copy(StringGrid1.Cells[i,k],1,l));
-      end;
-
-      count := count+1;
-      StringGrid1.Cells[i,k] := StringGrid1.Cells[i,k] + '/' + IntToStr(count);
-    end;
-
-    colTituR := colTituR + 'codi';
-    dadosTituR := dadosTituR + '''' + StringGrid1.Cells[i,k] + '''';
-    colBTitu := colBTitu + 'codi';
-    dadosBTitu := dadosBTitu + '''' + StringGrid1.Cells[i,k] + '''';
-  end
-  else begin
-    colTituR := colTituR + 'codi';
-    dadosTituR := dadosTituR + IntToStr(k);
-    colBTitu := colBTitu + 'codi';
-    dadosBTitu := dadosBTitu + IntToStr(k);
-  end;
-
   //EMPR (EMPRESA)
-  i:=BuscaColuna(StringGrid1,'empr');
-  if (i<>-1) then
+  empr := Inteiro('empr', '1');
+  if (errosLinha.Count = 0) and (UpperCase( ExtractFileExt(frmPrinc.DBPath.Text) ) = '.FDB') and
+     (querySelect('SELECT codi FROM dados_empre WHERE codi = ' + empr) = '') then
+    RegistraErro('empr', empr, 'empresa não encontrada');
+
+  //VALO (VALOR) e SALD (SALDO): sem uma das colunas, assume o valor da outra
+  formato := TFormatSettings.Create;
+  formato.DecimalSeparator := '.';
+  valo := '';
+  sald := '';
+  if BuscaColuna(StringGrid1,'valo') <> -1 then valo := Numero('valo');
+  if BuscaColuna(StringGrid1,'sald') <> -1 then sald := Numero('sald');
+  if BuscaColuna(StringGrid1,'valo') = -1 then valo := sald;
+  if BuscaColuna(StringGrid1,'sald') = -1 then sald := valo;
+  if (valo <> '') and (sald <> '') then
   begin
-    colTituR := colTituR + ',empr';
-    dadosTituR := dadosTituR + ',''' + StringGrid1.Cells[i,k] + '''';
-    colBTitu := colBTitu + ',empr';
-    dadosBTitu := dadosBTitu + ',''' + StringGrid1.Cells[i,k] + '''';
-  end
-  else begin
-    colTituR := colTituR + ',empr';
-    dadosTituR := dadosTituR + ',1';
-    colBTitu := colBTitu + ',empr';
-    dadosBTitu := dadosBTitu + ',1';
+    if StrToFloat(valo, formato) <= 0 then
+      RegistraErro(IfThen(BuscaColuna(StringGrid1,'valo') <> -1, 'valo', 'sald'), valo, 'valor deve ser maior que zero')
+    else if StrToFloat(sald, formato) < 0 then
+      RegistraErro('sald', Celula('sald'), 'saldo negativo')
+    else if StrToFloat(sald, formato) > StrToFloat(valo, formato) then
+      RegistraErro('sald', Celula('sald'), 'saldo maior que o valor do título');
+    //Saldo zero: título quitado, grava a baixa
+    quitado := StrToFloat(sald, formato) = 0;
   end;
 
-  //CLIE (CLIENTE)
-  i:=BuscaColuna(StringGrid1,'clie');
-  if (i<>-1) then
+  //Datas: VENC obrigatório e pode ser futuro (ano com 2 dígitos = 20aa)
+  venc := DataSQL('venc', True);
+  if (venc = '') and (Celula('venc') = '') then
+    RegistraErro('venc', '', 'vencimento não informado');
+  dataBaixa := DataSQL('data_baixa', False);
+  if dataBaixa = '' then dataBaixa := venc;
+
+  //HIST (HISTORICO): maiúsculas com acento, como no ERP
+  hist := Corta(AnsiUpperCase(Celula('hist')), 200, 'hist');
+
+  //Campos do título
+  Adiciona('empr', empr, True);
+  Adiciona('loca_cobr', Inteiro('loca_cobr', '1'), False);
+  Adiciona('cart', Inteiro('cart', '1'), False);
+  oper := Corta(Celula('oper'), 10, 'oper');
+  if oper = '' then oper := OPER_PADRAO;
+  Adiciona('oper', '''' + TextoSQL(oper, MaxInt) + '''', True);
+  Adiciona('c_func', Inteiro('c_func', '1'), True);
+  if Celula('data') <> '' then Adiciona('data', DataSQL('data', False), False);
+  Adiciona('venc', venc, False);
+  Adiciona('valo', valo, True);
+  Adiciona('sald', sald, False);
+  if hist <> '' then
   begin
-    temp := UpperCase(RemoveAcento(StringGrid1.Cells[i,k]));
-    temp := stringreplace(temp, '''', ' ',[rfReplaceAll, rfIgnoreCase]);
-    temp := (Copy(temp,1,60));
-    //Se for letras, buscar código.
-    if not (IsNumeric(temp)) then
-    begin
-      temp2 := IntToStr(frmPrinc.getCodiClieForn(''''+temp+''''));
-      //Se não encontrar a string, cadastrar cliente
-      if temp2='0' then begin
-        temp2 := IntToStr(frmPrinc.cadastraClieForn('nome',''''+temp+''''));
-      end;
-      colTituR := colTituR + ',clie';
-      dadosTituR := dadosTituR + ',''' + temp2 + '''';
-      colBTitu := colBTitu + ',clie';
-      dadosBTitu := dadosBTitu + ',''' + temp2 + '''';
-    end
-    else begin
-      //Se for números, considera como código
-      temp2 := IntToStr(frmPrinc.getCodiClieForn('(SELECT c.nome FROM clieforn c WHERE c.codi = '+temp+')'));
-      //Antes buscamos se existe o código cadastrado, se não encontrar colocamos o generator mesmo
-      if temp2='0' then begin
-        colTituR := colTituR + ',clie';
-        dadosTituR := dadosTituR + ',' + 'gen_id(gen_clieforn_id,0)';
-        colBTitu := colBTitu + ',clie';
-        dadosBTitu := dadosBTitu + ',' + 'gen_id(gen_clieforn_id,0)';
-      end
-      else begin
-        //Se achar o código, usamos o código
-        colTituR := colTituR + ',clie';
-        dadosTituR := dadosTituR + ',''' + temp + '''';
-        colBTitu := colBTitu + ',clie';
-        dadosBTitu := dadosBTitu + ',''' + temp + '''';
-      end;
-    end;
-  end
-  else begin
-    //Se não tiver fornecedor, colocar o generator.
-    colTituR := colTituR + ',clie';
-    dadosTituR := dadosTituR + ',' + 'gen_id(gen_clieforn_id,0)';
-    colBTitu := colBTitu + ',clie';
-    dadosBTitu := dadosBTitu + ',' + 'gen_id(gen_clieforn_id,0)';
+    colTituR := colTituR + ',hist';
+    dadosTituR := dadosTituR + ',''' + TextoSQL(hist, MaxInt) + '''';
+    //Histórico da baixa tem 150 caracteres
+    colBTitu := colBTitu + ',hist';
+    dadosBTitu := dadosBTitu + ',''' + TextoSQL(hist, 150) + '''';
   end;
 
-  //LOCA_COBR (LOCAL DE COBRANÇA)
-  i:=BuscaColuna(StringGrid1,'loca_cobr');
-  if (i<>-1) then
+  //Campos da baixa (somente título quitado)
+  colBTitu := colBTitu + ',data,tota,id,juro,mult,desco,cont,empr_baix';
+  dadosBTitu := dadosBTitu + ',' + dataBaixa + ',' + valo + ',gen_id(gen_' + TABELA_BAIXA + '_id,1),0,0,0,1,' + empr;
+
+  //Cliente e código somente se o restante da linha estiver correto
+  //(evita perguntar sobre o cadastro do cliente numa linha que vai parar)
+  if Celula(COLUNA_CF) = '' then RegistraErro(COLUNA_CF, '', NOME_CF + ' não informado');
+  if errosLinha.Count > 0 then Exit;
+
+  //CLIE (CLIENTE): código ou nome
+  forn := CodigoClieForn(Celula(COLUNA_CF));
+  if errosLinha.Count > 0 then Exit;
+
+  //CODI (CÓDIGO): sem a coluna, usa o número da linha da planilha
+  if BuscaColuna(StringGrid1,'codi') <> -1 then
+    codi := stringreplace(Celula('codi'), '.', '',[rfReplaceAll])
+  else
+    codi := IntToStr(k);
+  if codi = '' then
   begin
-    colTituR := colTituR + ',loca_cobr';
-    dadosTituR := dadosTituR + ',''' + StringGrid1.Cells[i,k] + '''';
-  end
-  else begin
-    colTituR := colTituR + ',loca_cobr';
-    dadosTituR := dadosTituR + ',''' + '1' + '''';
+    RegistraErro('codi', '', 'código do título não informado');
+    Exit;
   end;
+  codi := CodigoTitulo(codi);
 
-  //CART (TIPO DE CARTEIRA)
-  i:=BuscaColuna(StringGrid1,'cart');
-  if (i<>-1) then
-  begin
-    colTituR := colTituR + ',cart';
-    dadosTituR := dadosTituR + ',''' + StringGrid1.Cells[i,k] + '''';
-  end
-  else begin
-    colTituR := colTituR + ',cart';
-    dadosTituR := dadosTituR + ',''' + '1' + '''';
-  end;
-
-  //OPER (OPERAÇÃO DO PLANO DE CONTAS)
-  i:=BuscaColuna(StringGrid1,'oper');
-  if (i<>-1) then
-  begin
-    colTituR := colTituR + ',oper';
-    dadosTituR := dadosTituR + ',''' + StringGrid1.Cells[i,k] + '''';
-    colBTitu := colBTitu + ',oper';
-    dadosBTitu := dadosBTitu + ',''' + StringGrid1.Cells[i,k] + '''';
-  end
-  else begin
-    colTituR := colTituR + ',oper';
-    dadosTituR := dadosTituR + ',''' + '002' + '''';
-    colBTitu := colBTitu + ',oper';
-    dadosBTitu := dadosBTitu + ',''' + '002' + '''';
-  end;
-
-  //C_FUNC (FUNCIONÁRIO)
-  i:=BuscaColuna(StringGrid1,'c_func');
-  if (i<>-1) then
-  begin
-    colTituR := colTituR + ',c_func';
-    dadosTituR := dadosTituR + ',''' + StringGrid1.Cells[i,k] + '''';
-    colBTitu := colBTitu + ',c_func';
-    dadosBTitu := dadosBTitu + ',''' + StringGrid1.Cells[i,k] + '''';
-  end
-  else begin
-    colTituR := colTituR + ',c_func';
-    dadosTituR := dadosTituR + ',''' + '1' + '''';
-    colBTitu := colBTitu + ',c_func';
-    dadosBTitu := dadosBTitu + ',''' + '1' + '''';
-  end;
-
-
-  for i := 0 to StringGrid1.ColCount-1 do
-  begin
-    //DATA (Data de criação do título)
-    if (LowerCase(StringGrid1.Cells[i,0])='data') then
-    begin
-      temp := Trim(StringGrid1.Cells[i,k]);
-      temp := stringreplace(temp, '-', '',[rfReplaceAll, rfIgnoreCase]);
-      temp := stringreplace(temp, '/', '',[rfReplaceAll, rfIgnoreCase]);
-      temp := stringreplace(temp, '.', '',[rfReplaceAll, rfIgnoreCase]);
-      if temp.Length >= 8 then
-      begin
-        temp := (Copy(temp,1,2)) +'.'+ (Copy(temp,3,2)) +'.'+ (Copy(temp,5,4));
-        colTituR := colTituR + ',data';
-        dadosTituR := dadosTituR + ',''' + temp + '''';
-      end
-      else if temp.Length = 6 then begin
-        temp2 := (Copy(DateToStr(Date()),9,2));
-        //Testa os dois ultimos caracteres da data atual com data do titulo
-        //Se os caracteres da data do titulo forem maiores, significa que é um século antes
-        if StrToInt(temp2)<StrToInt(Copy(temp,5,2)) then temp2 := IntToStr(StrToInt(temp2)-1);
-        temp := (Copy(temp,1,2)) +'.'+ (Copy(temp,3,2)) +'.'+ temp2 + (Copy(temp,5,2));
-        colTituR := colTituR + ',data';
-        dadosTituR := dadosTituR + ',''' + temp + '''';
-      end;
-    end
-    //VENC (Data de vencimento do título)
-    else if (LowerCase(StringGrid1.Cells[i,0])='venc') then
-    begin
-      temp := Trim(StringGrid1.Cells[i,k]);
-      temp := stringreplace(temp, '-', '',[rfReplaceAll, rfIgnoreCase]);
-      temp := stringreplace(temp, '/', '',[rfReplaceAll, rfIgnoreCase]);
-      temp := stringreplace(temp, '.', '',[rfReplaceAll, rfIgnoreCase]);
-      if temp.Length >= 8 then
-      begin
-        temp := (Copy(temp,1,2)) +'.'+ (Copy(temp,3,2)) +'.'+ (Copy(temp,5,4));
-        colTituR := colTituR + ',venc';
-        dadosTituR := dadosTituR + ',''' + temp + '''';
-      end
-      else if temp.Length = 6 then begin
-        temp2 := (Copy(DateToStr(Date()),9,2));
-        //Testa os dois ultimos caracteres da data atual com data do titulo
-        //Se os caracteres da data do titulo forem maiores, significa que é um século antes
-        if StrToInt(temp2)<StrToInt(Copy(temp,5,2)) then temp2 := IntToStr(StrToInt(temp2)-1);
-        temp := (Copy(temp,1,2)) +'.'+ (Copy(temp,3,2)) +'.'+ temp2 + (Copy(temp,5,2));
-        colTituR := colTituR + ',venc';
-        dadosTituR := dadosTituR + ',''' + temp + '''';
-      end;
-    end
-    //VALO (Valor do título)
-    else if (LowerCase(StringGrid1.Cells[i,0])='valo') then
-    begin
-      if StringGrid1.Cells[i,k]='' then
-      begin
-        temp := '0.0';
-      end
-      else begin
-        temp := StringGrid1.Cells[i,k];
-      end;
-      temp := corrigeFloat(temp);
-      colTituR := colTituR + ',valo';
-      dadosTituR := dadosTituR + ',' + temp;
-      colBTitu := colBTitu + ',valo';
-      dadosBTitu := dadosBTitu + ',' + temp;
-      colBTitu := colBTitu + ',tota';
-      dadosBTitu := dadosBTitu + ',' + temp;
-
-      //Testar se não existe coluna saldo, se não existir joga o valor da VALO
-      count:=BuscaColuna(StringGrid1,'sald');
-      if (count=-1) then
-      begin
-        colTituR := colTituR + ',sald';
-        if StringGrid1.Cells[i,k]='' then
-        begin
-          temp2 := '0.0';
-        end
-        else begin
-          temp2 := StringGrid1.Cells[i,k];
-        end;
-        temp2 := corrigeFloat(temp2);
-        dadosTituR := dadosTituR + ',' + temp2;
-        temp2 := stringreplace(temp2, '.', ',',[rfReplaceAll, rfIgnoreCase]);
-        saldo := StrToFloat(temp2);
-      end;
-    end
-    //SALDO (Saldo do título)
-    else if (LowerCase(StringGrid1.Cells[i,0])='sald') then
-    begin
-      colTituR := colTituR + ',sald';
-      if StringGrid1.Cells[i,k]='' then
-      begin
-        temp := '0.0';
-      end
-      else begin
-        temp := StringGrid1.Cells[i,k];
-      end;
-      temp := corrigeFloat(temp);
-      dadosTituR := dadosTituR + ',' + temp;
-      temp := stringreplace(temp, '.', ',',[rfReplaceAll, rfIgnoreCase]);
-      saldo := StrToFloat(temp);
-
-      //Testar se não existe coluna valo, se não existir joga o valor da SALD
-      count:=BuscaColuna(StringGrid1,'valo');
-      if (count=-1) then
-      begin
-        if StringGrid1.Cells[i,k]='' then
-        begin
-          temp2 := '0.0';
-        end
-        else begin
-          temp2 := StringGrid1.Cells[i,k];
-        end;
-        temp2 := corrigeFloat(temp2);
-        colTituR := colTituR + ',valo';
-        dadosTituR := dadosTituR + ',' + temp2;
-        colBTitu := colBTitu + ',valo';
-        dadosBTitu := dadosBTitu + ',' + temp2;
-        colBTitu := colBTitu + ',tota';
-        dadosBTitu := dadosBTitu + ',' + temp2;
-      end;
-    end
-    //HIST (HISTORICO)
-    else if (LowerCase(StringGrid1.Cells[i,0])='hist') then
-    begin
-      colTituR := colTituR + ',hist';
-      temp := UpperCase(RemoveAcento(StringGrid1.Cells[i,k]));
-      temp := stringreplace(temp, '''', ' ',[rfReplaceAll, rfIgnoreCase]);
-      temp := (Copy(temp,1,150));
-      dadosTituR := dadosTituR + ',''' + temp + '''';
-    end
-
-    //Colunas extras para BTITUR
-    //DATA_BAIXA (DATA DA BAIXA)
-    else if (LowerCase(StringGrid1.Cells[i,0])='data_baixa') then
-    begin
-      colBTitu := colBTitu + ',data';
-      temp := Trim(StringGrid1.Cells[i,k]);
-      temp := stringreplace(temp, '-', '',[rfReplaceAll, rfIgnoreCase]);
-      temp := stringreplace(temp, '/', '',[rfReplaceAll, rfIgnoreCase]);
-      temp := stringreplace(temp, '.', '',[rfReplaceAll, rfIgnoreCase]);
-      if temp.Length >= 8 then
-      begin
-        temp := (Copy(temp,1,2)) +'.'+ (Copy(temp,3,2)) +'.'+ (Copy(temp,5,4));
-        dadosBTitu := dadosBTitu + ',''' + temp + '''';
-      end
-      else if temp.Length = 6 then begin
-        temp2 := (Copy(DateToStr(Date()),9,2));
-        //Testa os dois ultimos caracteres da data atual com data do titulo
-        //Se os caracteres da data do titulo forem maiores, significa que é um século antes
-        if StrToInt(temp2)<StrToInt(Copy(temp,5,2)) then temp2 := IntToStr(StrToInt(temp2)-1);
-        temp := (Copy(temp,1,2)) +'.'+ (Copy(temp,3,2)) +'.'+ temp2 + (Copy(temp,5,2));
-        dadosBTitu := dadosBTitu + ',''' + temp + '''';
-      end;
-    end
-    ;
-
-  //Fim do For das colunas
-  end;
-
-  //ID (ID DA BTITUR)
-  colBTitu := colBTitu + ',id';
-  dadosBTitu := dadosBTitu + ',' + 'gen_id(gen_btitur_id,1)';
-  //JURO (JUROS)
-  colBTitu := colBTitu + ',juro';
-  dadosBTitu := dadosBTitu + ',''' + '0.0' + '''';
-  //MULT (MULTA)
-  colBTitu := colBTitu + ',mult';
-  dadosBTitu := dadosBTitu + ',''' + '0.0' + '''';
-  //DESCO (DESCONTO)
-  colBTitu := colBTitu + ',desco';
-  dadosBTitu := dadosBTitu + ',''' + '0.0' + '''';
-  //CONT (CONTA)
-  colBTitu := colBTitu + ',cont';
-  dadosBTitu := dadosBTitu + ',''' + '1' + '''';
-  //EMPR_BAIX (EMPRESA ONDE O TÍTULO FOI BAIXADO)
-  colBTitu := colBTitu + ',empr_baix';
-  dadosBTitu := dadosBTitu + ',''' + '1' + '''';
+  colTituR := 'codi,' + COLUNA_CF + colTituR;
+  dadosTituR := '''' + TextoSQL(codi, MaxInt) + ''',' + forn + dadosTituR;
+  colBTitu := 'codi,' + COLUNA_CF + colBTitu;
+  dadosBTitu := '''' + TextoSQL(codi, MaxInt) + ''',' + forn + dadosBTitu;
 end;
 
 procedure cImportaTituR.Gravar;
@@ -386,25 +453,34 @@ var
   fileTXT: TextFile;
   SQL: TSQLDataSet;
 begin
+  //Valores inválidos: para nesta linha para o usuário corrigir e continuar daqui
+  if errosLinha.Count > 0 then
+  begin
+    ShowMessage('Linha ' + IntToStr(k) + ' com valores inválidos:' + sLineBreak + sLineBreak +
+      errosLinha.Text + sLineBreak + 'Corrija na planilha e clique em Importar para continuar a partir desta linha.');
+    status := 0;
+    Exit;
+  end;
+
   //----------------------------------------
   //Gravar no banco de Títulos a Receber
   if UpperCase( ExtractFileExt(frmPrinc.DBPath.Text) ) = '.FDB' then begin
+    SQL := TSQLDataSet.Create(Nil);
     try
       try
         //Abrir conexoes
         frmPrinc.conDestino.Open;
-        SQL := TSQLDataSet.Create(Nil);
         SQL.SQLConnection := frmPrinc.conDestino;
 
         //Executar INSERT
         frmImportando.atualizaStatus('Inserindo dados na tabela TITUR.');
-        SQL.CommandText := 'INSERT INTO titur ('+ colTituR +') VALUES ' + '(' + dadosTituR + ');';
+        SQL.CommandText := 'INSERT INTO ' + TABELA + ' ('+ colTituR +') VALUES ' + '(' + dadosTituR + ');';
         SQL.ExecSQL;
 
-        if saldo <= 0.0 then begin
-          //Inserir na BTITUP
+        if quitado then begin
+          //Inserir na BTITUR
           frmImportando.atualizaStatus('Inserindo dados na tabela BTITUR.');
-          SQL.CommandText := 'INSERT INTO btitur ('+ colBTitu +') VALUES ' + '(' + dadosBTitu +');';
+          SQL.CommandText := 'INSERT INTO ' + TABELA_BAIXA + ' ('+ colBTitu +') VALUES ' + '(' + dadosBTitu +');';
           SQL.ExecSQL;
         end;
 
@@ -426,24 +502,33 @@ begin
   else if (UpperCase( ExtractFileExt(frmPrinc.DBPath.Text) ) = '.TXT') or
           (UpperCase( ExtractFileExt(frmPrinc.DBPath.Text) ) = '.SQL')
   then begin
+    //Carregar arquivo TXT
+    AssignFile(fileTXT, frmPrinc.DBPath.Text);
+    if not FileExists(frmPrinc.DBPath.Text) then ReWrite(fileTXT)
+    else append(fileTXT);
     try
       try
-        //Carregar arquivo TXT
-        AssignFile(fileTXT, frmPrinc.DBPath.Text);
-        if not FileExists(frmPrinc.DBPath.Text) then ReWrite(fileTXT)
-        else append(fileTXT);
+        //Cliente informado pelo nome: cadastra se não existir
+        if cadastroForn <> '' then begin
+          WriteLn(fileTXT, '----------Comandos da CLIEFORN----------');
+          WriteLn(fileTXT, 'ALTER TRIGGER clieforn_biu0 INACTIVE;');
+          WriteLn(fileTXT, 'COMMIT WORK;');
+          WriteLn(fileTXT, cadastroForn);
+          WriteLn(fileTXT, 'COMMIT WORK;');
+          WriteLn(fileTXT, 'ALTER TRIGGER clieforn_biu0 ACTIVE;');
+          WriteLn(fileTXT, 'COMMIT WORK;');
+        end;
 
         frmImportando.atualizaStatus('Comandos da TITUR.');
         WriteLn(fileTXT, '----------Comandos da TITUR----------');
-
-        WriteLn(fileTXT, 'INSERT INTO titur ('+ colTituR +') VALUES ' + '(' + dadosTituR + ');');
+        WriteLn(fileTXT, 'INSERT INTO ' + TABELA + ' ('+ colTituR +') VALUES ' + '(' + dadosTituR + ');');
         WriteLn(fileTXT, 'COMMIT WORK;');
 
-        if saldo <= 0.0 then begin
-          //Inserir na BTITUP
+        if quitado then begin
+          //Inserir na BTITUR
           frmImportando.atualizaStatus('Comandos BTITUR.');
           WriteLn(fileTXT, '----------Comandos da BTITUR----------');
-          WriteLn(fileTXT, 'INSERT INTO btitur ('+ colBTitu +') VALUES ' + '(' + dadosBTitu +');');
+          WriteLn(fileTXT, 'INSERT INTO ' + TABELA_BAIXA + ' ('+ colBTitu +') VALUES ' + '(' + dadosBTitu +');');
           WriteLn(fileTXT, 'COMMIT WORK;');
         end;
       except
@@ -451,7 +536,6 @@ begin
         begin
           ShowMessage('Erro TXT: '+e.message);
           status := 0;
-          CloseFile(fileTXT);
           Exit;
         end;
       end;
@@ -459,6 +543,14 @@ begin
       CloseFile(fileTXT);
     end;
   end;
+
+  titulosGravados.Add(codi + '|' + forn + '|' + empr);
 end;
+
+initialization
+  titulosGravados := TStringList.Create;
+
+finalization
+  titulosGravados.Free;
 
 end.

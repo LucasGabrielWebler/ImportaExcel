@@ -84,12 +84,12 @@ begin
   //Se não encontrou pede pra reiniciar
   if not encontrou then
   begin
-    but := Mensagem('Termo não encontrado. Deseja recomeçar a busca do incío?', mtCustom, [mbYes, mbNo],['Sim','Não'], 'Não encontrado.');
+    but := Mensagem('Termo não encontrado. Deseja recomeçar a busca do início?', mtCustom, [mbYes, mbNo],['Sim','Não'], 'Não encontrado.');
     //Sim
     if (but = 6) then
     begin
       //Recomeçar do início
-      currentRow := 0;
+      currentRow := 1;
       encontrou := Buscar;
       if not encontrou then
       begin
@@ -120,7 +120,7 @@ begin
       0: begin
         for i := currentRow to frmPrinc.StringGrid1.RowCount-1 do
         begin
-          if (frmPrinc.StringGrid1.Cells[frmPrinc.StringGrid1.Col, i].IndexOf(edtSearch.Text) > 0) or
+          if (AnsiUpperCase(frmPrinc.StringGrid1.Cells[frmPrinc.StringGrid1.Col, i]).IndexOf(AnsiUpperCase(edtSearch.Text)) >= 0) or
              (frmPrinc.StringGrid1.Cells[frmPrinc.StringGrid1.Col, i] = edtSearch.Text) then
           begin
             //Setar foco na linha e coluna encontrada
@@ -135,9 +135,9 @@ begin
       1: begin
         for i := currentRow to frmPrinc.StringGrid1.RowCount-1 do
         begin
-          for j := 0 to frmPrinc.StringGrid1.ColCount-1 do
+          for j := 1 to frmPrinc.StringGrid1.ColCount-1 do
           begin
-            if (frmPrinc.StringGrid1.Cells[j, i].IndexOf(edtSearch.Text) > 0) or
+            if (AnsiUpperCase(frmPrinc.StringGrid1.Cells[j, i]).IndexOf(AnsiUpperCase(edtSearch.Text)) >= 0) or
                (frmPrinc.StringGrid1.Cells[j, i] = edtSearch.Text) then
             begin
               //Setar foco na linha e coluna encontrada
@@ -160,9 +160,9 @@ begin
     case rgSelecao.ItemIndex of
       //Coluna
       0: begin
-        for i := currentRow downto 0 do
+        for i := currentRow downto 1 do
         begin
-          if (frmPrinc.StringGrid1.Cells[frmPrinc.StringGrid1.Col, i].IndexOf(edtSearch.Text) > 0) or
+          if (AnsiUpperCase(frmPrinc.StringGrid1.Cells[frmPrinc.StringGrid1.Col, i]).IndexOf(AnsiUpperCase(edtSearch.Text)) >= 0) or
              (frmPrinc.StringGrid1.Cells[frmPrinc.StringGrid1.Col, i] = edtSearch.Text) then
           begin
             //Setar foco na linha e coluna encontrada
@@ -175,11 +175,11 @@ begin
       end;
       //Tudo
       1: begin
-        for i := currentRow downto 0 do
+        for i := currentRow downto 1 do
         begin
-          for j := 0 to frmPrinc.StringGrid1.ColCount-1 do
+          for j := 1 to frmPrinc.StringGrid1.ColCount-1 do
           begin
-            if (frmPrinc.StringGrid1.Cells[j, i].IndexOf(edtSearch.Text) > 0) or
+            if (AnsiUpperCase(frmPrinc.StringGrid1.Cells[j, i]).IndexOf(AnsiUpperCase(edtSearch.Text)) >= 0) or
                (frmPrinc.StringGrid1.Cells[j, i] = edtSearch.Text) then
             begin
               //Setar foco na linha e coluna encontrada

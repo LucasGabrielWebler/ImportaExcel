@@ -49,20 +49,20 @@ begin
   //Salvar tabela em memoria para permitir CTRL+Z
   frmPrinc.StringGridToArray(frmPrinc.StringGrid1);
 
-  edtOldValue.Text := UpperCase(edtOldValue.Text);
+  edtOldValue.Text := AnsiUpperCase(edtOldValue.Text);
 
   case rgSelecao.ItemIndex of
     //Célula
     0: begin
       temp := frmPrinc.StringGrid1.Cells[frmPrinc.StringGrid1.Col,frmPrinc.StringGrid1.Row];
-      temp := UpperCase(temp);
+      temp := AnsiUpperCase(temp);
       frmPrinc.StringGrid1.Cells[frmPrinc.StringGrid1.Col,frmPrinc.StringGrid1.Row] := temp;
     end;
     //Coluna
     1: begin
       for i := 1 to frmPrinc.StringGrid1.RowCount-1 do begin
         temp := frmPrinc.StringGrid1.Cells[frmPrinc.StringGrid1.Col, i];
-        temp := UpperCase(temp);
+        temp := AnsiUpperCase(temp);
         frmPrinc.StringGrid1.Cells[frmPrinc.StringGrid1.Col, i] := temp;
       end;
     end;
@@ -71,7 +71,7 @@ begin
       for i := 1 to frmPrinc.StringGrid1.RowCount-1 do begin
         for j := 0 to frmPrinc.StringGrid1.ColCount-1 do begin
           temp := frmPrinc.StringGrid1.Cells[j, i];
-          temp := UpperCase(temp);
+          temp := AnsiUpperCase(temp);
           frmPrinc.StringGrid1.Cells[j, i] := temp;
         end;
       end;
@@ -87,20 +87,20 @@ begin
   //Salvar tabela em memoria para permitir CTRL+Z
   frmPrinc.StringGridToArray(frmPrinc.StringGrid1);
 
-  edtOldValue.Text := LowerCase(edtOldValue.Text);
+  edtOldValue.Text := AnsiLowerCase(edtOldValue.Text);
 
   case rgSelecao.ItemIndex of
     //Célula
     0: begin
       temp := frmPrinc.StringGrid1.Cells[frmPrinc.StringGrid1.Col,frmPrinc.StringGrid1.Row];
-      temp := LowerCase(temp);
+      temp := AnsiLowerCase(temp);
       frmPrinc.StringGrid1.Cells[frmPrinc.StringGrid1.Col,frmPrinc.StringGrid1.Row] := temp;
     end;
     //Coluna
     1: begin
       for i := 1 to frmPrinc.StringGrid1.RowCount-1 do begin
         temp := frmPrinc.StringGrid1.Cells[frmPrinc.StringGrid1.Col, i];
-        temp := LowerCase(temp);
+        temp := AnsiLowerCase(temp);
         frmPrinc.StringGrid1.Cells[frmPrinc.StringGrid1.Col, i] := temp;
       end;
     end;
@@ -109,7 +109,7 @@ begin
       for i := 1 to frmPrinc.StringGrid1.RowCount-1 do begin
         for j := 0 to frmPrinc.StringGrid1.ColCount-1 do begin
           temp := frmPrinc.StringGrid1.Cells[j, i];
-          temp := LowerCase(temp);
+          temp := AnsiLowerCase(temp);
           frmPrinc.StringGrid1.Cells[j, i] := temp;
         end;
       end;

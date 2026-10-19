@@ -23,193 +23,210 @@ type
 var
   frmColunas: TfrmColunas;
 
+function ColunasAceitas(tipo: string): TStringList;
+
 implementation
 
 {$R *.dfm}
 
-procedure TfrmColunas.MostrarColunas();
+//Colunas aceitas por tipo de importação (tela Colunas e aviso de colunas não reconhecidas)
+//Quem chama libera a lista
+function ColunasAceitas(tipo: string): TStringList;
 begin
-  ListColunas.Items.Clear;
+  Result := TStringList.Create;
 
   //Colunas de cada tipo de importação, agrupadas em sequência lógica (seguindo as tabelas do banco)
-  if LabelTipoImp.Caption = 'Clie/Forn' then
+  if tipo = 'Clie/Forn' then
   begin
     //Identificação
-    ListColunas.Items.add('CODI');
-    ListColunas.Items.add('EMPRESA');
-    ListColunas.Items.add('TIPOCAD');
-    ListColunas.Items.add('ATIVO');
-    ListColunas.Items.add('NOME');
-    ListColunas.Items.add('NOME_FANT');
-    ListColunas.Items.add('GRUPO');
+    Result.Add('CODI');
+    Result.Add('EMPRESA');
+    Result.Add('TIPOCAD');
+    Result.Add('ATIVO');
+    Result.Add('NOME');
+    Result.Add('NOME_FANT');
+    Result.Add('GRUPO');
     //Documentos
-    ListColunas.Items.add('CPF_CNPJ');
-    ListColunas.Items.add('CPF');
-    ListColunas.Items.add('CNPJ');
-    ListColunas.Items.add('RG');
-    ListColunas.Items.add('INSC');
-    ListColunas.Items.add('INSCR_PRODUTOR');
+    Result.Add('CPF_CNPJ');
+    Result.Add('CPF');
+    Result.Add('CNPJ');
+    Result.Add('RG');
+    Result.Add('INSC');
+    Result.Add('INSCR_PRODUTOR');
     //Dados pessoais
-    ListColunas.Items.add('DATA_NASC');
-    ListColunas.Items.add('SEXO');
-    ListColunas.Items.add('ESTA_CIVI');
-    ListColunas.Items.add('NOME_PAI');
-    ListColunas.Items.add('NOME_MAE');
+    Result.Add('DATA_NASC');
+    Result.Add('SEXO');
+    Result.Add('ESTA_CIVI');
+    Result.Add('NOME_PAI');
+    Result.Add('NOME_MAE');
     //Endereço
-    ListColunas.Items.add('ENDE');
-    ListColunas.Items.add('COMP');
-    ListColunas.Items.add('BAIR');
-    ListColunas.Items.add('CIDA');
-    ListColunas.Items.add('UF');
-    ListColunas.Items.add('CEP');
-    ListColunas.Items.add('PROX');
+    Result.Add('ENDE');
+    Result.Add('COMP');
+    Result.Add('BAIR');
+    Result.Add('CIDA');
+    Result.Add('UF');
+    Result.Add('CEP');
+    Result.Add('PROX');
     //Contato
-    ListColunas.Items.add('FONE');
-    ListColunas.Items.add('FONE2');
-    ListColunas.Items.add('FAX');
-    ListColunas.Items.add('MAIL');
+    Result.Add('FONE');
+    Result.Add('FONE2');
+    Result.Add('FAX');
+    Result.Add('MAIL');
     //Trabalho
-    ListColunas.Items.add('FIRM');
-    ListColunas.Items.add('TRABALHA_DESDE');
-    ListColunas.Items.add('CARG');
-    ListColunas.Items.add('SALA');
-    ListColunas.Items.add('ENDE_FIRM');
-    ListColunas.Items.add('BAIR_FIRM');
-    ListColunas.Items.add('CIDA_FIRM');
-    ListColunas.Items.add('UF_FIRM');
-    ListColunas.Items.add('CEP_FIRM');
-    ListColunas.Items.add('FONE_FIRM');
+    Result.Add('FIRM');
+    Result.Add('TRABALHA_DESDE');
+    Result.Add('CARG');
+    Result.Add('SALA');
+    Result.Add('ENDE_FIRM');
+    Result.Add('BAIR_FIRM');
+    Result.Add('CIDA_FIRM');
+    Result.Add('UF_FIRM');
+    Result.Add('CEP_FIRM');
+    Result.Add('FONE_FIRM');
     //Cônjuge
-    ListColunas.Items.add('CONJ');
-    ListColunas.Items.add('DATA_CONJ');
-    ListColunas.Items.add('CONJ_FIRM');
-    ListColunas.Items.add('CONJ_CARG');
-    ListColunas.Items.add('CONJ_SALA');
+    Result.Add('CONJ');
+    Result.Add('DATA_CONJ');
+    Result.Add('CONJ_FIRM');
+    Result.Add('CONJ_CARG');
+    Result.Add('CONJ_SALA');
     //Outros
-    ListColunas.Items.add('REFE_COME');
-    ListColunas.Items.add('OBS');
+    Result.Add('REFE_COME');
+    Result.Add('OBS');
   end
-  else if LabelTipoImp.Caption = 'Produtos' then
+  else if tipo = 'Produtos' then
   begin
     //Identificação
-    ListColunas.Items.add('EMPR');
-    ListColunas.Items.add('CODI');
-    ListColunas.Items.add('DESCR');
-    ListColunas.Items.add('DESCR2');
-    ListColunas.Items.add('REFE');
-    ListColunas.Items.add('REFE_ORIGINAL');
-    ListColunas.Items.add('CODI_BARRA');
-    ListColunas.Items.add('CODI_BARRA_COM');
-    ListColunas.Items.add('ATIVO');
+    Result.Add('EMPR');
+    Result.Add('CODI');
+    Result.Add('DESCR');
+    Result.Add('DESCR2');
+    Result.Add('REFE');
+    Result.Add('REFE_ORIGINAL');
+    Result.Add('CODI_BARRA');
+    Result.Add('CODI_BARRA_COM');
+    Result.Add('ATIVO');
     //Classificação
-    ListColunas.Items.add('TIPO');
-    ListColunas.Items.add('GRUP');
-    ListColunas.Items.add('SUB_GRUP');
-    ListColunas.Items.add('DEPARTAMENTO');
-    ListColunas.Items.add('MARCA');
-    ListColunas.Items.add('COLECAO');
+    Result.Add('TIPO');
+    Result.Add('GRUP');
+    Result.Add('SUB_GRUP');
+    Result.Add('DEPARTAMENTO');
+    Result.Add('MARCA');
+    Result.Add('COLECAO');
     //Unidade, medidas e fiscal
-    ListColunas.Items.add('UNID');
-    ListColunas.Items.add('FATOR_CONV');
-    ListColunas.Items.add('PESL');
-    ListColunas.Items.add('PESB');
-    ListColunas.Items.add('NCM');
-    ListColunas.Items.add('CEST');
+    Result.Add('UNID');
+    Result.Add('FATOR_CONV');
+    Result.Add('PESL');
+    Result.Add('PESB');
+    Result.Add('NCM');
+    Result.Add('CEST');
     //Estoque
-    ListColunas.Items.add('QTD');
-    ListColunas.Items.add('EST');
-    ListColunas.Items.add('MAX');
-    ListColunas.Items.add('QTD_MINIMA');
-    ListColunas.Items.add('LOCALIZACAO');
+    Result.Add('QTD');
+    Result.Add('EST');
+    Result.Add('MAX');
+    Result.Add('QTD_MINIMA');
+    Result.Add('LOCALIZACAO');
     //Fornecedor
-    ListColunas.Items.add('FORN');
+    Result.Add('FORN');
     //Custos e preços
-    ListColunas.Items.add('CUSTO');
-    ListColunas.Items.add('FRETE');
-    ListColunas.Items.add('IPI');
-    ListColunas.Items.add('ICMS');
-    ListColunas.Items.add('PIS');
-    ListColunas.Items.add('COFINS');
-    ListColunas.Items.add('CUSTO_REAL');
-    ListColunas.Items.add('CUSTO_MEDIO');
-    ListColunas.Items.add('MARGEM');
-    ListColunas.Items.add('PRECO_PRAZO');
-    ListColunas.Items.add('PRECO_VISTA');
+    Result.Add('CUSTO');
+    Result.Add('FRETE');
+    Result.Add('IPI');
+    Result.Add('ICMS');
+    Result.Add('PIS');
+    Result.Add('COFINS');
+    Result.Add('CUSTO_REAL');
+    Result.Add('CUSTO_MEDIO');
+    Result.Add('MARGEM');
+    Result.Add('PRECO_PRAZO');
+    Result.Add('PRECO_VISTA');
     //Tributação
-    ListColunas.Items.add('CSOSN');
-    ListColunas.Items.add('CSOSN_ESTA');
-    ListColunas.Items.add('CSOSN_INTER');
-    ListColunas.Items.add('CST');
-    ListColunas.Items.add('CST_ESTA');
-    ListColunas.Items.add('CST_INTER');
-    ListColunas.Items.add('ALIQ_ICMS');
-    ListColunas.Items.add('REDU_ESTA');
-    ListColunas.Items.add('REDU_INTER');
-    ListColunas.Items.add('CST_IPI');
-    ListColunas.Items.add('ALIQ_IPI');
-    ListColunas.Items.add('CST_PIS');
-    ListColunas.Items.add('ALIQ_PIS');
-    ListColunas.Items.add('CST_COFINS');
-    ListColunas.Items.add('ALIQ_COFINS');
+    Result.Add('CSOSN');
+    Result.Add('CSOSN_ESTA');
+    Result.Add('CSOSN_INTER');
+    Result.Add('CST');
+    Result.Add('CST_ESTA');
+    Result.Add('CST_INTER');
+    Result.Add('ALIQ_ICMS');
+    Result.Add('REDU_ESTA');
+    Result.Add('REDU_INTER');
+    Result.Add('CST_IPI');
+    Result.Add('ALIQ_IPI');
+    Result.Add('CST_PIS');
+    Result.Add('ALIQ_PIS');
+    Result.Add('CST_COFINS');
+    Result.Add('ALIQ_COFINS');
     //Outros
-    ListColunas.Items.add('OBS');
+    Result.Add('OBS');
   end
-  else if LabelTipoImp.Caption = 'Grupos' then
+  else if tipo = 'Grupos' then
   begin
-    ListColunas.Items.add('CODI');
-    ListColunas.Items.add('EMPR');
-    ListColunas.Items.add('DESCR');
+    Result.Add('CODI');
+    Result.Add('EMPR');
+    Result.Add('DESCR');
   end
-  else if LabelTipoImp.Caption = 'SubGrupos' then
+  else if tipo = 'SubGrupos' then
   begin
-    ListColunas.Items.add('CODI');
-    ListColunas.Items.add('EMPR');
-    ListColunas.Items.add('DESCR');
+    Result.Add('CODI');
+    Result.Add('EMPR');
+    Result.Add('DESCR');
   end
-  else if LabelTipoImp.Caption = 'Marcas' then
+  else if tipo = 'Marcas' then
   begin
-    ListColunas.Items.add('CODI');
-    ListColunas.Items.add('DESCR');
+    Result.Add('CODI');
+    Result.Add('DESCR');
   end
-  else if LabelTipoImp.Caption = 'Títulos a Pagar' then
-  begin
-    //Identificação
-    ListColunas.Items.add('CODI');
-    ListColunas.Items.add('EMPR');
-    ListColunas.Items.add('FORN');
-    //Datas e valores
-    ListColunas.Items.add('DATA');
-    ListColunas.Items.add('VENC');
-    ListColunas.Items.add('VALO');
-    ListColunas.Items.add('SALD');
-    ListColunas.Items.add('HIST');
-    //Cobrança e financeiro
-    ListColunas.Items.add('OPER');
-    ListColunas.Items.add('CART');
-    ListColunas.Items.add('LOCA_COBR');
-    ListColunas.Items.add('C_FUNC');
-    //Baixa
-    ListColunas.Items.add('DATA_BAIXA');
-  end
-  else if LabelTipoImp.Caption = 'Títulos a Receber' then
+  else if tipo = 'Títulos a Pagar' then
   begin
     //Identificação
-    ListColunas.Items.add('CODI');
-    ListColunas.Items.add('EMPR');
-    ListColunas.Items.add('CLIE');
+    Result.Add('CODI');
+    Result.Add('EMPR');
+    Result.Add('FORN');
     //Datas e valores
-    ListColunas.Items.add('DATA');
-    ListColunas.Items.add('VENC');
-    ListColunas.Items.add('VALO');
-    ListColunas.Items.add('SALD');
-    ListColunas.Items.add('HIST');
+    Result.Add('DATA');
+    Result.Add('VENC');
+    Result.Add('VALO');
+    Result.Add('SALD');
+    Result.Add('HIST');
     //Cobrança e financeiro
-    ListColunas.Items.add('OPER');
-    ListColunas.Items.add('CART');
-    ListColunas.Items.add('LOCA_COBR');
-    ListColunas.Items.add('C_FUNC');
+    Result.Add('OPER');
+    Result.Add('CART');
+    Result.Add('LOCA_COBR');
+    Result.Add('C_FUNC');
     //Baixa
-    ListColunas.Items.add('DATA_BAIXA');
+    Result.Add('DATA_BAIXA');
+  end
+  else if tipo = 'Títulos a Receber' then
+  begin
+    //Identificação
+    Result.Add('CODI');
+    Result.Add('EMPR');
+    Result.Add('CLIE');
+    //Datas e valores
+    Result.Add('DATA');
+    Result.Add('VENC');
+    Result.Add('VALO');
+    Result.Add('SALD');
+    Result.Add('HIST');
+    //Cobrança e financeiro
+    Result.Add('OPER');
+    Result.Add('CART');
+    Result.Add('LOCA_COBR');
+    Result.Add('C_FUNC');
+    //Baixa
+    Result.Add('DATA_BAIXA');
+  end;
+end;
+
+procedure TfrmColunas.MostrarColunas();
+var
+  lista: TStringList;
+begin
+  ListColunas.Items.Clear;
+  lista := ColunasAceitas(LabelTipoImp.Caption);
+  try
+    ListColunas.Items.AddStrings(lista);
+  finally
+    lista.Free;
   end;
 end;
 

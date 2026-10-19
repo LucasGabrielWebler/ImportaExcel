@@ -59,6 +59,9 @@ begin
     end
     else begin
       StringGrid1.Cells[i,k] := stringreplace(StringGrid1.Cells[i,k], '.', '',[rfReplaceAll, rfIgnoreCase]);
+      //Código precisa ser numérico (texto daria erro de conversão no banco)
+      if not IsNumeric(StringGrid1.Cells[i,k]) then
+        RegistraErro('codi', StringGrid1.Cells[i,k], 'código numérico inválido');
       colClieForn := colClieForn + 'codi';
       dadosClieForn := dadosClieForn + '''' + StringGrid1.Cells[i,k] + '''';
       //Testa se é Update
@@ -189,9 +192,9 @@ begin
         colClieForn := colClieForn + ',codi_grupo_clie';
         dadosClieForn := dadosClieForn + ',' + temp2;
         //Testa se é Update
+        //Descrição do grupo não pode ser chave de Update (somente o código)
         if VerificaUpdate('grupo') = 1 then begin
-          ShowMessage('Só é possível utilizar o código do grupo como Update, não da pra usar a descrição.');
-          Exit;
+          RegistraErro('grupo', temp, 'a descrição do grupo não pode ser chave de Update (use o código do grupo)');
         end
         else begin
           if dadosUpdateClieForn <> '' then dadosUpdateClieForn := dadosUpdateClieForn + ', ';
@@ -232,6 +235,8 @@ begin
     begin
       colClieForn := colClieForn + ',nome';
       temp := AnsiUpperCase(StringGrid1.Cells[i,k]);
+      //Nome (razão social) é obrigatório; o nome fantasia pode ficar vazio
+      if Trim(temp) = '' then RegistraErro('nome', '', 'nome (razão social) não informado');
       temp2 := TextoSQL(Corta(temp,60,'nome'),60); //Apóstrofo e tamanho do campo
       dadosClieForn := dadosClieForn + ',''' + temp2 + '''';
       //Testa se é Update
@@ -275,6 +280,9 @@ begin
       begin
         colClieForn := colClieForn + ',nome';
         dadosClieForn := dadosClieForn + ',''' + temp2 + '''';
+        //Inclusão sem a coluna NOME: o nome fantasia vira o nome (razão social), então é obrigatório
+        if (colUpdateCount <= 0) and (Trim(temp) = '') then
+          RegistraErro('nome_fant', '', 'nome não informado (sem a coluna NOME, o NOME_FANT é gravado como nome)');
       end;
     end
     //DATA_NASC
@@ -328,7 +336,7 @@ begin
       temp := stringreplace(temp, '-', '',[rfReplaceAll, rfIgnoreCase]);
       temp := stringreplace(temp, '/', '',[rfReplaceAll, rfIgnoreCase]);
       temp := stringreplace(temp, '.', '',[rfReplaceAll, rfIgnoreCase]);
-      if temp.Length = 11 then
+      if (temp.Length = 11) and SoNumeros(temp) then
       begin
         temp := (Copy(temp,1,3))+ '.' + (Copy(temp,4,3)) + '.' + (Copy(temp,7,3)) + '-' + (Copy(temp,10,2));
         colClieForn := colClieForn + ',cpf';
@@ -357,7 +365,7 @@ begin
       temp := stringreplace(temp, '-', '',[rfReplaceAll, rfIgnoreCase]);
       temp := stringreplace(temp, '/', '',[rfReplaceAll, rfIgnoreCase]);
       temp := stringreplace(temp, '.', '',[rfReplaceAll, rfIgnoreCase]);
-      if temp.Length = 14 then
+      if (temp.Length = 14) and SoNumeros(temp) then
       begin
         temp := (Copy(temp,1,2))+ '.' + (Copy(temp,3,3)) + '.' + (Copy(temp,6,3)) + '/' + (Copy(temp,9,4)) + '-' + (Copy(temp,13,2));
         colClieForn := colClieForn + ',cnpj';
@@ -386,7 +394,7 @@ begin
       temp := stringreplace(temp, '-', '',[rfReplaceAll, rfIgnoreCase]);
       temp := stringreplace(temp, '/', '',[rfReplaceAll, rfIgnoreCase]);
       temp := stringreplace(temp, '.', '',[rfReplaceAll, rfIgnoreCase]);
-      if temp.Length = 11 then
+      if (temp.Length = 11) and SoNumeros(temp) then
       begin
         temp2 := (Copy(temp,1,3))+ '.' + (Copy(temp,4,3)) + '.' + (Copy(temp,7,3)) + '-' + (Copy(temp,10,2));
         colClieForn := colClieForn + ',cpf';
@@ -405,7 +413,7 @@ begin
           dadosUpdateClieForn := dadosUpdateClieForn + ',tipo=' + '''' + 'F' + '''';
         end;
       end
-      else if temp.Length = 14 then
+      else if (temp.Length = 14) and SoNumeros(temp) then
       begin
         temp2 := (Copy(temp,1,2))+ '.' + (Copy(temp,3,3)) + '.' + (Copy(temp,6,3)) + '/' + (Copy(temp,9,4)) + '-' + (Copy(temp,13,2));
         colClieForn := colClieForn + ',cnpj';
@@ -532,7 +540,7 @@ begin
       temp := stringreplace(temp, '-', '',[rfReplaceAll, rfIgnoreCase]);
       temp := stringreplace(temp, '/', '',[rfReplaceAll, rfIgnoreCase]);
       temp := stringreplace(temp, '.', '',[rfReplaceAll, rfIgnoreCase]);
-      temp := TextoSQL(Corta(temp,20,'inscr_produtor'),20); //Apóstrofo e tamanho do campo
+      temp := TextoSQL(Corta(temp,60,'inscr_produtor'),60); //Apóstrofo e tamanho do campo
       if temp.Length > 1 then
       begin
         colClieForn := colClieForn + ',inscr_produtor';
@@ -1101,7 +1109,7 @@ begin
     begin
       colClieForn := colClieForn + ',obs';
       temp := StringGrid1.Cells[i,k];
-      temp := TextoSQL(Corta(temp,80,'obs'),80); //Apóstrofo e tamanho do campo
+      temp := TextoSQL(temp,MaxInt); //Apóstrofo (campo texto sem limite de tamanho)
       dadosClieForn := dadosClieForn + ',''' + temp + '''';
       //Testa se é Update
       if VerificaUpdate('obs') = 1 then begin
@@ -1118,45 +1126,29 @@ begin
     begin
       temp := StringGrid1.Cells[i,k];
       if Length(temp) > 330 then RegistraErro('refe_come', temp, 'texto maior que 330 caracteres');
+      //Referência comercial não pode ser chave de Update (a importação também é bloqueada no início)
+      if VerificaUpdate('refe_come') = 1 then
+        RegistraErro('refe_come', '', 'a referência comercial não pode ser chave de Update');
       if (temp.Length>220) then
       begin
         colClieForn := colClieForn + ',refe_come3';
         temp2 := TextoSQL(Copy(temp,221,110),110);
         dadosClieForn := dadosClieForn + ',''' + temp2 + '''';
-        //Testa se é Update
-        if VerificaUpdate('refe_come') = 1 then begin
-          ShowMessage('Referencia comercial não pode ser uma condição de Update. Sry mas não da.');
-          Exit;
-        end
-        else begin
-          if dadosUpdateClieForn <> '' then dadosUpdateClieForn := dadosUpdateClieForn + ', ';
-          dadosUpdateClieForn := dadosUpdateClieForn + 'refe_come3=' + '''' + temp2 + '''';
-        end;
+        if dadosUpdateClieForn <> '' then dadosUpdateClieForn := dadosUpdateClieForn + ', ';
+        dadosUpdateClieForn := dadosUpdateClieForn + 'refe_come3=' + '''' + temp2 + '''';
       end;
       if (temp.Length>110) then
       begin
         colClieForn := colClieForn + ',refe_come2';
         temp2 := TextoSQL(Copy(temp,111,110),110);
         dadosClieForn := dadosClieForn + ',''' + temp2 + '''';
-        //Testa se é Update
-        if VerificaUpdate('refe_come') = 1 then begin
-          ShowMessage('Referencia comercial não pode ser uma condição de Update. Sry mas não da.');
-          Exit;
-        end
-        else begin
-          if dadosUpdateClieForn <> '' then dadosUpdateClieForn := dadosUpdateClieForn + ', ';
-          dadosUpdateClieForn := dadosUpdateClieForn + 'refe_come2=' + '''' + temp2 + '''';
-        end;
+        if dadosUpdateClieForn <> '' then dadosUpdateClieForn := dadosUpdateClieForn + ', ';
+        dadosUpdateClieForn := dadosUpdateClieForn + 'refe_come2=' + '''' + temp2 + '''';
       end;
       colClieForn := colClieForn + ',refe_come1';
       temp2 := TextoSQL(Copy(temp,1,110),110);
       dadosClieForn := dadosClieForn + ',''' + temp2 + '''';
-      //Testa se é Update
-      if VerificaUpdate('refe_come') = 1 then begin
-        ShowMessage('Referencia comercial não pode ser uma condição de Update. Sry mas não da.');
-        Exit;
-      end
-      else begin
+      begin
         if dadosUpdateClieForn <> '' then dadosUpdateClieForn := dadosUpdateClieForn + ', ';
         dadosUpdateClieForn := dadosUpdateClieForn + 'refe_come1=' + '''' + temp2 + '''';
         //Update com texto menor: limpar as partes que sobraram do texto anterior
@@ -1218,10 +1210,9 @@ begin
         end;
       end
       else begin
+        //Vazio não grava o campo (fica nulo)
         if temp <> '' then
           RegistraErro('sexo', StringGrid1.Cells[i,k], 'valor não reconhecido (use M ou F)');
-        colClieForn := colClieForn + ',sexo';
-        dadosClieForn := dadosClieForn + ',''' + 'F' + '''';
       end;
     end
     //TIPOCAD (A=AMBOS, C=CLIENTE, F=FORNECEDOR)
@@ -1309,10 +1300,16 @@ procedure cImportaClieForn.Gravar;
 var
   fileTXT: TextFile;
   SQL: TSQLDataSet;
+  j: Integer;
 begin
   //Sair se estiver em erro
   if status = 0 then
     Exit;
+
+  //Update: todas as colunas chave precisam estar preenchidas (uma chave vazia ampliaria o filtro)
+  for j := 0 to colUpdateCount-1 do
+    if (BuscaColuna(StringGrid1, colUpdate[j]) <> -1) and (Trim(StringGrid1.Cells[BuscaColuna(StringGrid1, colUpdate[j]), k]) = '') then
+      RegistraErro(colUpdate[j], '', 'coluna chave (Update) em branco');
 
   //Update sem valor na(s) coluna(s) chave: não gera SQL inválido
   if (colUpdateCount > 0) and (condUpdateClieForn = '') then
@@ -1338,8 +1335,8 @@ begin
     try
       try
         //Abrir conexoes
-        frmPrinc.conDestino.Open;
         SQL := TSQLDataSet.Create(Nil);
+        frmPrinc.conDestino.Open;
         SQL.SQLConnection := frmPrinc.conDestino;
 
         //Se for INSERT

@@ -126,9 +126,9 @@ uses
 const
   //Recálculo das margens dos produtos (sem estouro numérico e com o sinal correto)
   //MARGEM1: margem do preço a prazo sobre o custo real (negativa quando o preço é menor que o custo)
-  SQL_MARGEM1 = 'UPDATE prod_custos pc SET pc.cust_margem1 = CAST((pc.cust_preco_prazo - pc.cust_custo_real)*100 AS NUMERIC(18,2)) / pc.cust_custo_real WHERE pc.cust_preco_prazo > 0 AND pc.cust_custo_real > 0;';
+  SQL_MARGEM1 = 'UPDATE prod_custos pc SET pc.cust_margem1 = CAST((pc.cust_preco_prazo - pc.cust_custo_real)*100 AS NUMERIC(18,2)) / CAST(pc.cust_custo_real AS DOUBLE PRECISION) WHERE pc.cust_preco_prazo > 0 AND pc.cust_custo_real > 0;';
   //MARGEM2: desconto do preço a vista sobre o preço a prazo (negativa quando a vista é maior)
-  SQL_MARGEM2 = 'UPDATE prod_custos pc SET pc.cust_margem2 = CAST((pc.cust_preco_prazo - pc.cust_preco_vista)*100 AS NUMERIC(18,2)) / pc.cust_preco_prazo WHERE pc.cust_preco_prazo > 0;';
+  SQL_MARGEM2 = 'UPDATE prod_custos pc SET pc.cust_margem2 = CAST((pc.cust_preco_prazo - pc.cust_preco_vista)*100 AS NUMERIC(18,2)) / CAST(pc.cust_preco_prazo AS DOUBLE PRECISION) WHERE pc.cust_preco_prazo > 0;';
 
 //Função para definir a quantidade de empresas
 function TfrmPrinc.quantidadeEmpresas(colEmpr: Integer): Integer;
@@ -237,30 +237,35 @@ end;
 //Função para cadastrar cliente/fornecedor no banco de dados. Retorna Gen_ID
 function TfrmPrinc.cadastraClieForn(colClieForn,dadosClieForn: string): Integer;
 var
-  gen_id: Integer;
   queryTemp: TSQLQuery;
 
 begin
+  Result := -1;
+  queryTemp := TSQLQuery.Create(nil);
   try
     try
       frmPrinc.conDestino.Open;
-      queryTemp := TSQLQuery.Create(nil);
       queryTemp.SQLConnection := frmPrinc.conDestino;
       queryTemp.SQL.Clear;
 
       //Desativar Trigger das cidades
       queryTemp.CommandText := 'ALTER TRIGGER clieforn_biu0 INACTIVE;';
       queryTemp.ExecSQL;
-      //Executar INSERT
-      queryTemp.CommandText := 'INSERT INTO clieforn ('+ colClieForn +') VALUES ' + '(' + dadosClieForn + ');';
-      queryTemp.ExecSQL;
-      //Reativar Trigger das cidades
-      queryTemp.CommandText := 'ALTER TRIGGER clieforn_biu0 ACTIVE;';
-      queryTemp.ExecSQL;
+      try
+        //Executar INSERT
+        queryTemp.CommandText := 'INSERT INTO clieforn ('+ colClieForn +') VALUES ' + '(' + dadosClieForn + ');';
+        queryTemp.ExecSQL;
+      finally
+        //Reativar Trigger das cidades, mesmo se o INSERT der erro
+        //(ExecuteDirect para manter o INSERT no CommandText da mensagem de erro)
+        frmPrinc.conDestino.ExecuteDirect('ALTER TRIGGER clieforn_biu0 ACTIVE;');
+      end;
 
       queryTemp.SQL.Clear;
       queryTemp.SQL.Add('SELECT c.codi FROM clieforn c WHERE c.codi = gen_id(gen_clieforn_id,0);');
       queryTemp.Open;
+      if not queryTemp.IsEmpty then
+        Result := queryTemp.FieldByName('CODI').AsInteger;
 
     except
       on e: exception do
@@ -269,14 +274,7 @@ begin
       end;
     end;
   finally
-    if queryTemp.IsEmpty then
-    begin
-      Result := -1;
-    end
-    else begin
-      Result := queryTemp.FieldByName('CODI').AsInteger;
-    end;
-    queryTemp.Close;
+    queryTemp.Free;
     frmPrinc.conDestino.Close;
   end;
 end;
@@ -300,8 +298,8 @@ begin
   else
   begin
     try
-      frmPrinc.conDestino.Open;
       queryTemp := TSQLQuery.Create(nil);
+      frmPrinc.conDestino.Open;
       queryTemp.SQLConnection := frmPrinc.conDestino;
       queryTemp.SQL.Clear;
       queryTemp.SQL.Add('SELECT * FROM CIDADE WHERE CID_DESC = :PDESC AND CID_UF = :PUF');
@@ -335,8 +333,8 @@ begin
   else
   begin
     try
-      frmPrinc.conDestino.Open;
       queryTemp := TSQLQuery.Create(nil);
+      frmPrinc.conDestino.Open;
       queryTemp.SQLConnection := frmPrinc.conDestino;
       queryTemp.SQL.Clear;
       queryTemp.SQL.Add('SELECT tp.codi FROM titup tp WHERE tp.codi = :PCODI');
@@ -367,8 +365,8 @@ begin
   else
   begin
     try
-      frmPrinc.conDestino.Open;
       queryTemp := TSQLQuery.Create(nil);
+      frmPrinc.conDestino.Open;
       queryTemp.SQLConnection := frmPrinc.conDestino;
       queryTemp.SQL.Clear;
       queryTemp.SQL.Add('SELECT tr.codi FROM titur tr WHERE tr.codi = :PCODI');
@@ -399,8 +397,8 @@ begin
   else
   begin
     try
-      frmPrinc.conDestino.Open;
       queryTemp := TSQLQuery.Create(nil);
+      frmPrinc.conDestino.Open;
       queryTemp.SQLConnection := frmPrinc.conDestino;
       queryTemp.SQL.Clear;
       queryTemp.SQL.Add('SELECT g.codi FROM grup_prod g WHERE g.codi = :PCODI');
@@ -431,8 +429,8 @@ begin
   else
   begin
     try
-      frmPrinc.conDestino.Open;
       queryTemp := TSQLQuery.Create(nil);
+      frmPrinc.conDestino.Open;
       queryTemp.SQLConnection := frmPrinc.conDestino;
       queryTemp.SQL.Clear;
       queryTemp.SQL.Add('SELECT sg.codi FROM sub_grup_prod sg WHERE sg.codi = :PCODI');
@@ -463,8 +461,8 @@ begin
   else
   begin
     try
-      frmPrinc.conDestino.Open;
       queryTemp := TSQLQuery.Create(nil);
+      frmPrinc.conDestino.Open;
       queryTemp.SQLConnection := frmPrinc.conDestino;
       queryTemp.SQL.Clear;
       queryTemp.SQL.Add('SELECT m.codi FROM marca m WHERE m.codi = :PCODI');
@@ -496,8 +494,8 @@ begin
   begin
     try
       try
-        frmPrinc.conDestino.Open;
         queryTemp := TSQLQuery.Create(nil);
+        frmPrinc.conDestino.Open;
         queryTemp.SQLConnection := frmPrinc.conDestino;
         queryTemp.SQL.Clear;
         //queryTemp.SQL.Add('select c.codi from clieforn c where c.nome = :PNOME');
@@ -588,6 +586,7 @@ var
   temp, temp2, max: String;
   i, k: integer;
   fileTXT: TextFile;
+  lista: TStringList;
 
 begin
   //Incicialmente, testar se existem colunas com mesmo nome
@@ -613,11 +612,67 @@ begin
     Exit;
   end;
 
+  //Coluna da empresa: EMPRESA e EMPR são aceitas em todos os tipos de importação
+  //(Clie/Forn usa EMPRESA; Produtos, Títulos, Grupos e SubGrupos usam EMPR)
+  if (SelectImport.Text <> 'CUSTOM') and (SelectImport.Text <> 'Marcas') then
+  begin
+    if SelectImport.Text = 'Clie/Forn' then begin temp := 'EMPRESA'; temp2 := 'EMPR'; end
+    else begin temp := 'EMPR'; temp2 := 'EMPRESA'; end;
+    if (BuscaColuna(StringGrid1,temp) <> -1) and (BuscaColuna(StringGrid1,temp2) <> -1) then
+    begin
+      ShowMessage('Utilize somente uma coluna de empresa (EMPRESA ou EMPR), não as duas.');
+      Exit;
+    end;
+    //Sinônimo: passa a coluna para o nome usado por este tipo de importação
+    i := BuscaColuna(StringGrid1,temp2);
+    if i <> -1 then
+    begin
+      StringGrid1.Cells[i,0] := temp;
+      for k := 0 to colUpdateCount-1 do
+        if UpperCase(colUpdate[k]) = temp2 then colUpdate[k] := temp;
+    end;
+  end;
+
+  //Colunas que não pertencem ao tipo de importação (ex.: nome digitado errado) não são importadas:
+  //avisa quais são e pergunta se deseja continuar
+  if SelectImport.Text <> 'CUSTOM' then
+  begin
+    lista := ColunasAceitas(SelectImport.Text);
+    try
+      temp := '';
+      for i := 1 to StringGrid1.ColCount-1 do
+        if (Trim(StringGrid1.Cells[i,0]) <> '') and (lista.IndexOf(UpperCase(Trim(StringGrid1.Cells[i,0]))) = -1) then
+          temp := temp + '   ' + Trim(StringGrid1.Cells[i,0]) + sLineBreak;
+    finally
+      lista.Free;
+    end;
+    if temp <> '' then
+      if Mensagem('As colunas abaixo não são reconhecidas para ' + SelectImport.Text + ' e NÃO serão importadas:' + sLineBreak + sLineBreak +
+                  temp + sLineBreak + 'Confira o nome das colunas em Carregar > Colunas.' + sLineBreak + 'Deseja continuar a importação?',
+                  mtWarning, [mbYes, mbNo], ['Continuar', 'Cancelar'], 'Colunas não reconhecidas') <> mrYes then
+        Exit;
+  end;
+
   //Se for Clie/Forn, não pode usar CPF_CNPJ junto com as colunas CPF ou CNPJ
   if (SelectImport.Text = 'Clie/Forn') and (BuscaColuna(StringGrid1,'cpf_cnpj') <> -1) and
      ((BuscaColuna(StringGrid1,'cpf') <> -1) or (BuscaColuna(StringGrid1,'cnpj') <> -1)) then
   begin
     ShowMessage('Utilize a coluna CPF_CNPJ ou as colunas CPF/CNPJ, não as duas formas juntas.');
+    Exit;
+  end;
+
+  //Clie/Forn: referência comercial não pode ser chave de Update
+  if (SelectImport.Text = 'Clie/Forn') and (VerificaUpdate('refe_come') = 1) then
+  begin
+    ShowMessage('A coluna REFE_COME não pode ser marcada como Update (chave). Desmarque a coluna para continuar.');
+    Exit;
+  end;
+
+  //Clie/Forn: inclusão exige o nome (razão social), na coluna NOME ou NOME_FANT
+  if (SelectImport.Text = 'Clie/Forn') and (colUpdateCount <= 0) and
+     (BuscaColuna(StringGrid1,'nome') = -1) and (BuscaColuna(StringGrid1,'nome_fant') = -1) then
+  begin
+    ShowMessage('Informe a coluna NOME (razão social) para incluir clientes e fornecedores.');
     Exit;
   end;
 
@@ -634,6 +689,35 @@ begin
     ShowMessage('Utilize a coluna CST ou as colunas CST_ESTA/CST_INTER, não as duas formas juntas.');
     Exit;
   end;
+
+  //Títulos: colunas obrigatórias (cliente/fornecedor, vencimento e valor ou saldo)
+  if (SelectImport.Text = 'Títulos a Pagar') or (SelectImport.Text = 'Títulos a Receber') then
+  begin
+    if SelectImport.Text = 'Títulos a Pagar' then temp := 'forn' else temp := 'clie';
+    if BuscaColuna(StringGrid1,temp) = -1 then
+    begin
+      ShowMessage('Informe a coluna ' + UpperCase(temp) + ' (código ou nome do ' +
+        IfThen(temp = 'forn', 'fornecedor', 'cliente') + ') para importar ' + SelectImport.Text + '.');
+      Exit;
+    end;
+    if BuscaColuna(StringGrid1,'venc') = -1 then
+    begin
+      ShowMessage('Informe a coluna VENC (vencimento) para importar ' + SelectImport.Text + '.');
+      Exit;
+    end;
+    if (BuscaColuna(StringGrid1,'valo') = -1) and (BuscaColuna(StringGrid1,'sald') = -1) then
+    begin
+      ShowMessage('Informe a coluna VALO (valor) ou SALD (saldo) para importar ' + SelectImport.Text + '.');
+      Exit;
+    end;
+    //Reinicia o controle de códigos e de cadastros da importação
+    if SelectImport.Text = 'Títulos a Pagar' then cImportaTituP.Inicia
+    else cImportaTituR.Inicia;
+  end;
+
+  //Produtos: verifica se a importação usa o generator (linhas sem CODI)
+  if SelectImport.Text = 'Produtos' then
+    cImportaProduto.Inicia(StringGrid1, StrToIntDef(StartLine.Text, 1));
 
 
   //Status se esta OK ou se tem erro, setado como OK
@@ -680,8 +764,8 @@ begin
       begin
         frmImportando.atualizaStatus('Inserindo dados na tabela PROD_AJUS.');
         if UpperCase( ExtractFileExt(DBPath.Text) ) = '.FDB' then begin
-          conDestino.Open;
           SQL := TSQLDataSet.Create(Nil);
+          conDestino.Open;
           try
             SQL.SQLConnection := conDestino;
             SQL.CommandText := 'INSERT INTO prod_ajus (codi,data,obs) VALUES (gen_id(gen_prod_ajus_id,1),CURRENT_DATE,''IMPORTADO PELO IMPORTA EXCEL'');';
@@ -824,8 +908,8 @@ begin
       //Usando banco de dados FDB
       if UpperCase( ExtractFileExt(DBPath.Text) ) = '.FDB' then begin
         //Abrir conexoes
-        conDestino.Open;
         SQL := TSQLDataSet.Create(Nil);
+        conDestino.Open;
         SQL.SQLConnection := conDestino;
 
         if SelectImport.Text='Clie/Forn' then
@@ -1110,6 +1194,7 @@ var
   stream : string;
 
 begin
+  Result := False;
   //Criar StringList
   CSV := TStringList.Create;
 
@@ -1269,14 +1354,32 @@ begin
 end;
 
 
+//Confirmar antes de apagar os dados da base de destino (os menus Limpar apagam tudo e zeram os generators)
+function ConfirmaLimpeza(dados: string): Boolean;
+begin
+  Result := False;
+  if UpperCase(ExtractFileExt(frmPrinc.DBPath.Text)) <> '.FDB' then
+  begin
+    ShowMessage('Selecione uma base de dados (.FDB) como destino para limpar os dados.');
+    Exit;
+  end;
+  Result := Mensagem('Serão APAGADOS TODOS os dados de ' + dados + ' da base:' + sLineBreak + sLineBreak +
+                     frmPrinc.DBPath.Text + sLineBreak + sLineBreak +
+                     'Essa operação não pode ser desfeita. Deseja continuar?',
+                     mtWarning, [mbYes, mbNo], ['Apagar', 'Cancelar'], 'Limpar dados') = mrYes;
+end;
+
+
 //Limpar dados de clientes e fornecedores do banco
 procedure TfrmPrinc.mnuLimpaClieFornClick(Sender: TObject);
 var
   SQL: TSQLDataSet;
 begin
+  if not ConfirmaLimpeza('clientes e fornecedores') then Exit;
+
   //Abrir conexoes
-  conDestino.Open;
   SQL := TSQLDataSet.Create(Nil);
+  conDestino.Open;
   SQL.SQLConnection := conDestino;
 
   SQL.CommandText := 'DELETE FROM clieforn;';
@@ -1298,9 +1401,11 @@ procedure TfrmPrinc.mnuLimpaGruposClick(Sender: TObject);
 var
   SQL: TSQLDataSet;
 begin
+  if not ConfirmaLimpeza('grupos') then Exit;
+
   //Abrir conexoes
-  conDestino.Open;
   SQL := TSQLDataSet.Create(Nil);
+  conDestino.Open;
   SQL.SQLConnection := conDestino;
 
   SQL.CommandText := 'DELETE FROM grup_prod;';
@@ -1322,9 +1427,11 @@ procedure TfrmPrinc.mnuLimpaMarcasClick(Sender: TObject);
 var
   SQL: TSQLDataSet;
 begin
+  if not ConfirmaLimpeza('marcas') then Exit;
+
   //Abrir conexoes
-  conDestino.Open;
   SQL := TSQLDataSet.Create(Nil);
+  conDestino.Open;
   SQL.SQLConnection := conDestino;
 
   SQL.CommandText := 'DELETE FROM marca;';
@@ -1346,9 +1453,11 @@ procedure TfrmPrinc.mnuLimpaProdutosClick(Sender: TObject);
 var
   SQL: TSQLDataSet;
 begin
+  if not ConfirmaLimpeza('produtos (com estoque e ajustes)') then Exit;
+
   //Abrir conexoes
-  conDestino.Open;
   SQL := TSQLDataSet.Create(Nil);
+  conDestino.Open;
   SQL.SQLConnection := conDestino;
 
   SQL.CommandText := 'DELETE FROM prod;';
@@ -1390,9 +1499,11 @@ procedure TfrmPrinc.mnuLimpaSubGruposClick(Sender: TObject);
 var
   SQL: TSQLDataSet;
 begin
+  if not ConfirmaLimpeza('subgrupos') then Exit;
+
   //Abrir conexoes
-  conDestino.Open;
   SQL := TSQLDataSet.Create(Nil);
+  conDestino.Open;
   SQL.SQLConnection := conDestino;
 
   SQL.CommandText := 'DELETE FROM sub_grup_prod;';
@@ -1414,9 +1525,11 @@ procedure TfrmPrinc.mnuLimpaTituPClick(Sender: TObject);
 var
   SQL: TSQLDataSet;
 begin
+  if not ConfirmaLimpeza('títulos a pagar') then Exit;
+
   //Abrir conexoes
-  conDestino.Open;
   SQL := TSQLDataSet.Create(Nil);
+  conDestino.Open;
   SQL.SQLConnection := conDestino;
 
   SQL.CommandText := 'DELETE FROM titup;';
@@ -1438,9 +1551,11 @@ procedure TfrmPrinc.mnuLimpaTituRClick(Sender: TObject);
 var
   SQL: TSQLDataSet;
 begin
+  if not ConfirmaLimpeza('títulos a receber') then Exit;
+
   //Abrir conexoes
-  conDestino.Open;
   SQL := TSQLDataSet.Create(Nil);
+  conDestino.Open;
   SQL.SQLConnection := conDestino;
 
   SQL.CommandText := 'DELETE FROM titur;';

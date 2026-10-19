@@ -19,6 +19,8 @@ uses
   function TextoSQL(texto: string; tamanho: Integer): string;
   function NumeroSQL(texto: string): string;
   function DataValida(data: string): Boolean;
+  function SoNumeros(texto: string): Boolean;
+  function LimpaNumero(texto: string): string;
   function AnoQuatroDigitos(ano: string): string;
 
   //Validação dos valores da linha (a importação para na linha com erro)
@@ -165,8 +167,8 @@ var
 begin
   try
     try
-      frmPrinc.conDestino.Open;
       queryTemp := TSQLQuery.Create(nil);
+      frmPrinc.conDestino.Open;
       queryTemp.SQLConnection := frmPrinc.conDestino;
       queryTemp.SQL.Clear;
       queryTemp.CommandText := sql;
@@ -204,8 +206,8 @@ begin
   else
     try
       try
-        frmPrinc.conDestino.Open;
         queryTemp := TSQLQuery.Create(nil);
+        frmPrinc.conDestino.Open;
         queryTemp.SQLConnection := frmPrinc.conDestino;
         queryTemp.SQL.Clear;
         queryTemp.CommandText := sql;
@@ -239,7 +241,7 @@ end;
 
 function PrimeiraMaiuscula(texto: string) : string;
 begin
-  Result := UpperCase(Copy(texto,1,1)) + LowerCase(Copy(texto,2,Length(texto)-1));
+  Result := AnsiUpperCase(Copy(texto,1,1)) + AnsiLowerCase(Copy(texto,2,Length(texto)-1));
 end;
 
 
@@ -270,6 +272,24 @@ end;
 
 
 //Função para validar data da planilha já sem separadores (ddmmaaaa ou ddmmaa)
+//Remove R$, % e espaços de um valor numérico da planilha (a validação já aceita esses símbolos)
+function LimpaNumero(texto: string): string;
+begin
+  Result := stringreplace(texto, 'R$', '',[rfReplaceAll, rfIgnoreCase]);
+  Result := Trim(stringreplace(Result, '%', '',[rfReplaceAll]));
+end;
+
+//Texto composto somente por dígitos (0-9)
+function SoNumeros(texto: string): Boolean;
+var
+  c: Char;
+begin
+  Result := texto <> '';
+  for c in texto do
+    if not CharInSet(c, ['0'..'9']) then Exit(False);
+end;
+
+
 function DataValida(data: string): Boolean;
 var
   d: TDateTime;
@@ -281,7 +301,9 @@ begin
   for c in data do
     if not CharInSet(c, ['0'..'9']) then Exit;
   if Length(data) = 8 then
-    Result := TryEncodeDate(StrToInt(Copy(data,5,4)), StrToInt(Copy(data,3,2)), StrToInt(Copy(data,1,2)), d)
+    //Ano entre 1900 e 2099 (evita datas digitadas errado, ex.: 0201)
+    Result := (StrToInt(Copy(data,5,4)) >= 1900) and (StrToInt(Copy(data,5,4)) <= 2099) and
+              TryEncodeDate(StrToInt(Copy(data,5,4)), StrToInt(Copy(data,3,2)), StrToInt(Copy(data,1,2)), d)
   else
     Result := TryEncodeDate(StrToInt(AnoQuatroDigitos(Copy(data,5,2))), StrToInt(Copy(data,3,2)), StrToInt(Copy(data,1,2)), d);
 end;
@@ -477,7 +499,7 @@ begin
     for j := 1 to grid.ColCount-1 do
     begin
       if i=j then Continue;
-      if grid.Cells[j,0]=temp then
+      if UpperCase(grid.Cells[j,0])=UpperCase(temp) then
       begin
         ShowMessage('Colunas com mesmo nome ('+temp+'): '+IntToStr(i)+' e '+IntToStr(j));
         Result := False;
@@ -519,6 +541,7 @@ var
   CSV : TStrings;
   stream : string;
 begin
+  Result := False;
   //Criar StringList
   CSV := TStringList.Create;
 

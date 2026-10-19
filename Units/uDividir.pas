@@ -63,7 +63,7 @@ begin
         if idxChar > 0 then
         begin
           //Escrever campo da direita (após caracter divisor)
-          frmPrinc.StringGrid1.Cells[i+1,j] := Copy(temp, idxChar+2, Length(temp)-idxChar-1);
+          frmPrinc.StringGrid1.Cells[i+1,j] := Copy(temp, idxChar+1+Length(edtChar.Text), MaxInt);
           //Escrever campo da esquerda (até o caracter divisor)
           frmPrinc.StringGrid1.Cells[i,j] := Copy(temp, 0, idxChar);
           //Setar flag dividiu

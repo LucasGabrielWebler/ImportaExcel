@@ -32,6 +32,8 @@ type
       procedure AdicionaItemUpdate(sql: String);
       function CodigoCadastro(valor, tabela, campoDescr, generator, colsExtras, valoresExtras: string): string;
       function SQLPrecoPelaMargem: string;
+      function SQLGenerator(antes: Boolean): string;
+      class procedure Inicia(Grid: TStringGrid; inicio: Integer);
       procedure ValidaLinha;
   end;
 
@@ -39,6 +41,47 @@ implementation
 
 uses
   importa_excel, importando;
+
+var
+  //Generator de produtos: usado quando a linha não tem CODI
+  usaGenerator, generatorSincronizado: Boolean;
+
+//Início da importação: verifica se alguma linha usa o generator (sem a coluna CODI ou CODI vazio)
+class procedure cImportaProduto.Inicia(Grid: TStringGrid; inicio: Integer);
+var
+  i, c: Integer;
+begin
+  generatorSincronizado := False;
+  usaGenerator := False;
+  if colUpdateCount > 0 then Exit;
+  c := BuscaColuna(Grid, 'codi');
+  if c = -1 then
+    usaGenerator := True
+  else
+    for i := inicio to Grid.RowCount-1 do
+      if Trim(Grid.Cells[c,i]) = '' then
+      begin
+        usaGenerator := True;
+        Break;
+      end;
+end;
+
+//Mantém o generator à frente dos códigos já cadastrados (base e planilha) para não repetir código:
+//antes do primeiro produto sem CODI acerta pelo maior código da tabela;
+//depois de um produto com CODI maior que o generator, avança o generator até ele
+function cImportaProduto.SQLGenerator(antes: Boolean): string;
+begin
+  Result := '';
+  if (not usaGenerator) or (colUpdateCount > 0) then Exit;
+  if antes then
+  begin
+    if generatorSincronizado then Exit;
+    generatorSincronizado := True;
+    Result := 'SELECT gen_id(gen_prod_id, MAXVALUE(0, (SELECT COALESCE(MAX(codi),0) FROM prod) - gen_id(gen_prod_id,0))) FROM RDB$DATABASE';
+  end
+  else if IsNumeric(prodCod) then
+    Result := 'SELECT gen_id(gen_prod_id, MAXVALUE(0, ' + prodCod + ' - gen_id(gen_prod_id,0))) FROM RDB$DATABASE';
+end;
 
 constructor cImportaProduto.ImportaRegistro(numReg: Integer; Grid: TStringGrid);
 begin
@@ -441,17 +484,8 @@ begin
       condUpdateProdCust := condUpdateProdCust + 'cust_prod_codi=' + '''' + UpperCase(RemoveAcento(prodCod)) + '''';
       if condUpdateItens <> '' then condUpdateItens := condUpdateItens + ' AND ';
       condUpdateItens := condUpdateItens + 'cod_prod=' + '''' + UpperCase(RemoveAcento(prodCod)) + '''';
-    end
-    else begin
-      if dadosUpdateProd <> '' then dadosUpdateProd := dadosUpdateProd + ', ';
-      dadosUpdateProd := dadosUpdateProd + 'codi=' + '''' + UpperCase(RemoveAcento(prodCod)) + '''';
-      if dadosUpdateProdTrib <> '' then dadosUpdateProdTrib := dadosUpdateProdTrib + ', ';
-      dadosUpdateProdTrib := dadosUpdateProdTrib + 'trib_prod_codi=' + '''' + UpperCase(RemoveAcento(prodCod)) + '''';
-      if dadosUpdateProdAdic <> '' then dadosUpdateProdAdic := dadosUpdateProdAdic + ', ';
-      dadosUpdateProdAdic := dadosUpdateProdAdic + 'adic_prod_codi=' + '''' + UpperCase(RemoveAcento(prodCod)) + '''';
-      if dadosUpdateProdCust <> '' then dadosUpdateProdCust := dadosUpdateProdCust + ', ';
-      dadosUpdateProdCust := dadosUpdateProdCust + 'cust_prod_codi=' + '''' + UpperCase(RemoveAcento(prodCod)) + '''';
     end;
+    //No Update o CODI é usado somente como chave, nunca é alterado (igual aos clientes)
   end
   else begin
     colProd := colProd + ',codi';
@@ -717,7 +751,7 @@ begin
     else begin
       temp := StringGrid1.Cells[i,k];
     end;
-    temp := corrigeFloat(temp);
+    temp := corrigeFloat(LimpaNumero(temp));
     //Movimentação de estoque .6 (QTD e QTD_MAX)
     AdicionaItem(temp, '6');
     //Testa se é Update
@@ -782,7 +816,7 @@ begin
     else begin
       temp := StringGrid1.Cells[i,k];
     end;
-    temp := corrigeFloat(temp);
+    temp := corrigeFloat(LimpaNumero(temp));
     //Movimentação de estoque .5 (somente QTD)
     AdicionaItem(temp, '5');
     //Testa se é Update
@@ -832,7 +866,7 @@ begin
     else begin
       temp := StringGrid1.Cells[i,k];
     end;
-    temp := corrigeFloat(temp);
+    temp := corrigeFloat(LimpaNumero(temp));
     //Movimentação de estoque .4 (somente QTD_MAX)
     AdicionaItem(temp, '4');
     //Testa se é Update
@@ -927,7 +961,7 @@ begin
         temp2 := CodigoCadastro(temp, 'prod_colecao', 'descri', 'gen_prod_colecao_id', '', '');
         if temp2 = '' then
         begin
-          RegistraErro('colecao', StringGrid1.Cells[i,k], 'código de cole\x{e7}\x{e3}o não encontrado');
+          RegistraErro('colecao', StringGrid1.Cells[i,k], 'código de coleção não encontrado');
           temp2 := 'NULL';
         end;
         colProd := colProd + ',codi_colecao';
@@ -1251,7 +1285,7 @@ begin
       else begin
         temp := StringGrid1.Cells[i,k];
       end;
-      temp := corrigeFloat(temp);
+      temp := corrigeFloat(LimpaNumero(temp));
       dadosProd := dadosProd + ',' + temp;
       //Testa se é Update
       if VerificaUpdate('pesl') = 1 then begin
@@ -1282,7 +1316,7 @@ begin
       else begin
         temp := StringGrid1.Cells[i,k];
       end;
-      temp := corrigeFloat(temp);
+      temp := corrigeFloat(LimpaNumero(temp));
       dadosProd := dadosProd + ',' + temp;
       //Testa se é Update
       if VerificaUpdate('pesb') = 1 then begin
@@ -1313,7 +1347,7 @@ begin
       else begin
         temp := StringGrid1.Cells[i,k];
       end;
-      temp := corrigeFloat(temp);
+      temp := corrigeFloat(LimpaNumero(temp));
       dadosProd := dadosProd + ',' + temp;
       //Testa se é Update
       if VerificaUpdate('fator_conv') = 1 then begin
@@ -1344,7 +1378,7 @@ begin
       else begin
         temp := StringGrid1.Cells[i,k];
       end;
-      temp := corrigeFloat(temp);
+      temp := corrigeFloat(LimpaNumero(temp));
       dadosProdAdic := dadosProdAdic + ',' + temp;
       //Testa se é Update
       if VerificaUpdate('qtd_minima') = 1 then begin
@@ -1378,7 +1412,7 @@ begin
       temp := stringreplace(temp, 'R', '',[rfReplaceAll, rfIgnoreCase]);
       temp := stringreplace(temp, '$', '',[rfReplaceAll, rfIgnoreCase]);
       temp := Trim(temp);
-      temp := corrigeFloat(temp);
+      temp := corrigeFloat(LimpaNumero(temp));
       dadosProdCust := dadosProdCust + ',' + temp;
       //Testar se existe o custo_real, se não joga o custo mesmo
       if (BuscaColuna(StringGrid1,'custo_real')=-1) then
@@ -1415,7 +1449,7 @@ begin
       else begin
         temp := StringGrid1.Cells[i,k];
       end;
-      temp := corrigeFloat(temp);
+      temp := corrigeFloat(LimpaNumero(temp));
       dadosProdCust := dadosProdCust + ',' + temp;
       //Testa se é Update
       if VerificaUpdate('custo_medio') = 1 then begin
@@ -1447,7 +1481,7 @@ begin
         temp := StringGrid1.Cells[i,k];
       end;
       temp := stringreplace(temp, '%', '',[rfReplaceAll, rfIgnoreCase]);
-      temp := corrigeFloat(temp);
+      temp := corrigeFloat(LimpaNumero(temp));
       dadosProdCust := dadosProdCust + ',' + temp;
       //Testa se é Update
       if VerificaUpdate('ipi') = 1 then begin
@@ -1479,7 +1513,7 @@ begin
         temp := StringGrid1.Cells[i,k];
       end;
       temp := stringreplace(temp, '%', '',[rfReplaceAll, rfIgnoreCase]);
-      temp := corrigeFloat(temp);
+      temp := corrigeFloat(LimpaNumero(temp));
       dadosProdCust := dadosProdCust + ',' + temp;
       //Testa se é Update
       if VerificaUpdate('pis') = 1 then begin
@@ -1511,7 +1545,7 @@ begin
         temp := StringGrid1.Cells[i,k];
       end;
       temp := stringreplace(temp, '%', '',[rfReplaceAll, rfIgnoreCase]);
-      temp := corrigeFloat(temp);
+      temp := corrigeFloat(LimpaNumero(temp));
       dadosProdCust := dadosProdCust + ',' + temp;
       //Testa se é Update
       if VerificaUpdate('cofins') = 1 then begin
@@ -1543,7 +1577,7 @@ begin
         temp := StringGrid1.Cells[i,k];
       end;
       temp := stringreplace(temp, '%', '',[rfReplaceAll, rfIgnoreCase]);
-      temp := corrigeFloat(temp);
+      temp := corrigeFloat(LimpaNumero(temp));
       dadosProdCust := dadosProdCust + ',' + temp;
       //Testa se é Update
       if VerificaUpdate('icms') = 1 then begin
@@ -1575,7 +1609,7 @@ begin
         temp := StringGrid1.Cells[i,k];
       end;
       temp := stringreplace(temp, '%', '',[rfReplaceAll, rfIgnoreCase]);
-      temp := corrigeFloat(temp);
+      temp := corrigeFloat(LimpaNumero(temp));
       dadosProdCust := dadosProdCust + ',' + temp;
       //Testa se é Update
       if VerificaUpdate('frete') = 1 then begin
@@ -1606,7 +1640,7 @@ begin
       else begin
         temp := StringGrid1.Cells[i,k];
       end;
-      temp := corrigeFloat(temp);
+      temp := corrigeFloat(LimpaNumero(temp));
       dadosProdCust := dadosProdCust + ',' + temp;
       //Testa se é Update
       if VerificaUpdate('custo_real') = 1 then begin
@@ -1637,7 +1671,7 @@ begin
       else begin
         temp := StringGrid1.Cells[i,k];
       end;
-      temp := corrigeFloat(temp);
+      temp := corrigeFloat(LimpaNumero(temp));
       dadosProdCust := dadosProdCust + ',' + temp;
       //Testar se existe o preco a vista, se não joga o a prazo mesmo
       if (BuscaColuna(StringGrid1,'preco_vista')=-1) then
@@ -1674,7 +1708,7 @@ begin
       else begin
         temp := StringGrid1.Cells[i,k];
       end;
-      temp := corrigeFloat(temp);
+      temp := corrigeFloat(LimpaNumero(temp));
       dadosProdCust := dadosProdCust + ',' + temp;
       //Testar se existe o preco a prazo, se não joga o a vista mesmo
       if (BuscaColuna(StringGrid1,'preco_prazo')=-1) then
@@ -1712,14 +1746,14 @@ begin
         temp := StringGrid1.Cells[i,k];
       end;
       temp := stringreplace(temp, '%', '',[rfReplaceAll, rfIgnoreCase]);
-      temp := corrigeFloat(temp);
+      temp := corrigeFloat(LimpaNumero(temp));
       temp := stringreplace(temp, '.', ',',[rfReplaceAll, rfIgnoreCase]);
 
       //Testar se precisa multiplicar por 100
       if StrToFloat(temp) < 1 then
         temp := FloatToStr( StrToFloat(temp) * 100 );
 
-      temp := corrigeFloat(temp);
+      temp := corrigeFloat(LimpaNumero(temp));
       dadosProdCust := dadosProdCust + ',' + temp;
 
       //MARGEM preenchida e sem PRECO_PRAZO na planilha: calcula o preço a prazo somente deste produto
@@ -1976,7 +2010,7 @@ begin
       end
       else begin
         temp := stringreplace(StringGrid1.Cells[i,k], '%', '',[rfReplaceAll, rfIgnoreCase]);
-        temp := corrigeFloat(temp);
+        temp := corrigeFloat(LimpaNumero(temp));
         colProdTrib := colProdTrib + ',TRIB_ALIQ_ICMS_ESTADUAL';
         dadosProdTrib := dadosProdTrib + ',''' + temp + '''';
       end;
@@ -2008,7 +2042,7 @@ begin
       end
       else begin
         temp := stringreplace(StringGrid1.Cells[i,k], '%', '',[rfReplaceAll, rfIgnoreCase]);
-        temp := corrigeFloat(temp);
+        temp := corrigeFloat(LimpaNumero(temp));
         colProdTrib := colProdTrib + ',TRIB_REDU_ICMS_ESTADUAL';
         dadosProdTrib := dadosProdTrib + ',''' + temp + '''';
       end;
@@ -2036,11 +2070,11 @@ begin
       if StringGrid1.Cells[i,k]='' then begin
         colProdTrib := colProdTrib + ',TRIB_REDU_ICMS_INTERESTADUAL';
         dadosProdTrib := dadosProdTrib + ',''' + '0' + '''';
-        temp := '';
+        temp := '0';
       end
       else begin
         temp := stringreplace(StringGrid1.Cells[i,k], '%', '',[rfReplaceAll, rfIgnoreCase]);
-        temp := corrigeFloat(temp);
+        temp := corrigeFloat(LimpaNumero(temp));
         colProdTrib := colProdTrib + ',TRIB_REDU_ICMS_INTERESTADUAL';
         dadosProdTrib := dadosProdTrib + ',''' + temp + '''';
       end;
@@ -2088,7 +2122,7 @@ begin
       end
       else begin
         if dadosUpdateProdTrib <> '' then dadosUpdateProdTrib := dadosUpdateProdTrib + ', ';
-        dadosUpdateProdTrib := dadosUpdateProdTrib + 'TRIB_CST_IPI=' + '''' + StringGrid1.Cells[i,k] + '''';
+        dadosUpdateProdTrib := dadosUpdateProdTrib + 'TRIB_CST_IPI=' + IfThen(StringGrid1.Cells[i,k]='', 'null', '''' + StringGrid1.Cells[i,k] + '''');
       end;
     end
     //ALIQ_IPI (Alíquota de IPI)
@@ -2097,10 +2131,11 @@ begin
       if StringGrid1.Cells[i,k]='' then begin
         colProdTrib := colProdTrib + ',TRIB_ALIQ_IPI';
         dadosProdTrib := dadosProdTrib + ',''' + '0' + '''';
+        temp := '0';
       end
       else begin
         temp := stringreplace(StringGrid1.Cells[i,k], '%', '',[rfReplaceAll, rfIgnoreCase]);
-        temp := corrigeFloat(temp);
+        temp := corrigeFloat(LimpaNumero(temp));
         colProdTrib := colProdTrib + ',TRIB_ALIQ_IPI';
         dadosProdTrib := dadosProdTrib + ',''' + temp + '''';
       end;
@@ -2148,7 +2183,7 @@ begin
       end
       else begin
         if dadosUpdateProdTrib <> '' then dadosUpdateProdTrib := dadosUpdateProdTrib + ', ';
-        dadosUpdateProdTrib := dadosUpdateProdTrib + 'TRIB_CST_PIS=' + '''' + StringGrid1.Cells[i,k] + '''';
+        dadosUpdateProdTrib := dadosUpdateProdTrib + 'TRIB_CST_PIS=' + IfThen(StringGrid1.Cells[i,k]='', '''0''', '''' + StringGrid1.Cells[i,k] + '''');
       end;
     end
     //ALIQ_PIS (Alíquota de PIS)
@@ -2161,7 +2196,7 @@ begin
       end
       else begin
         temp := stringreplace(StringGrid1.Cells[i,k], '%', '',[rfReplaceAll, rfIgnoreCase]);
-        temp := corrigeFloat(temp);
+        temp := corrigeFloat(LimpaNumero(temp));
         colProdTrib := colProdTrib + ',TRIB_ALIQ_PIS';
         dadosProdTrib := dadosProdTrib + ',''' + temp + '''';
       end;
@@ -2209,7 +2244,7 @@ begin
       end
       else begin
         if dadosUpdateProdTrib <> '' then dadosUpdateProdTrib := dadosUpdateProdTrib + ', ';
-        dadosUpdateProdTrib := dadosUpdateProdTrib + 'TRIB_CST_COFINS=' + '''' + StringGrid1.Cells[i,k] + '''';
+        dadosUpdateProdTrib := dadosUpdateProdTrib + 'TRIB_CST_COFINS=' + IfThen(StringGrid1.Cells[i,k]='', '''0''', '''' + StringGrid1.Cells[i,k] + '''');
       end;
     end
     //ALIQ_COFINS (Alíquota de COFINS)
@@ -2222,7 +2257,7 @@ begin
       end
       else begin
         temp := stringreplace(StringGrid1.Cells[i,k], '%', '',[rfReplaceAll, rfIgnoreCase]);
-        temp := corrigeFloat(temp);
+        temp := corrigeFloat(LimpaNumero(temp));
         colProdTrib := colProdTrib + ',TRIB_ALIQ_COFINS';
         dadosProdTrib := dadosProdTrib + ',''' + temp + '''';
       end;
@@ -2317,6 +2352,11 @@ begin
   if status = 0 then
     Exit;
 
+  //Update: todas as colunas chave precisam estar preenchidas (chave vazia, ex.: refe='', alteraria vários produtos)
+  for j := 0 to colUpdateCount-1 do
+    if (BuscaColuna(StringGrid1, colUpdate[j]) <> -1) and (Trim(StringGrid1.Cells[BuscaColuna(StringGrid1, colUpdate[j]), k]) = '') then
+      RegistraErro(colUpdate[j], '', 'coluna chave (Update) em branco');
+
   //Valores inválidos na linha: para a importação para corrigir e continuar desta linha
   if errosLinha.Count > 0 then
   begin
@@ -2330,11 +2370,15 @@ begin
   //----------------------------------------
   //Gravar no banco de dados
   if UpperCase( ExtractFileExt(frmPrinc.DBPath.Text) ) = '.FDB' then begin
+    //Generator à frente dos códigos existentes (somente na inclusão de produtos sem CODI)
+    temp := SQLGenerator(True);
+    if temp <> '' then querySelect(temp);
+
     try
       try
         //Abrir conexoes
-        frmPrinc.conDestino.Open;
         SQL := TSQLDataSet.Create(Nil);
+        frmPrinc.conDestino.Open;
         SQL.SQLConnection := frmPrinc.conDestino;
 
         //Se for INSERT
@@ -2454,6 +2498,10 @@ begin
       SQL.Free;
       frmPrinc.conDestino.Close;
     end;
+
+    //Produto com CODI: o generator não pode ficar atrás dele
+    temp := SQLGenerator(False);
+    if temp <> '' then querySelect(temp);
   end
   //Gravar comandos em TXT
   else if (UpperCase( ExtractFileExt(frmPrinc.DBPath.Text) ) = '.TXT') or
@@ -2473,8 +2521,18 @@ begin
         if colUpdateCount <= 0 then begin
 
           frmImportando.atualizaStatus('Inserindo dados na tabela PROD.');
+          //Generator à frente dos códigos existentes (produtos sem CODI)
+          temp := SQLGenerator(True);
+          if temp <> '' then WriteLn(fileTXT, temp + ';');
           WriteLn(fileTXT, 'INSERT INTO prod ('+ colProd +') VALUES ' + '(' + dadosProd + ');');
           WriteLn(fileTXT, 'COMMIT WORK;');
+          //Produto com CODI: o generator não pode ficar atrás dele
+          temp := SQLGenerator(False);
+          if temp <> '' then
+          begin
+            WriteLn(fileTXT, temp + ';');
+            WriteLn(fileTXT, 'COMMIT WORK;');
+          end;
 
           //Criar registros em todas as empresas
           {

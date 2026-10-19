@@ -71,8 +71,8 @@ var
   queryTemp: TSQLQuery;
 begin
   try
-    frmPrinc.conDestino.Open;
     queryTemp := TSQLQuery.Create(nil);
+    frmPrinc.conDestino.Open;
     queryTemp.SQLConnection := frmPrinc.conDestino;
     queryTemp.SQL.Clear;
     queryTemp.SQL.Add(comando);
@@ -156,8 +156,8 @@ begin
   try
     try
       //Abrir conexoes
-      frmPrinc.conDestino.Open;
       SQL := TSQLDataSet.Create(Nil);
+      frmPrinc.conDestino.Open;
       SQL.SQLConnection := frmPrinc.conDestino;
 
       //Executar COMANDO
