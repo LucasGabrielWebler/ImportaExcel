@@ -120,7 +120,7 @@ var
 implementation
 
 uses
-  uImportaClieForn, uImportaProduto, uImportaGrupo, uImportaSubGrupo,
+  Data.DBXCommon, uImportaClieForn, uImportaProduto, uImportaGrupo, uImportaSubGrupo,
   uImportaMarca, uImportaTituP, uImportaTituR, uImportaCUSTOM;
 
 const
@@ -1374,25 +1374,46 @@ end;
 procedure TfrmPrinc.mnuLimpaClieFornClick(Sender: TObject);
 var
   SQL: TSQLDataSet;
+  tr: TDBXTransaction;
 begin
   if not ConfirmaLimpeza('clientes e fornecedores') then Exit;
 
   //Abrir conexoes
   SQL := TSQLDataSet.Create(Nil);
-  conDestino.Open;
-  SQL.SQLConnection := conDestino;
+  try
+    conDestino.Open;
+    SQL.SQLConnection := conDestino;
 
-  SQL.CommandText := 'DELETE FROM clieforn;';
-  SQL.ExecSQL;
+    //Tudo em uma transação: se algum vínculo impedir, nada é alterado
+    tr := conDestino.BeginTransaction;
+    try
+      //Carteiras (TIPO_CART) apontam para o participante da movimentação financeira (base zerada usa o cadastro 1)
+      SQL.CommandText := 'UPDATE tipo_cart SET codi_participante_movi_fina = NULL WHERE codi_participante_movi_fina IS NOT NULL;';
+      SQL.ExecSQL;
 
-  SQL.CommandText := 'ALTER SEQUENCE GEN_CLIEFORN_ID RESTART WITH 0;';
-  SQL.ExecSQL;
+      SQL.CommandText := 'DELETE FROM clieforn;';
+      SQL.ExecSQL;
 
-  ShowMessage('Limpado dados de clientes e fornecedores.');
+      conDestino.CommitFreeAndNil(tr);
+    except
+      on e: Exception do
+      begin
+        conDestino.RollbackFreeAndNil(tr);
+        ShowMessage('Não foi possível limpar os clientes e fornecedores. Nenhum dado foi alterado.' + sLineBreak + sLineBreak +
+                    'Verifique se há registros vinculados a eles (ex.: títulos a pagar/receber).' + sLineBreak + sLineBreak + e.Message);
+        Exit;
+      end;
+    end;
 
-  //Fechar conexoes
-  SQL.Free;
-  conDestino.Close;
+    SQL.CommandText := 'ALTER SEQUENCE GEN_CLIEFORN_ID RESTART WITH 0;';
+    SQL.ExecSQL;
+
+    ShowMessage('Limpado dados de clientes e fornecedores.');
+  finally
+    //Fechar conexoes
+    SQL.Free;
+    conDestino.Close;
+  end;
 end;
 
 
