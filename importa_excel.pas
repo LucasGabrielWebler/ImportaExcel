@@ -707,6 +707,16 @@ begin
     Exit;
   end;
 
+  //Redução: REDU vale para os 3 campos estaduais, não pode vir junto com REDU_ESTA, REDU_ESTA_CF ou REDU_ESTA_PRODUTOR
+  if (SelectImport.Text = 'Produtos') and (BuscaColuna(StringGrid1,'redu') <> -1) and
+     (ColunasCST(['redu_esta','redu_esta_cf','redu_esta_produtor']) > 0) then
+  begin
+    ShowMessage('Há mais de uma coluna de redução para o mesmo campo.' + sLineBreak + sLineBreak +
+                'REDU vale para os 3 campos estaduais (estadual, consumidor final e produtor).' + sLineBreak +
+                'Use REDU_ESTA, REDU_ESTA_CF e REDU_ESTA_PRODUTOR somente sem a coluna REDU.');
+    Exit;
+  end;
+
   //Títulos: colunas obrigatórias (cliente/fornecedor, vencimento e valor ou saldo)
   if (SelectImport.Text = 'Títulos a Pagar') or (SelectImport.Text = 'Títulos a Receber') then
   begin
@@ -1371,7 +1381,7 @@ begin
 end;
 
 
-//Quantas das colunas informadas existem na planilha (usado na validação das colunas de CST e CSOSN)
+//Quantas das colunas informadas existem na planilha (usado na validação das colunas de CST, CSOSN e redução)
 function TfrmPrinc.ColunasCST(colunas: array of string): Integer;
 var
   j: Integer;

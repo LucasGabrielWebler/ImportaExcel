@@ -158,8 +158,11 @@ begin
     Result.Add('CST_INTERESTADUAL');
     Result.Add('CST_INTER_CF');
     Result.Add('ALIQ_ICMS');
+    Result.Add('REDU');
     Result.Add('REDU_ESTA');
-    Result.Add('REDU_INTER');
+    Result.Add('REDU_ESTA_CF');
+    Result.Add('REDU_ESTA_PRODUTOR');
+    //Result.Add('REDU_INTER'); //Desativada: campo interestadual não é mais usado
     Result.Add('CST_IPI');
     Result.Add('ALIQ_IPI');
     Result.Add('CST_PIS');
@@ -228,13 +231,16 @@ begin
   end;
 end;
 
-//Texto exibido na tela Colunas: CST e CSOSN mostram a quais campos se aplicam
+//Texto exibido na tela Colunas: CST, CSOSN e REDU mostram a quais campos se aplicam
 //(o grupo e, recuadas embaixo dele, as colunas avulsas); as demais colunas aparecem só com o nome
 function TextoColuna(nome: string): string;
 var
   base: string;
 begin
   Result := nome;
+  //Redução: REDU vale para os 3 campos estaduais
+  if nome = 'REDU' then begin Result := nome + #9 + 'os 3 estaduais'; Exit; end;
+  if (nome = 'REDU_ESTA') or (nome = 'REDU_ESTA_CF') or (nome = 'REDU_ESTA_PRODUTOR') then begin Result := '     ' + nome + #9 + 'avulso'; Exit; end;
   if Pos('CSOSN', nome) = 1 then base := 'CSOSN'
   else if Pos('CST', nome) = 1 then base := 'CST'
   else Exit;
