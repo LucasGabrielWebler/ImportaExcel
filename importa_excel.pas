@@ -678,10 +678,18 @@ begin
   end;
 
   //Se for Produtos, não pode usar CSOSN/CST junto com as colunas separadas (estadual/interestadual)
-  if (SelectImport.Text = 'Produtos') and (BuscaColuna(StringGrid1,'csosn') <> -1) and
-     ((BuscaColuna(StringGrid1,'csosn_esta') <> -1) or (BuscaColuna(StringGrid1,'csosn_inter') <> -1)) then
+  //CSOSN: cada campo só pode vir de uma coluna (CSOSN = os 5 campos, CSOSN_ESTA = os 3 estaduais,
+  //CSOSN_INTER = os 2 interestaduais e uma coluna para cada campo)
+  if (SelectImport.Text = 'Produtos') and
+     ((ColunasCST(['csosn','csosn_esta','csosn_estadual']) > 1) or
+      (ColunasCST(['csosn','csosn_esta','csosn_esta_cf']) > 1) or
+      (ColunasCST(['csosn','csosn_esta','csosn_esta_produtor']) > 1) or
+      (ColunasCST(['csosn','csosn_inter','csosn_interestadual']) > 1) or
+      (ColunasCST(['csosn','csosn_inter','csosn_inter_cf']) > 1)) then
   begin
-    ShowMessage('Utilize a coluna CSOSN ou as colunas CSOSN_ESTA/CSOSN_INTER, não as duas formas juntas.');
+    ShowMessage('Há mais de uma coluna de CSOSN para o mesmo campo.' + sLineBreak + sLineBreak +
+                'CSOSN vale para os 5 campos, CSOSN_ESTA para os 3 estaduais e CSOSN_INTER para os 2 interestaduais.' + sLineBreak +
+                'Use CSOSN_ESTADUAL, CSOSN_ESTA_CF, CSOSN_ESTA_PRODUTOR, CSOSN_INTERESTADUAL e CSOSN_INTER_CF somente nos campos que as outras colunas não cobrem.');
     Exit;
   end;
   //CST de ICMS: cada campo só pode vir de uma coluna (CST = os 5 campos, CST_ESTA = os 3 estaduais,
@@ -1363,7 +1371,7 @@ begin
 end;
 
 
-//Quantas das colunas informadas existem na planilha (usado na validação das colunas de CST)
+//Quantas das colunas informadas existem na planilha (usado na validação das colunas de CST e CSOSN)
 function TfrmPrinc.ColunasCST(colunas: array of string): Integer;
 var
   j: Integer;

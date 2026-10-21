@@ -14,6 +14,7 @@ type
     procedure FormShow(Sender: TObject);
     procedure ListColunasKeyDown(Sender: TObject; var Key: Word;
       Shift: TShiftState);
+    procedure DesenhaColuna(Control: TWinControl; Index: Integer; Rect: TRect; State: TOwnerDrawState);
   private
     { Private declarations }
   public
@@ -142,15 +143,20 @@ begin
     //Tributação
     Result.Add('CSOSN');
     Result.Add('CSOSN_ESTA');
+    Result.Add('CSOSN_ESTADUAL');
+    Result.Add('CSOSN_ESTA_CF');
+    Result.Add('CSOSN_ESTA_PRODUTOR');
     Result.Add('CSOSN_INTER');
+    Result.Add('CSOSN_INTERESTADUAL');
+    Result.Add('CSOSN_INTER_CF');
     Result.Add('CST');
     Result.Add('CST_ESTA');
-    Result.Add('CST_INTER');
     Result.Add('CST_ESTADUAL');
-    Result.Add('CST_INTERESTADUAL');
     Result.Add('CST_ESTA_CF');
-    Result.Add('CST_INTER_CF');
     Result.Add('CST_ESTA_PRODUTOR');
+    Result.Add('CST_INTER');
+    Result.Add('CST_INTERESTADUAL');
+    Result.Add('CST_INTER_CF');
     Result.Add('ALIQ_ICMS');
     Result.Add('REDU_ESTA');
     Result.Add('REDU_INTER');
@@ -222,16 +228,59 @@ begin
   end;
 end;
 
+//Texto exibido na tela Colunas: CST e CSOSN mostram a quais campos se aplicam
+//(o grupo e, recuadas embaixo dele, as colunas avulsas); as demais colunas aparecem só com o nome
+function TextoColuna(nome: string): string;
+var
+  base: string;
+begin
+  Result := nome;
+  if Pos('CSOSN', nome) = 1 then base := 'CSOSN'
+  else if Pos('CST', nome) = 1 then base := 'CST'
+  else Exit;
+  if nome = base then Result := nome + #9 + 'os 5 campos'
+  else if nome = base + '_ESTA' then Result := nome + #9 + '3 estaduais'
+  else if nome = base + '_INTER' then Result := nome + #9 + '2 interestaduais'
+  else if (nome = base + '_ESTADUAL') or (nome = base + '_ESTA_CF') or (nome = base + '_ESTA_PRODUTOR') or
+          (nome = base + '_INTERESTADUAL') or (nome = base + '_INTER_CF') then Result := '     ' + nome + #9 + 'avulso';
+end;
+
 procedure TfrmColunas.MostrarColunas();
 var
   lista: TStringList;
+  i: Integer;
 begin
   ListColunas.Items.Clear;
   lista := ColunasAceitas(LabelTipoImp.Caption);
   try
-    ListColunas.Items.AddStrings(lista);
+    //Desenho próprio: descrição das colunas de CST/CSOSN alinhada e em cinza
+    ListColunas.Style := lbOwnerDrawFixed;
+    ListColunas.OnDrawItem := DesenhaColuna;
+    for i := 0 to lista.Count-1 do
+      ListColunas.Items.Add(TextoColuna(lista[i]));
   finally
     lista.Free;
+  end;
+end;
+
+//Desenha o nome da coluna e, para CST/CSOSN, a descrição alinhada à direita do nome (texto separado por #9)
+procedure TfrmColunas.DesenhaColuna(Control: TWinControl; Index: Integer; Rect: TRect; State: TOwnerDrawState);
+var
+  texto, descr: string;
+begin
+  texto := ListColunas.Items[Index];
+  descr := '';
+  if Pos(#9, texto) > 0 then
+  begin
+    descr := Copy(texto, Pos(#9, texto)+1, MaxInt);
+    texto := Copy(texto, 1, Pos(#9, texto)-1);
+  end;
+  ListColunas.Canvas.FillRect(Rect);
+  ListColunas.Canvas.TextOut(Rect.Left + 2, Rect.Top, texto);
+  if descr <> '' then
+  begin
+    if not (odSelected in State) then ListColunas.Canvas.Font.Color := clGrayText;
+    ListColunas.Canvas.TextOut(Rect.Left + 170, Rect.Top, descr);
   end;
 end;
 
@@ -243,11 +292,16 @@ end;
 
 procedure TfrmColunas.ListColunasKeyDown(Sender: TObject; var Key: Word;
   Shift: TShiftState);
+var
+  temp: string;
 begin
    //RECONHECER CTRL+C
    if ((Shift = [ssCtrl]) and (Key = 67)) then
    begin
-     ClipBoard.AsText := ListColunas.Items[ListColunas.ItemIndex];
+     if ListColunas.ItemIndex < 0 then Exit;
+     temp := ListColunas.Items[ListColunas.ItemIndex];
+     if Pos(#9, temp) > 0 then temp := Copy(temp, 1, Pos(#9, temp)-1);
+     ClipBoard.AsText := Trim(temp);
    end;
 end;
 

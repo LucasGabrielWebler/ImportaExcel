@@ -35,7 +35,7 @@ type
       function SQLGenerator(antes: Boolean): string;
       class procedure Inicia(Grid: TStringGrid; inicio: Integer);
       procedure ValidaLinha;
-      procedure CstIcms(i: Integer; coluna, campo: string);
+      procedure TributoCampo(i: Integer; coluna, campo, padrao: string);
   end;
 
 implementation
@@ -143,14 +143,14 @@ begin
               'WHERE ' + condUpdateProdCust + ' AND cust_custo_real > 0;';
 end;
 
-//CST de ICMS de um único campo (CST_ESTADUAL, CST_INTERESTADUAL, CST_ESTA_CF, CST_INTER_CF e CST_ESTA_PRODUTOR)
-//Vazio grava 90, igual às colunas CST, CST_ESTA e CST_INTER; no Update pode ser usada como chave
-procedure cImportaProduto.CstIcms(i: Integer; coluna, campo: string);
+//CST ou CSOSN de ICMS de um único campo (ex.: CST_ESTA_CF, CSOSN_INTER_CF)
+//Vazio grava o padrão (CST 90 / CSOSN 900), igual às colunas que aplicam a vários campos; no Update pode ser usada como chave
+procedure cImportaProduto.TributoCampo(i: Integer; coluna, campo, padrao: string);
 var
   temp: string;
 begin
   if StringGrid1.Cells[i,k]='' then
-    temp := '90'
+    temp := padrao
   else
     temp := StringGrid1.Cells[i,k];
   colProdTrib := colProdTrib + ',' + campo;
@@ -182,9 +182,10 @@ const
   NUMEROS: array[0..23] of string = ('qtd','est','max','pesl','pesb','fator_conv','qtd_minima',
     'custo','custo_medio','ipi','pis','cofins','icms','frete','custo_real','preco_prazo','preco_vista',
     'margem','aliq_icms','redu_esta','redu_inter','aliq_ipi','aliq_pis','aliq_cofins');
-  INTEIROS: array[0..17] of string = ('codi','empr','forn','tipo','csosn','csosn_esta','csosn_inter',
+  INTEIROS: array[0..22] of string = ('codi','empr','forn','tipo','csosn','csosn_esta','csosn_inter',
     'cst','cst_esta','cst_inter','cst_estadual','cst_interestadual','cst_esta_cf','cst_inter_cf','cst_esta_produtor',
-    'cst_ipi','cst_pis','cst_cofins');
+    'cst_ipi','cst_pis','cst_cofins',
+    'csosn_estadual','csosn_interestadual','csosn_esta_cf','csosn_inter_cf','csosn_esta_produtor');
   TEXTOS: array[0..14] of string = ('descr','descr2','refe','refe_original','localizacao','codi_barra',
     'codi_barra_com','unid','ncm','cest','grup','sub_grup','departamento','marca','colecao');
   TAMANHOS: array[0..14] of Integer = (120,255,30,255,30,30,30,12,10,8,30,30,30,50,30);
@@ -1922,6 +1923,12 @@ begin
         dadosUpdateProdTrib := dadosUpdateProdTrib + ',TRIB_SN_CSOSN_INTER_CF=' + '''' + temp + '''';
       end;
     end
+    //CSOSN de cada campo separadamente (somente o seu campo)
+    else if (LowerCase(StringGrid1.Cells[i,0])='csosn_estadual') then TributoCampo(i, 'csosn_estadual', 'TRIB_SN_CSOSN_ESTADUAL', '900')
+    else if (LowerCase(StringGrid1.Cells[i,0])='csosn_interestadual') then TributoCampo(i, 'csosn_interestadual', 'TRIB_SN_CSOSN_INTERESTADUAL', '900')
+    else if (LowerCase(StringGrid1.Cells[i,0])='csosn_esta_cf') then TributoCampo(i, 'csosn_esta_cf', 'TRIB_SN_CSOSN_ESTA_CF', '900')
+    else if (LowerCase(StringGrid1.Cells[i,0])='csosn_inter_cf') then TributoCampo(i, 'csosn_inter_cf', 'TRIB_SN_CSOSN_INTER_CF', '900')
+    else if (LowerCase(StringGrid1.Cells[i,0])='csosn_esta_produtor') then TributoCampo(i, 'csosn_esta_produtor', 'TRIB_SN_CSOSN_ESTA_PRODUTOR', '900')
     //CST
     else if (LowerCase(StringGrid1.Cells[i,0])='cst') then
     begin
@@ -2035,11 +2042,11 @@ begin
       end;
     end
     //CST de cada campo separadamente (somente o seu campo)
-    else if (LowerCase(StringGrid1.Cells[i,0])='cst_estadual') then CstIcms(i, 'cst_estadual', 'TRIB_CST_ICMS_ESTADUAL')
-    else if (LowerCase(StringGrid1.Cells[i,0])='cst_interestadual') then CstIcms(i, 'cst_interestadual', 'TRIB_CST_ICMS_INTERESTADUAL')
-    else if (LowerCase(StringGrid1.Cells[i,0])='cst_esta_cf') then CstIcms(i, 'cst_esta_cf', 'TRIB_CST_ICMS_ESTA_CF')
-    else if (LowerCase(StringGrid1.Cells[i,0])='cst_inter_cf') then CstIcms(i, 'cst_inter_cf', 'TRIB_CST_ICMS_INTER_CF')
-    else if (LowerCase(StringGrid1.Cells[i,0])='cst_esta_produtor') then CstIcms(i, 'cst_esta_produtor', 'TRIB_CST_ICMS_ESTA_PRODUTOR')
+    else if (LowerCase(StringGrid1.Cells[i,0])='cst_estadual') then TributoCampo(i, 'cst_estadual', 'TRIB_CST_ICMS_ESTADUAL', '90')
+    else if (LowerCase(StringGrid1.Cells[i,0])='cst_interestadual') then TributoCampo(i, 'cst_interestadual', 'TRIB_CST_ICMS_INTERESTADUAL', '90')
+    else if (LowerCase(StringGrid1.Cells[i,0])='cst_esta_cf') then TributoCampo(i, 'cst_esta_cf', 'TRIB_CST_ICMS_ESTA_CF', '90')
+    else if (LowerCase(StringGrid1.Cells[i,0])='cst_inter_cf') then TributoCampo(i, 'cst_inter_cf', 'TRIB_CST_ICMS_INTER_CF', '90')
+    else if (LowerCase(StringGrid1.Cells[i,0])='cst_esta_produtor') then TributoCampo(i, 'cst_esta_produtor', 'TRIB_CST_ICMS_ESTA_PRODUTOR', '90')
     //ALIQ_ICMS (Alíquota de ICMS)
     else if (LowerCase(StringGrid1.Cells[i,0])='aliq_icms') then
     begin
