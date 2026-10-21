@@ -97,6 +97,7 @@ type
   public
     { Public declarations }
     function StringGridToArray(Grid: TStringGrid): Integer;
+    function ColunasCST(colunas: array of string): Integer;
     function cadastraClieForn(colClieForn,dadosClieForn: string): Integer;
     class function buscaCidade(Cidade, UF: string): String;
     function temCodTituloP(Codigo: String): Boolean;
@@ -683,10 +684,18 @@ begin
     ShowMessage('Utilize a coluna CSOSN ou as colunas CSOSN_ESTA/CSOSN_INTER, não as duas formas juntas.');
     Exit;
   end;
-  if (SelectImport.Text = 'Produtos') and (BuscaColuna(StringGrid1,'cst') <> -1) and
-     ((BuscaColuna(StringGrid1,'cst_esta') <> -1) or (BuscaColuna(StringGrid1,'cst_inter') <> -1)) then
+  //CST de ICMS: cada campo só pode vir de uma coluna (CST = os 5 campos, CST_ESTA = os 3 estaduais,
+  //CST_INTER = os 2 interestaduais e uma coluna para cada campo)
+  if (SelectImport.Text = 'Produtos') and
+     ((ColunasCST(['cst','cst_esta','cst_estadual']) > 1) or
+      (ColunasCST(['cst','cst_esta','cst_esta_cf']) > 1) or
+      (ColunasCST(['cst','cst_esta','cst_esta_produtor']) > 1) or
+      (ColunasCST(['cst','cst_inter','cst_interestadual']) > 1) or
+      (ColunasCST(['cst','cst_inter','cst_inter_cf']) > 1)) then
   begin
-    ShowMessage('Utilize a coluna CST ou as colunas CST_ESTA/CST_INTER, não as duas formas juntas.');
+    ShowMessage('Há mais de uma coluna de CST para o mesmo campo.' + sLineBreak + sLineBreak +
+                'CST vale para os 5 campos, CST_ESTA para os 3 estaduais e CST_INTER para os 2 interestaduais.' + sLineBreak +
+                'Use CST_ESTADUAL, CST_ESTA_CF, CST_ESTA_PRODUTOR, CST_INTERESTADUAL e CST_INTER_CF somente nos campos que as outras colunas não cobrem.');
     Exit;
   end;
 
@@ -1351,6 +1360,17 @@ begin
     XlsHeaderLoad(StringGrid1,arquivo);
 
   end;
+end;
+
+
+//Quantas das colunas informadas existem na planilha (usado na validação das colunas de CST)
+function TfrmPrinc.ColunasCST(colunas: array of string): Integer;
+var
+  j: Integer;
+begin
+  Result := 0;
+  for j := Low(colunas) to High(colunas) do
+    if BuscaColuna(StringGrid1, colunas[j]) <> -1 then Inc(Result);
 end;
 
 

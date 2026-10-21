@@ -146,6 +146,11 @@ begin
     Result.Add('CST');
     Result.Add('CST_ESTA');
     Result.Add('CST_INTER');
+    Result.Add('CST_ESTADUAL');
+    Result.Add('CST_INTERESTADUAL');
+    Result.Add('CST_ESTA_CF');
+    Result.Add('CST_INTER_CF');
+    Result.Add('CST_ESTA_PRODUTOR');
     Result.Add('ALIQ_ICMS');
     Result.Add('REDU_ESTA');
     Result.Add('REDU_INTER');
