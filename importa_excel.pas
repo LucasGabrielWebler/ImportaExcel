@@ -707,6 +707,15 @@ begin
     Exit;
   end;
 
+  //Alíquota de ICMS: ALIQ_ICMS vale para os 3 campos estaduais, não pode vir junto com ALIQ_ICMS_ESTA, ALIQ_ICMS_ESTA_CF ou ALIQ_ICMS_ESTA_PRODUTOR
+  if (SelectImport.Text = 'Produtos') and (BuscaColuna(StringGrid1,'aliq_icms') <> -1) and
+     (ColunasCST(['aliq_icms_esta','aliq_icms_esta_cf','aliq_icms_esta_produtor']) > 0) then
+  begin
+    ShowMessage('Há mais de uma coluna de alíquota de ICMS para o mesmo campo.' + sLineBreak + sLineBreak +
+                'ALIQ_ICMS vale para os 3 campos estaduais (estadual, consumidor final e produtor).' + sLineBreak +
+                'Use ALIQ_ICMS_ESTA, ALIQ_ICMS_ESTA_CF e ALIQ_ICMS_ESTA_PRODUTOR somente sem a coluna ALIQ_ICMS.');
+    Exit;
+  end;
   //Redução: REDU vale para os 3 campos estaduais, não pode vir junto com REDU_ESTA, REDU_ESTA_CF ou REDU_ESTA_PRODUTOR
   if (SelectImport.Text = 'Produtos') and (BuscaColuna(StringGrid1,'redu') <> -1) and
      (ColunasCST(['redu_esta','redu_esta_cf','redu_esta_produtor']) > 0) then
@@ -1381,7 +1390,7 @@ begin
 end;
 
 
-//Quantas das colunas informadas existem na planilha (usado na validação das colunas de CST, CSOSN e redução)
+//Quantas das colunas informadas existem na planilha (usado na validação das colunas de CST, CSOSN, alíquota de ICMS e redução)
 function TfrmPrinc.ColunasCST(colunas: array of string): Integer;
 var
   j: Integer;

@@ -36,7 +36,7 @@ type
       class procedure Inicia(Grid: TStringGrid; inicio: Integer);
       procedure ValidaLinha;
       procedure TributoCampo(i: Integer; coluna, campo, padrao: string);
-      procedure ReducaoCampos(i: Integer; coluna: string; campos: array of string);
+      procedure PercentualCampos(i: Integer; coluna: string; campos: array of string);
   end;
 
 implementation
@@ -176,9 +176,10 @@ begin
   end;
 end;
 
-//Redução da alíquota de ICMS gravada em um ou mais campos (REDU = os 3 estaduais; REDU_ESTA_CF e REDU_ESTA_PRODUTOR = só o seu campo)
-//Vazio grava 0, igual à REDU_ESTA; aceita % e vírgula; no Update pode ser usada como chave (pelo primeiro campo)
-procedure cImportaProduto.ReducaoCampos(i: Integer; coluna: string; campos: array of string);
+//Percentual (redução ou alíquota de ICMS) gravado em um ou mais campos: REDU e ALIQ_ICMS = os 3 estaduais;
+//as colunas avulsas (ex.: REDU_ESTA_CF, ALIQ_ICMS_ESTA_PRODUTOR) = só o seu campo
+//Vazio grava 0; aceita % e vírgula; no Update pode ser usada como chave (pelo primeiro campo)
+procedure cImportaProduto.PercentualCampos(i: Integer; coluna: string; campos: array of string);
 var
   temp: string;
   j: Integer;
@@ -221,9 +222,9 @@ end;
 //Os erros são registrados em errosLinha e a importação para nesta linha para corrigir
 procedure cImportaProduto.ValidaLinha;
 const
-  NUMEROS: array[0..25] of string = ('qtd','est','max','pesl','pesb','fator_conv','qtd_minima',
+  NUMEROS: array[0..28] of string = ('qtd','est','max','pesl','pesb','fator_conv','qtd_minima',
     'custo','custo_medio','ipi','pis','cofins','icms','frete','custo_real','preco_prazo','preco_vista',
-    'margem','aliq_icms','redu','redu_esta','redu_esta_cf','redu_esta_produtor','aliq_ipi','aliq_pis','aliq_cofins');
+    'margem','aliq_icms','aliq_icms_esta','aliq_icms_esta_cf','aliq_icms_esta_produtor','redu','redu_esta','redu_esta_cf','redu_esta_produtor','aliq_ipi','aliq_pis','aliq_cofins');
   INTEIROS: array[0..22] of string = ('codi','empr','forn','tipo','csosn','csosn_esta','csosn_inter',
     'cst','cst_esta','cst_inter','cst_estadual','cst_interestadual','cst_esta_cf','cst_inter_cf','cst_esta_produtor',
     'cst_ipi','cst_pis','cst_cofins',
@@ -2089,42 +2090,15 @@ begin
     else if (LowerCase(StringGrid1.Cells[i,0])='cst_esta_cf') then TributoCampo(i, 'cst_esta_cf', 'TRIB_CST_ICMS_ESTA_CF', '90')
     else if (LowerCase(StringGrid1.Cells[i,0])='cst_inter_cf') then TributoCampo(i, 'cst_inter_cf', 'TRIB_CST_ICMS_INTER_CF', '90')
     else if (LowerCase(StringGrid1.Cells[i,0])='cst_esta_produtor') then TributoCampo(i, 'cst_esta_produtor', 'TRIB_CST_ICMS_ESTA_PRODUTOR', '90')
-    //ALIQ_ICMS (Alíquota de ICMS)
-    else if (LowerCase(StringGrid1.Cells[i,0])='aliq_icms') then
-    begin
-      if StringGrid1.Cells[i,k]='' then begin
-        colProdTrib := colProdTrib + ',TRIB_ALIQ_ICMS_ESTADUAL';
-        dadosProdTrib := dadosProdTrib + ',''' + '0' + '''';
-        temp := '0';
-      end
-      else begin
-        temp := stringreplace(StringGrid1.Cells[i,k], '%', '',[rfReplaceAll, rfIgnoreCase]);
-        temp := corrigeFloat(LimpaNumero(temp));
-        colProdTrib := colProdTrib + ',TRIB_ALIQ_ICMS_ESTADUAL';
-        dadosProdTrib := dadosProdTrib + ',''' + temp + '''';
-      end;
-      //Testa se é Update
-      if VerificaUpdate('aliq_icms') = 1 then begin
-        if condUpdateProdCust <> '' then condUpdateProdCust := condUpdateProdCust + ' AND ';
-        condUpdateProdCust := condUpdateProdCust + 'cust_prod_codi in (SELECT trib_prod_codi FROM prod_tributos WHERE TRIB_ALIQ_ICMS_ESTADUAL = '+''''+temp+''')';
-        if condUpdateProdTrib <> '' then condUpdateProdTrib := condUpdateProdTrib + ' AND ';
-        condUpdateProdTrib := condUpdateProdTrib + 'TRIB_ALIQ_ICMS_ESTADUAL='+''''+temp+'''';
-        if condUpdateProdAdic <> '' then condUpdateProdAdic := condUpdateProdAdic + ' AND ';
-        condUpdateProdAdic := condUpdateProdAdic + 'adic_prod_codi in (SELECT trib_prod_codi FROM prod_tributos WHERE TRIB_ALIQ_ICMS_ESTADUAL = '+''''+temp+''')';
-        if condUpdateProd <> '' then condUpdateProd := condUpdateProd + ' AND ';
-        condUpdateProd := condUpdateProd + 'codi in (SELECT trib_prod_codi FROM prod_tributos WHERE TRIB_ALIQ_ICMS_ESTADUAL = '+''''+temp+''')';
-        if condUpdateItens <> '' then condUpdateItens := condUpdateItens + ' AND ';
-        condUpdateItens := condUpdateItens + 'cod_prod in (SELECT trib_prod_codi FROM prod_tributos WHERE TRIB_ALIQ_ICMS_ESTADUAL = '+''''+temp+''')';
-      end
-      else begin
-        if dadosUpdateProdTrib <> '' then dadosUpdateProdTrib := dadosUpdateProdTrib + ', ';
-        dadosUpdateProdTrib := dadosUpdateProdTrib + 'TRIB_ALIQ_ICMS_ESTADUAL=' + '''' + temp + '''';
-      end;
-    end
+    //ALIQ_ICMS (os 3 campos estaduais) e as alíquotas de um único campo
+    else if (LowerCase(StringGrid1.Cells[i,0])='aliq_icms') then PercentualCampos(i, 'aliq_icms', ['TRIB_ALIQ_ICMS_ESTADUAL', 'TRIB_ALIQ_ICMS_ESTADUAL_CF', 'TRIB_ALIQ_ICMS_ESTA_PRODUTOR'])
+    else if (LowerCase(StringGrid1.Cells[i,0])='aliq_icms_esta') then PercentualCampos(i, 'aliq_icms_esta', ['TRIB_ALIQ_ICMS_ESTADUAL'])
+    else if (LowerCase(StringGrid1.Cells[i,0])='aliq_icms_esta_cf') then PercentualCampos(i, 'aliq_icms_esta_cf', ['TRIB_ALIQ_ICMS_ESTADUAL_CF'])
+    else if (LowerCase(StringGrid1.Cells[i,0])='aliq_icms_esta_produtor') then PercentualCampos(i, 'aliq_icms_esta_produtor', ['TRIB_ALIQ_ICMS_ESTA_PRODUTOR'])
     //REDU (os 3 campos estaduais) e as reduções de um único campo (o interestadual não é mais usado)
-    else if (LowerCase(StringGrid1.Cells[i,0])='redu') then ReducaoCampos(i, 'redu', ['TRIB_REDU_ICMS_ESTADUAL', 'TRIB_REDU_ICMS_ESTADUAL_CF', 'TRIB_REDU_ICMS_ESTA_PRODUTOR'])
-    else if (LowerCase(StringGrid1.Cells[i,0])='redu_esta_cf') then ReducaoCampos(i, 'redu_esta_cf', ['TRIB_REDU_ICMS_ESTADUAL_CF'])
-    else if (LowerCase(StringGrid1.Cells[i,0])='redu_esta_produtor') then ReducaoCampos(i, 'redu_esta_produtor', ['TRIB_REDU_ICMS_ESTA_PRODUTOR'])
+    else if (LowerCase(StringGrid1.Cells[i,0])='redu') then PercentualCampos(i, 'redu', ['TRIB_REDU_ICMS_ESTADUAL', 'TRIB_REDU_ICMS_ESTADUAL_CF', 'TRIB_REDU_ICMS_ESTA_PRODUTOR'])
+    else if (LowerCase(StringGrid1.Cells[i,0])='redu_esta_cf') then PercentualCampos(i, 'redu_esta_cf', ['TRIB_REDU_ICMS_ESTADUAL_CF'])
+    else if (LowerCase(StringGrid1.Cells[i,0])='redu_esta_produtor') then PercentualCampos(i, 'redu_esta_produtor', ['TRIB_REDU_ICMS_ESTA_PRODUTOR'])
     //REDU_ESTA (Redução da Alíquota de ICMS Estadual)
     else if (LowerCase(StringGrid1.Cells[i,0])='redu_esta') then
     begin

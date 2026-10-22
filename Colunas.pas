@@ -158,6 +158,9 @@ begin
     Result.Add('CST_INTERESTADUAL');
     Result.Add('CST_INTER_CF');
     Result.Add('ALIQ_ICMS');
+    Result.Add('ALIQ_ICMS_ESTA');
+    Result.Add('ALIQ_ICMS_ESTA_CF');
+    Result.Add('ALIQ_ICMS_ESTA_PRODUTOR');
     Result.Add('REDU');
     Result.Add('REDU_ESTA');
     Result.Add('REDU_ESTA_CF');
@@ -231,15 +234,16 @@ begin
   end;
 end;
 
-//Texto exibido na tela Colunas: CST, CSOSN e REDU mostram a quais campos se aplicam
+//Texto exibido na tela Colunas: CST, CSOSN, ALIQ_ICMS e REDU mostram a quais campos se aplicam
 //(o grupo e, recuadas embaixo dele, as colunas avulsas); as demais colunas aparecem só com o nome
 function TextoColuna(nome: string): string;
 var
   base: string;
 begin
   Result := nome;
-  //Redução: REDU vale para os 3 campos estaduais
-  if nome = 'REDU' then begin Result := nome + #9 + 'os 3 estaduais'; Exit; end;
+  //Alíquota de ICMS e redução: ALIQ_ICMS e REDU valem para os 3 campos estaduais
+  if (nome = 'ALIQ_ICMS') or (nome = 'REDU') then begin Result := nome + #9 + 'os 3 estaduais'; Exit; end;
+  if (nome = 'ALIQ_ICMS_ESTA') or (nome = 'ALIQ_ICMS_ESTA_CF') or (nome = 'ALIQ_ICMS_ESTA_PRODUTOR') then begin Result := '     ' + nome + #9 + 'avulso'; Exit; end;
   if (nome = 'REDU_ESTA') or (nome = 'REDU_ESTA_CF') or (nome = 'REDU_ESTA_PRODUTOR') then begin Result := '     ' + nome + #9 + 'avulso'; Exit; end;
   if Pos('CSOSN', nome) = 1 then base := 'CSOSN'
   else if Pos('CST', nome) = 1 then base := 'CST'
@@ -286,7 +290,7 @@ begin
   if descr <> '' then
   begin
     if not (odSelected in State) then ListColunas.Canvas.Font.Color := clGrayText;
-    ListColunas.Canvas.TextOut(Rect.Left + 170, Rect.Top, descr);
+    ListColunas.Canvas.TextOut(Rect.Left + 190, Rect.Top, descr);
   end;
 end;
 
