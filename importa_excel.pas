@@ -122,7 +122,7 @@ implementation
 
 uses
   Data.DBXCommon, uImportaClieForn, uImportaProduto, uImportaGrupo, uImportaSubGrupo,
-  uImportaMarca, uImportaTituP, uImportaTituR, uImportaCUSTOM;
+  uImportaMarca, uImportaTituP, uImportaTituR, uImportaCUSTOM, uImportaTran;
 
 const
   //Recálculo das margens dos produtos (sem estouro numérico e com o sinal correto)
@@ -615,7 +615,7 @@ begin
 
   //Coluna da empresa: EMPRESA e EMPR são aceitas em todos os tipos de importação
   //(Clie/Forn usa EMPRESA; Produtos, Títulos, Grupos e SubGrupos usam EMPR)
-  if (SelectImport.Text <> 'CUSTOM') and (SelectImport.Text <> 'Marcas') then
+  if (SelectImport.Text <> 'CUSTOM') and (SelectImport.Text <> 'Marcas') and (SelectImport.Text <> 'Transportadoras') then
   begin
     if SelectImport.Text = 'Clie/Forn' then begin temp := 'EMPRESA'; temp2 := 'EMPR'; end
     else begin temp := 'EMPR'; temp2 := 'EMPRESA'; end;
@@ -674,6 +674,30 @@ begin
      (BuscaColuna(StringGrid1,'nome') = -1) and (BuscaColuna(StringGrid1,'nome_fant') = -1) then
   begin
     ShowMessage('Informe a coluna NOME (razão social) para incluir clientes e fornecedores.');
+    Exit;
+  end;
+
+  //Transportadoras: inclusão exige a coluna NOME; a cidade vem por CIDA + UF ou por CODI_CIDA, não pelas duas
+  if (SelectImport.Text = 'Transportadoras') and (colUpdateCount <= 0) and (BuscaColuna(StringGrid1,'nome') = -1) then
+  begin
+    ShowMessage('Informe a coluna NOME para incluir transportadoras.');
+    Exit;
+  end;
+  if (SelectImport.Text = 'Transportadoras') and (BuscaColuna(StringGrid1,'codi_cida') <> -1) and (BuscaColuna(StringGrid1,'cida') <> -1) then
+  begin
+    ShowMessage('Informe a cidade pelas colunas CIDA e UF ou pela coluna CODI_CIDA, não pelas duas formas juntas.');
+    Exit;
+  end;
+  if (SelectImport.Text = 'Transportadoras') and (BuscaColuna(StringGrid1,'cpf_cnpj') <> -1) and
+     ((BuscaColuna(StringGrid1,'cpf') <> -1) or (BuscaColuna(StringGrid1,'cnpj') <> -1)) then
+  begin
+    ShowMessage('Utilize a coluna CPF_CNPJ ou as colunas CPF/CNPJ, não as duas formas juntas.');
+    Exit;
+  end;
+
+  if (SelectImport.Text = 'Transportadoras') and (BuscaColuna(StringGrid1,'obs') <> -1) and (BuscaColuna(StringGrid1,'observacao') <> -1) then
+  begin
+    ShowMessage('Utilize somente uma coluna de observação (OBS ou OBSERVACAO), não as duas.');
     Exit;
   end;
 
@@ -897,6 +921,17 @@ begin
         end
 
         //----------------------------------------------------------------------------
+        //Importar Transportadoras
+        else if SelectImport.Text = 'Transportadoras' then
+        begin
+          cImportaTran.ImportaRegistro(k, StringGrid1);
+
+          //Verificar se deu erro
+          if status = 0 then
+            Break; //Quebra o for
+        end
+
+        //----------------------------------------------------------------------------
         //Importar Títulos a Pagar
         else if SelectImport.Text = 'Títulos a Pagar' then
         begin
@@ -1026,6 +1061,18 @@ begin
           end;
         end
 
+        else if SelectImport.Text='Transportadoras' then
+        begin
+          //Arrumar Generator das Transportadoras
+          max := querySelect('SELECT MAX(codi) FROM tran');
+          if StrToIntDef(max, 0) > 0 then
+          begin
+            frmImportando.atualizaStatus('Alterar Generator das Transportadoras.');
+            SQL.CommandText := 'ALTER SEQUENCE GEN_TRAN_ID RESTART WITH ' + max + ';';
+            SQL.ExecSQL;
+          end;
+        end
+
         else if SelectImport.Text='Marcas' then
         begin
           //Arrumar Generator das MARCAS
@@ -1113,6 +1160,14 @@ begin
           //Arrumar Generator dos SubGrupos
           frmImportando.atualizaStatus('Alterar Generator dos SubGrupos.');
           WriteLn(fileTXT, 'SELECT gen_id(GEN_SUB_GRUP_PROD_ID, ABS((SELECT MAX(CODI) FROM sub_grup_prod) - (SELECT gen_id(GEN_SUB_GRUP_PROD_ID,0) FROM RDB$DATABASE)) ) FROM RDB$DATABASE;');
+          WriteLn(fileTXT, 'COMMIT WORK;');
+        end
+
+        else if SelectImport.Text='Transportadoras' then
+        begin
+          //Arrumar Generator das Transportadoras
+          frmImportando.atualizaStatus('Alterar Generator das Transportadoras.');
+          WriteLn(fileTXT, 'SELECT gen_id(GEN_TRAN_ID, ABS((SELECT MAX(CODI) FROM tran) - (SELECT gen_id(GEN_TRAN_ID,0) FROM RDB$DATABASE)) ) FROM RDB$DATABASE;');
           WriteLn(fileTXT, 'COMMIT WORK;');
         end
 

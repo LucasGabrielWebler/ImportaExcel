@@ -187,6 +187,28 @@ begin
     Result.Add('EMPR');
     Result.Add('DESCR');
   end
+  else if tipo = 'Transportadoras' then
+  begin
+    //Cadastro principal da transportadora (tabela TRAN), na ordem da tela do ERP
+    Result.Add('CODI');
+    Result.Add('ATIVO');
+    Result.Add('CNPJ');
+    Result.Add('CPF');
+    Result.Add('CPF_CNPJ');
+    Result.Add('INSC');
+    Result.Add('NOME');
+    Result.Add('ENDE');
+    Result.Add('CIDA');
+    Result.Add('UF');
+    Result.Add('CODI_CIDA');
+    Result.Add('FONE');
+    Result.Add('PLACA');
+    Result.Add('PLACA2');
+    Result.Add('PLACA3');
+    Result.Add('EMAIL');
+    Result.Add('OBS');
+    Result.Add('OBSERVACAO');
+  end
   else if tipo = 'Marcas' then
   begin
     Result.Add('CODI');

@@ -314,6 +314,7 @@ object frmPrinc: TfrmPrinc
       OnChange = SelectImportChange
       Items.Strings = (
         'Clie/Forn'
+        'Transportadoras'
         'Grupos'
         'SubGrupos'
         'Marcas'

@@ -12,6 +12,7 @@ uses
   uImportaGrupo in 'Units\uImportaGrupo.pas',
   uImportaSubGrupo in 'Units\uImportaSubGrupo.pas',
   uImportaMarca in 'Units\uImportaMarca.pas',
+  uImportaTran in 'Units\uImportaTran.pas',
   uImportaTituP in 'Units\uImportaTituP.pas',
   uImportaTituR in 'Units\uImportaTituR.pas',
   uImportaCUSTOM in 'Units\uImportaCUSTOM.pas',
