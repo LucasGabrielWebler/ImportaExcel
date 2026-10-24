@@ -713,6 +713,10 @@ object frmPrinc: TfrmPrinc
         Caption = 'Clie/Forn'#13#10
         OnClick = mnuLimpaClieFornClick
       end
+      object mnuLimpaTransportadoras: TMenuItem
+        Caption = 'Transportadoras'
+        OnClick = mnuLimpaTransportadorasClick
+      end
       object mnuLimpaGrupos: TMenuItem
         Caption = 'Grupos'#13#10
         OnClick = mnuLimpaGruposClick

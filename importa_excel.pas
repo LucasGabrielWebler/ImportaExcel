@@ -21,6 +21,7 @@ type
     mnuCabecalho: TMenuItem;
     Limpar: TMenuItem;
     mnuLimpaClieForn: TMenuItem;
+    mnuLimpaTransportadoras: TMenuItem;
     mnuLimpaGrupos: TMenuItem;
     mnuLimpaSubGrupos: TMenuItem;
     mnuLimpaMarcas: TMenuItem;
@@ -70,6 +71,7 @@ type
     procedure btnSalvarClick(Sender: TObject);
     procedure mnuCabecalhoClick(Sender: TObject);
     procedure mnuLimpaClieFornClick(Sender: TObject);
+    procedure mnuLimpaTransportadorasClick(Sender: TObject);
     procedure mnuLimpaGruposClick(Sender: TObject);
     procedure mnuLimpaSubGruposClick(Sender: TObject);
     procedure mnuLimpaMarcasClick(Sender: TObject);
@@ -1511,6 +1513,44 @@ begin
     SQL.ExecSQL;
 
     ShowMessage('Limpado dados de clientes e fornecedores.');
+  finally
+    //Fechar conexoes
+    SQL.Free;
+    conDestino.Close;
+  end;
+end;
+
+
+//Limpar transportadoras do banco
+procedure TfrmPrinc.mnuLimpaTransportadorasClick(Sender: TObject);
+var
+  SQL: TSQLDataSet;
+begin
+  if not ConfirmaLimpeza('transportadoras') then Exit;
+
+  //Abrir conexoes
+  SQL := TSQLDataSet.Create(Nil);
+  try
+    conDestino.Open;
+    SQL.SQLConnection := conDestino;
+
+    //Transportadora usada em MDF-e, CT-e, romaneio ou orçamento não pode ser apagada: nada é alterado
+    try
+      SQL.CommandText := 'DELETE FROM tran;';
+      SQL.ExecSQL;
+    except
+      on e: Exception do
+      begin
+        ShowMessage('Não foi possível limpar as transportadoras. Nenhum dado foi alterado.' + sLineBreak + sLineBreak +
+                    'Verifique se há registros vinculados a elas (ex.: MDF-e, CT-e, romaneio de carga ou orçamento).' + sLineBreak + sLineBreak + e.Message);
+        Exit;
+      end;
+    end;
+
+    SQL.CommandText := 'ALTER SEQUENCE GEN_TRAN_ID RESTART WITH 0;';
+    SQL.ExecSQL;
+
+    ShowMessage('Limpado dados de transportadoras.');
   finally
     //Fechar conexoes
     SQL.Free;

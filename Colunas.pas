@@ -289,7 +289,9 @@ begin
     ListColunas.Style := lbOwnerDrawFixed;
     ListColunas.OnDrawItem := DesenhaColuna;
     for i := 0 to lista.Count-1 do
-      ListColunas.Items.Add(TextoColuna(lista[i]));
+      //Sinônimos aceitos na importação, mas que não aparecem na lista (ex.: OBS das transportadoras = OBSERVACAO)
+      if not ((LabelTipoImp.Caption = 'Transportadoras') and (lista[i] = 'OBS')) then
+        ListColunas.Items.Add(TextoColuna(lista[i]));
   finally
     lista.Free;
   end;
@@ -306,6 +308,15 @@ begin
   begin
     descr := Copy(texto, Pos(#9, texto)+1, MaxInt);
     texto := Copy(texto, 1, Pos(#9, texto)-1);
+  end;
+  //Mesmas faixas de cor da planilha (azul e amarelo alternados); item selecionado mantém o destaque padrão
+  if not (odSelected in State) then
+  begin
+    if Index mod 2 = 0 then
+      ListColunas.Canvas.Brush.Color := $00FFEBDF
+    else
+      ListColunas.Canvas.Brush.Color := $00E1FFF9;
+    ListColunas.Canvas.Font.Color := clBlack;
   end;
   ListColunas.Canvas.FillRect(Rect);
   ListColunas.Canvas.TextOut(Rect.Left + 2, Rect.Top, texto);
