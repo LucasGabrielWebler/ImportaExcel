@@ -12,6 +12,7 @@ Ferramenta em Delphi XE7 para importar planilhas (Excel ou CSV) para a base Fire
 | SubGrupos | `SUB_GRUP_PROD` | |
 | Marcas | `MARCA` | |
 | Produtos | `PROD` | Inclui tributos (`PROD_TRIBUTOS`), custos e estoque |
+| Grades | `GRADE`, `GRADE_LINHA`, `GRADE_COLUNA` | Liga o produto à grade e lança o estoque por tamanho/cor (`GRADE_LANCAMENTO`, `GRADE_ESTOQUE`, ajuste em `GRAD_AJUS` e `PROD_AJUS`). Os produtos precisam ter sido importados antes |
 | Títulos a Pagar | `TITUP` | Inclui baixas (`BTITUP`); pode cadastrar o fornecedor quando não existir |
 | Títulos a Receber | `TITUR` | Inclui baixas (`BTITUR`); pode cadastrar o cliente quando não existir |
 | CUSTOM | informada na tela | Importa colunas com o mesmo nome dos campos da tabela informada em **Nome tabela CUSTOM** |
@@ -38,6 +39,26 @@ As colunas aceitas por cada tipo, na ordem recomendada, aparecem em **Carregar >
 
 Para alterar cadastros existentes em vez de incluir novos, clique com o botão direito no cabeçalho da coluna que será a chave e escolha **Update**. A coluna fica em azul e aparece em **Colunas Update**. Cada linha altera os registros que correspondem à chave; as demais colunas são os campos atualizados.
 
+### Grades
+
+Uma planilha só, com uma linha por combinação do produto (tamanho, ou tamanho e cor):
+
+| Coluna | Uso |
+|---|---|
+| PROD | Código do produto (obrigatória) |
+| EMPR | Empresa onde o estoque aparece (padrão 1) |
+| GRADE | Código ou descrição da grade. Pela descrição, a grade é cadastrada se não existir |
+| TIT_LINHA / TIT_COLUNA | Títulos usados ao cadastrar a grade (ex.: TAMANHO e COR) |
+| LINHA | Tamanho (obrigatória) |
+| COLUNA | Cor (opcional). Sem ela, a grade é de uma dimensão e usa a coluna UNICO |
+| QTD ou EST / MAX | Saldo final da combinação: QTD vale para o estoque fiscal e o físico; EST só fiscal e MAX só físico |
+
+- O importador lança só a diferença até o saldo da planilha: reimportar a mesma planilha não duplica o estoque. Quantidade vazia não mexe no estoque e negativo é aceito.
+- O estoque entra como um ajuste (um `GRAD_AJUS` e um `PROD_AJUS` por importação), e o estoque total do produto é a soma da grade.
+- Produto sem grade que já tem estoque é barrado (zere o estoque antes de vincular a grade); produto ligado a outra grade também.
+- Tamanho ou cor novos são cadastrados na grade, e todos os produtos da grade ganham a combinação com estoque zero.
+- Não usa colunas Update. No script, as linhas que o banco `.FDB` barraria não alteram nada.
+
 ### Destino: FDB ou script
 
 | | Banco `.FDB` | Script `.SQL` / `.TXT` |
@@ -55,7 +76,7 @@ Para alterar cadastros existentes em vez de incluir novos, clique com o botão d
 | Carregar > Cabeçalho | Carrega na grade o cabeçalho de outra planilha |
 | Carregar > Colunas | Lista as colunas aceitas pelo tipo selecionado |
 | Editar | Adicionar/deletar coluna e linha, procurar, substituir e dividir |
-| Limpar | Apaga os dados de um tipo na base `.FDB` (Clie/Forn, Transportadoras, Grupos, SubGrupos, Marcas, Produtos, Títulos a Pagar e a Receber). Pede confirmação e reinicia o generator |
+| Limpar | Apaga os dados de um tipo na base `.FDB` (Clie/Forn, Transportadoras, Grupos, SubGrupos, Marcas, Produtos, Títulos a Pagar e a Receber). Pede confirmação e reinicia o generator. Limpar Produtos apaga também o estoque e os lançamentos das grades |
 
 Clique direito na grade: em uma célula, preenche a coluna copiando o valor ou em série; no cabeçalho, mescla, copia ou marca a coluna como Update.
 
@@ -85,6 +106,7 @@ O acesso ao banco usa dbExpress (`Data.DBXFirebird`).
 | `Units/uImportaTran.pas` | Importação de transportadoras |
 | `Units/uImportaGrupo.pas`, `uImportaSubGrupo.pas`, `uImportaMarca.pas` | Grupos, subgrupos e marcas |
 | `Units/uImportaProduto.pas` | Importação de produtos e tributos |
+| `Units/uImportaGrade.pas` | Importação de grades (tamanho e cor) e do estoque por combinação |
 | `Units/uImportaTituP.pas`, `uImportaTituR.pas` | Títulos a pagar e a receber |
 | `Units/uImportaCUSTOM.pas` | Importação para tabela informada pelo usuário |
 | `Units/uUtil.pas` | Leitura de Excel/CSV e funções auxiliares |
