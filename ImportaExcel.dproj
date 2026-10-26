@@ -110,6 +110,7 @@
         <DCCReference Include="Units\uImportaSubGrupo.pas"/>
         <DCCReference Include="Units\uImportaMarca.pas"/>
         <DCCReference Include="Units\uImportaTran.pas"/>
+        <DCCReference Include="Units\uImportaGrade.pas"/>
         <DCCReference Include="Units\uImportaTituP.pas"/>
         <DCCReference Include="Units\uImportaTituR.pas"/>
         <DCCReference Include="Units\uImportaCUSTOM.pas"/>
