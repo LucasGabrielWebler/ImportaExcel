@@ -209,6 +209,21 @@ begin
     Result.Add('OBS');
     Result.Add('OBSERVACAO');
   end
+  else if tipo = 'Grades' then
+  begin
+    //Uma linha por combinação do produto (ex.: tamanho, ou tamanho e cor)
+    Result.Add('PROD');
+    Result.Add('EMPR');
+    Result.Add('GRADE');
+    Result.Add('TIT_LINHA');
+    Result.Add('TIT_COLUNA');
+    Result.Add('LINHA');
+    Result.Add('COLUNA');
+    //Saldo final da combinação
+    Result.Add('QTD');
+    Result.Add('EST');
+    Result.Add('MAX');
+  end
   else if tipo = 'Marcas' then
   begin
     Result.Add('CODI');
@@ -277,6 +292,22 @@ begin
           (nome = base + '_INTERESTADUAL') or (nome = base + '_INTER_CF') then Result := '     ' + nome + #9 + 'avulso';
 end;
 
+//Descrição das colunas de Grades na tela Colunas
+function TextoColunaGrade(nome: string): string;
+begin
+  Result := nome;
+  if nome = 'PROD' then Result := nome + #9 + 'código (obrigatório)'
+  else if nome = 'EMPR' then Result := nome + #9 + 'empresa (padrão 1)'
+  else if nome = 'GRADE' then Result := nome + #9 + 'código ou descrição'
+  else if nome = 'TIT_LINHA' then Result := nome + #9 + 'ex.: TAMANHO'
+  else if nome = 'TIT_COLUNA' then Result := nome + #9 + 'ex.: COR'
+  else if nome = 'LINHA' then Result := nome + #9 + 'ex.: P, M, 38'
+  else if nome = 'COLUNA' then Result := nome + #9 + 'ex.: AZUL (opcional)'
+  else if nome = 'QTD' then Result := nome + #9 + 'fiscal e físico'
+  else if nome = 'EST' then Result := nome + #9 + 'só fiscal'
+  else if nome = 'MAX' then Result := nome + #9 + 'só físico';
+end;
+
 procedure TfrmColunas.MostrarColunas();
 var
   lista: TStringList;
@@ -290,7 +321,9 @@ begin
     ListColunas.OnDrawItem := DesenhaColuna;
     for i := 0 to lista.Count-1 do
       //Sinônimos aceitos na importação, mas que não aparecem na lista (ex.: OBS das transportadoras = OBSERVACAO)
-      if not ((LabelTipoImp.Caption = 'Transportadoras') and (lista[i] = 'OBS')) then
+      if LabelTipoImp.Caption = 'Grades' then
+        ListColunas.Items.Add(TextoColunaGrade(lista[i]))
+      else if not ((LabelTipoImp.Caption = 'Transportadoras') and (lista[i] = 'OBS')) then
         ListColunas.Items.Add(TextoColuna(lista[i]));
   finally
     lista.Free;

@@ -319,6 +319,7 @@ object frmPrinc: TfrmPrinc
         'SubGrupos'
         'Marcas'
         'Produtos'
+        'Grades'
         'T'#237'tulos a Pagar'
         'T'#237'tulos a Receber'
         'CUSTOM')

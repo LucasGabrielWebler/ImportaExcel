@@ -124,7 +124,7 @@ implementation
 
 uses
   Data.DBXCommon, uImportaClieForn, uImportaProduto, uImportaGrupo, uImportaSubGrupo,
-  uImportaMarca, uImportaTituP, uImportaTituR, uImportaCUSTOM, uImportaTran;
+  uImportaMarca, uImportaTituP, uImportaTituR, uImportaCUSTOM, uImportaTran, uImportaGrade;
 
 const
   //Recálculo das margens dos produtos (sem estouro numérico e com o sinal correto)
@@ -777,6 +777,33 @@ begin
     else cImportaTituR.Inicia;
   end;
 
+  //Grades: PROD e LINHA são obrigatórias; QTD, EST e MAX são o saldo final de cada combinação (não usa Update)
+  if SelectImport.Text = 'Grades' then
+  begin
+    if colUpdateCount > 0 then
+    begin
+      ShowMessage('A importação de Grades não usa colunas Update.' + sLineBreak + sLineBreak +
+                  'QTD, EST e MAX são o saldo final de cada combinação e o importador lança só a diferença.' + sLineBreak +
+                  'Desmarque as colunas Update para continuar.');
+      Exit;
+    end;
+    if BuscaColuna(StringGrid1,'prod') = -1 then
+    begin
+      ShowMessage('Informe a coluna PROD (código do produto) para importar Grades.');
+      Exit;
+    end;
+    if BuscaColuna(StringGrid1,'linha') = -1 then
+    begin
+      ShowMessage('Informe a coluna LINHA (ex.: tamanho) para importar Grades.');
+      Exit;
+    end;
+    if (BuscaColuna(StringGrid1,'qtd') <> -1) and ((BuscaColuna(StringGrid1,'est') <> -1) or (BuscaColuna(StringGrid1,'max') <> -1)) then
+    begin
+      ShowMessage('Utilize a coluna QTD (estoque fiscal e físico) ou as colunas EST (fiscal) e MAX (físico), não as duas formas juntas.');
+      Exit;
+    end;
+  end;
+
   //Produtos: verifica se a importação usa o generator (linhas sem CODI)
   if SelectImport.Text = 'Produtos' then
     cImportaProduto.Inicia(StringGrid1, StrToIntDef(StartLine.Text, 1));
@@ -853,6 +880,10 @@ begin
         end;
       end;
 
+      //Grades: generators e controle do ajuste de estoque da importação
+      if SelectImport.Text = 'Grades' then
+        cImportaGrade.Inicia;
+
       for k := StrToInt(StartLine.Text) to StringGrid1.RowCount-1 do
       begin
 
@@ -927,6 +958,17 @@ begin
         else if SelectImport.Text = 'Transportadoras' then
         begin
           cImportaTran.ImportaRegistro(k, StringGrid1);
+
+          //Verificar se deu erro
+          if status = 0 then
+            Break; //Quebra o for
+        end
+
+        //----------------------------------------------------------------------------
+        //Importar Grades
+        else if SelectImport.Text = 'Grades' then
+        begin
+          cImportaGrade.ImportaRegistro(k, StringGrid1);
 
           //Verificar se deu erro
           if status = 0 then
@@ -1087,6 +1129,14 @@ begin
           end;
         end
 
+        else if SelectImport.Text='Grades' then
+        begin
+          //Completar o estoque da grade (zero) de todos os produtos com grade
+          frmImportando.atualizaStatus('Completando o estoque das grades.');
+          SQL.CommandText := cImportaGrade.SQLMatriz;
+          SQL.ExecSQL;
+        end
+
         ;
         //Fechar conexoes
         SQL.Free;
@@ -1178,6 +1228,14 @@ begin
           //Arrumar Generator das MARCAS
           frmImportando.atualizaStatus('Alterar Generator das Marcas.');
           WriteLn(fileTXT, 'SELECT gen_id(GEN_MARCA_ID, ABS((SELECT MAX(CODI) FROM marca) - (SELECT gen_id(GEN_MARCA_ID,0) FROM RDB$DATABASE)) ) FROM RDB$DATABASE;');
+          WriteLn(fileTXT, 'COMMIT WORK;');
+        end
+
+        else if SelectImport.Text='Grades' then
+        begin
+          //Completar o estoque da grade (zero) de todos os produtos com grade
+          frmImportando.atualizaStatus('Completando o estoque das grades.');
+          WriteLn(fileTXT, cImportaGrade.SQLMatriz);
           WriteLn(fileTXT, 'COMMIT WORK;');
         end
 
@@ -1616,13 +1674,18 @@ procedure TfrmPrinc.mnuLimpaProdutosClick(Sender: TObject);
 var
   SQL: TSQLDataSet;
 begin
-  if not ConfirmaLimpeza('produtos (com estoque e ajustes)') then Exit;
+  if not ConfirmaLimpeza('produtos (com estoque, ajustes e estoque das grades)') then Exit;
 
   //Abrir conexoes
   SQL := TSQLDataSet.Create(Nil);
   conDestino.Open;
   SQL.SQLConnection := conDestino;
 
+  //Lançamentos de estoque das grades apontam para o produto (o estoque da grade é apagado junto com o produto)
+  SQL.CommandText := 'DELETE FROM grade_lancamento;';
+  SQL.ExecSQL;
+  SQL.CommandText := 'DELETE FROM grad_ajus;';
+  SQL.ExecSQL;
   SQL.CommandText := 'DELETE FROM prod;';
   SQL.ExecSQL;
   SQL.CommandText := 'DELETE FROM prod_ajus;';
@@ -1630,6 +1693,16 @@ begin
   SQL.CommandText := 'DELETE FROM itens;';
   SQL.ExecSQL;
 
+  SQL.CommandText := 'ALTER SEQUENCE GEN_GRADE_AJUS_ID RESTART WITH 0;';
+  SQL.ExecSQL;
+  SQL.CommandText := 'ALTER SEQUENCE GEN_GRADE_ESTOQUE_ID RESTART WITH 0;';
+  SQL.ExecSQL;
+  SQL.CommandText := 'ALTER SEQUENCE GEN_GRADE_LANCAMENTO_ID RESTART WITH 0;';
+  SQL.ExecSQL;
+  SQL.CommandText := 'ALTER SEQUENCE GEN_GRADE_LANCAMENTO_ITENS_ID RESTART WITH 0;';
+  SQL.ExecSQL;
+  SQL.CommandText := 'ALTER SEQUENCE GEN_GRADE_PROD_ID RESTART WITH 0;';
+  SQL.ExecSQL;
   SQL.CommandText := 'ALTER SEQUENCE GEN_ITENS_ID RESTART WITH 0;';
   SQL.ExecSQL;
   SQL.CommandText := 'ALTER SEQUENCE GEN_MVA_ID RESTART WITH 0;';
