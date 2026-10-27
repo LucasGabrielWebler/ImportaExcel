@@ -17,6 +17,7 @@ object frmPrinc: TfrmPrinc
   OldCreateOrder = False
   ParentBiDiMode = False
   Position = poDesigned
+  OnCreate = FormCreate
   PixelsPerInch = 96
   TextHeight = 13
   object StringGrid1: TStringGrid
@@ -741,6 +742,9 @@ object frmPrinc: TfrmPrinc
         Caption = 'T'#237'tulos a Receber'
         OnClick = mnuLimpaTituRClick
       end
+    end
+    object mnuTema: TMenuItem
+      Caption = 'Tema'
     end
   end
   object conOrigem: TSQLConnection

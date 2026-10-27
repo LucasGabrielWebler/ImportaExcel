@@ -18,6 +18,7 @@ type
     procedure atualizaStatus(status: string);
     procedure BitBtn1Click(Sender: TObject);
     procedure FormClose(Sender: TObject; var Action: TCloseAction);
+    procedure FormShow(Sender: TObject);
 
   private
     { Private declarations }
@@ -32,7 +33,7 @@ var
 
 implementation
 
-uses importa_excel;
+uses importa_excel, uTema;
 
 {$R *.dfm}
 
@@ -71,12 +72,12 @@ begin
   if status = 1 then
   begin
     frmImportando.Label2.Caption := frmImportando.Label2.Caption + ' - Concluído!';
-    frmImportando.Label2.Font.Color := clGreen;
+    frmImportando.Label2.Font.Color := CorSucesso;
     frmImportando.BitBtn1.Caption := 'Fechar';
   end
   else begin
     frmImportando.Label2.Caption := frmImportando.Label2.Caption + ' - Erro.';
-    frmImportando.Label2.Font.Color := clRed;
+    frmImportando.Label2.Font.Color := CorErro;
     frmImportando.BitBtn1.Caption := 'Ir para Erro';
     erro := True;
   end;
@@ -84,9 +85,16 @@ begin
   //frmImportando.Label2.Top := (Height - frmImportando.Label2.Height) div 2;
 end;
 
+//Título e status com as cores do tema (o tema não troca a cor das fontes próprias destes rótulos)
+procedure TfrmImportando.FormShow(Sender: TObject);
+begin
+  Label1.Font.Color := CorAndamento;
+  Label3.Font.Color := CorTexto;
+end;
+
 procedure TfrmImportando.FormClose(Sender: TObject; var Action: TCloseAction);
 begin
-  frmImportando.Label2.Font.Color := clHotLight;
+  frmImportando.Label2.Font.Color := CorAndamento;
   frmImportando.BitBtn1.Caption := 'Cancelar';
 end;
 

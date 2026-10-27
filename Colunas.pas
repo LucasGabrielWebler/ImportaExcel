@@ -28,6 +28,9 @@ function ColunasAceitas(tipo: string): TStringList;
 
 implementation
 
+uses
+  uTema;
+
 {$R *.dfm}
 
 //Colunas aceitas por tipo de importação (tela Colunas e aviso de colunas não reconhecidas)
@@ -312,17 +315,15 @@ begin
   //Mesmas faixas de cor da planilha (azul e amarelo alternados); item selecionado mantém o destaque padrão
   if not (odSelected in State) then
   begin
-    if Index mod 2 = 0 then
-      ListColunas.Canvas.Brush.Color := $00FFEBDF
-    else
-      ListColunas.Canvas.Brush.Color := $00E1FFF9;
-    ListColunas.Canvas.Font.Color := clBlack;
+    //Primeira coluna com a mesma cor da primeira linha de dados da planilha
+    ListColunas.Canvas.Brush.Color := CorFaixa(Index + 1);
+    ListColunas.Canvas.Font.Color := CorTexto;
   end;
   ListColunas.Canvas.FillRect(Rect);
   ListColunas.Canvas.TextOut(Rect.Left + 2, Rect.Top, texto);
   if descr <> '' then
   begin
-    if not (odSelected in State) then ListColunas.Canvas.Font.Color := clGrayText;
+    if not (odSelected in State) then ListColunas.Canvas.Font.Color := CorDescricao;
     ListColunas.Canvas.TextOut(Rect.Left + 190, Rect.Top, descr);
   end;
 end;

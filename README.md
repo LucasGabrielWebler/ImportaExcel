@@ -56,6 +56,7 @@ Para alterar cadastros existentes em vez de incluir novos, clique com o botão d
 | Carregar > Colunas | Lista as colunas aceitas pelo tipo selecionado |
 | Editar | Adicionar/deletar coluna e linha, procurar, substituir e dividir |
 | Limpar | Apaga os dados de um tipo na base `.FDB` (Clie/Forn, Transportadoras, Grupos, SubGrupos, Marcas, Produtos, Títulos a Pagar e a Receber). Pede confirmação e reinicia o generator |
+| Tema | Escolhe a aparência: claro (padrão do Windows) ou um dos temas embutidos (Carbon, Charcoal Dark Slate, Cobalt XEMedia, Glossy e Sapphire Kamri). A troca vale na hora e fica salva por usuário (`%APPDATA%\ImportaExcel\ImportaExcel.ini`) |
 
 Clique direito na grade: em uma célula, preenche a coluna copiando o valor ou em série; no cabeçalho, mescla, copia ou marca a coluna como Update.
 

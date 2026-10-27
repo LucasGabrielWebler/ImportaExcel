@@ -12,6 +12,7 @@ object frmImportando: TfrmImportando
   Font.Style = []
   OldCreateOrder = False
   OnClose = FormClose
+  OnShow = FormShow
   PixelsPerInch = 96
   TextHeight = 13
   object Label1: TLabel
@@ -20,12 +21,14 @@ object frmImportando: TfrmImportando
     Width = 128
     Height = 25
     Caption = 'Importando...'
+    StyleElements = [seClient, seBorder]
     Font.Charset = DEFAULT_CHARSET
     Font.Color = clHotLight
     Font.Height = -21
     Font.Name = 'Tahoma'
     Font.Style = []
     ParentFont = False
+    Transparent = True
   end
   object Label2: TLabel
     Left = 60
@@ -35,12 +38,14 @@ object frmImportando: TfrmImportando
     Align = alCustom
     Alignment = taCenter
     Caption = '0/100'
+    StyleElements = [seClient, seBorder]
     Font.Charset = DEFAULT_CHARSET
     Font.Color = clWindowText
     Font.Height = -20
     Font.Name = 'Tahoma'
     Font.Style = []
     ParentFont = False
+    Transparent = True
     Layout = tlCenter
   end
   object Label3: TLabel
@@ -49,12 +54,14 @@ object frmImportando: TfrmImportando
     Width = 36
     Height = 16
     Caption = 'Status'
+    StyleElements = [seClient, seBorder]
     Font.Charset = DEFAULT_CHARSET
     Font.Color = clWindowText
     Font.Height = -13
     Font.Name = 'Tahoma'
     Font.Style = []
     ParentFont = False
+    Transparent = True
   end
   object BitBtn1: TBitBtn
     Left = 113

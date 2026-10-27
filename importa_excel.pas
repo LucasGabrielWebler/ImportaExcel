@@ -28,6 +28,7 @@ type
     mnuLimpaProdutos: TMenuItem;
     mnuLimpaTituP: TMenuItem;
     mnuLimpaTituR: TMenuItem;
+    mnuTema: TMenuItem;
     mnuAdicionarColuna: TMenuItem;
     mnuAdicionarLinha: TMenuItem;
     mnuDeletarColuna: TMenuItem;
@@ -78,6 +79,8 @@ type
     procedure mnuLimpaProdutosClick(Sender: TObject);
     procedure mnuLimpaTituPClick(Sender: TObject);
     procedure mnuLimpaTituRClick(Sender: TObject);
+    procedure FormCreate(Sender: TObject);
+    procedure mnuTemaItemClick(Sender: TObject);
     procedure mnuAdicionarColunaClick(Sender: TObject);
     procedure mnuAdicionarLinhaClick(Sender: TObject);
     procedure mnuDeletarColunaClick(Sender: TObject);
@@ -124,7 +127,7 @@ implementation
 
 uses
   Data.DBXCommon, uImportaClieForn, uImportaProduto, uImportaGrupo, uImportaSubGrupo,
-  uImportaMarca, uImportaTituP, uImportaTituR, uImportaCUSTOM, uImportaTran;
+  uImportaMarca, uImportaTituP, uImportaTituR, uImportaCUSTOM, uImportaTran, uTema;
 
 const
   //Recálculo das margens dos produtos (sem estouro numérico e com o sinal correto)
@@ -792,7 +795,7 @@ begin
     try
       //Criar tela de loading
       frmImportando.Show;
-      frmImportando.Label2.Font.Color := clBlack;
+      frmImportando.Label2.Font.Color := CorTexto;
 
       //Carregar inicio da StartLine
       if not IsNumeric(StartLine.Text) then begin
@@ -2162,25 +2165,37 @@ var
 begin
   with (Sender as TStringGrid) do
   begin
-    Canvas.Font.Color := clBlack;
-    Canvas.Brush.Color := clWhite;
+    //Cores do tema escolhido (claro: faixas azul e amarelo)
+    Canvas.Font.Color := CorTexto;
+    Canvas.Brush.Color := CorCabecalho;
     // Don't change color for first Column, first row
     if (ARow <> 0) and (ACol <> 0) then begin
       // Draw the Band
-      if ARow mod 2 = 0 then
-        Canvas.Brush.Color := $00E1FFF9
-      else
-        Canvas.Brush.Color := $00FFEBDF;
+      Canvas.Brush.Color := CorFaixa(ARow);
     end;
     for i := 0 to colUpdateCount-1 do begin
       if StringGrid1.Cells[Acol,Arow] = colUpdate[i] then
-        Canvas.Font.Color := clBlue;
+        Canvas.Font.Color := CorUpdate;
     end;
     Canvas.TextRect(Rect, Rect.Left + 2, Rect.Top + 2, cells[acol, arow]);
     Canvas.FrameRect(Rect);
   end;
 end;
 
+
+//Menu Tema: temas disponíveis (claro do Windows e os embutidos no executável)
+procedure TfrmPrinc.FormCreate(Sender: TObject);
+begin
+  MontaMenuTema(mnuTema, mnuTemaItemClick);
+end;
+
+//Troca o tema na hora e salva a escolha para as próximas vezes
+procedure TfrmPrinc.mnuTemaItemClick(Sender: TObject);
+begin
+  AplicaTema((Sender as TMenuItem).Hint);
+  MontaMenuTema(mnuTema, mnuTemaItemClick);
+  StringGrid1.Invalidate;
+end;
 
 //Botão abrir cadastro da empresa
 procedure TfrmPrinc.mnuDadosEmprClick(Sender: TObject);
