@@ -26,6 +26,7 @@ type
     mnuLimpaSubGrupos: TMenuItem;
     mnuLimpaMarcas: TMenuItem;
     mnuLimpaProdutos: TMenuItem;
+    mnuLimpaGrades: TMenuItem;
     mnuLimpaTituP: TMenuItem;
     mnuLimpaTituR: TMenuItem;
     mnuAdicionarColuna: TMenuItem;
@@ -76,6 +77,7 @@ type
     procedure mnuLimpaSubGruposClick(Sender: TObject);
     procedure mnuLimpaMarcasClick(Sender: TObject);
     procedure mnuLimpaProdutosClick(Sender: TObject);
+    procedure mnuLimpaGradesClick(Sender: TObject);
     procedure mnuLimpaTituPClick(Sender: TObject);
     procedure mnuLimpaTituRClick(Sender: TObject);
     procedure mnuAdicionarColunaClick(Sender: TObject);
@@ -1670,6 +1672,79 @@ end;
 
 
 //Limpar dados de produtos do banco
+//Limpar grades: os produtos são mantidos, só perdem a grade
+procedure TfrmPrinc.mnuLimpaGradesClick(Sender: TObject);
+var
+  SQL: TSQLDataSet;
+  tr: TDBXTransaction;
+begin
+  if not ConfirmaLimpeza('grades (cadastro das grades, estoque por tamanho e cor e os ajustes feitos pela importação de grades; os produtos são mantidos, sem grade)') then Exit;
+
+  //Abrir conexoes
+  SQL := TSQLDataSet.Create(Nil);
+  try
+    conDestino.Open;
+    SQL.SQLConnection := conDestino;
+
+    //Tudo em uma transação: se algum vínculo impedir, nada é alterado
+    tr := conDestino.BeginTransaction;
+    try
+      //Produtos continuam cadastrados, sem grade
+      SQL.CommandText := 'UPDATE prod SET grade_grad_id = NULL WHERE grade_grad_id IS NOT NULL;';
+      SQL.ExecSQL;
+      //Lançamentos de estoque da grade (vendas e pedidos já feitos só perdem o vínculo com o tamanho/cor)
+      SQL.CommandText := 'DELETE FROM grade_lancamento;';
+      SQL.ExecSQL;
+      SQL.CommandText := 'DELETE FROM grad_ajus;';
+      SQL.ExecSQL;
+      SQL.CommandText := 'DELETE FROM grade_estoque;';
+      SQL.ExecSQL;
+      SQL.CommandText := 'DELETE FROM grade_prod;';
+      SQL.ExecSQL;
+      //Ajustes da importação de grades: os ITENS saem junto (trigger da PROD_AJUS) e o estoque total do produto
+      //volta ao que era antes da importação
+      SQL.CommandText := 'DELETE FROM prod_ajus WHERE CAST(obs AS VARCHAR(200)) = ''' + OBS_AJUSTE + ''';';
+      SQL.ExecSQL;
+      //Cadastro das grades (tamanhos e cores saem junto)
+      SQL.CommandText := 'DELETE FROM grade;';
+      SQL.ExecSQL;
+
+      conDestino.CommitFreeAndNil(tr);
+    except
+      on e: Exception do
+      begin
+        conDestino.RollbackFreeAndNil(tr);
+        ShowMessage('Não foi possível limpar as grades. Nenhum dado foi alterado.' + sLineBreak + sLineBreak +
+                    'Verifique se há registros vinculados a elas (ex.: integração com e-commerce).' + sLineBreak + sLineBreak + e.Message);
+        Exit;
+      end;
+    end;
+
+    SQL.CommandText := 'ALTER SEQUENCE GEN_GRADE_ID RESTART WITH 0;';
+    SQL.ExecSQL;
+    SQL.CommandText := 'ALTER SEQUENCE GEN_GRADE_LINHA_ID RESTART WITH 0;';
+    SQL.ExecSQL;
+    SQL.CommandText := 'ALTER SEQUENCE GEN_GRADE_COLUNA_ID RESTART WITH 0;';
+    SQL.ExecSQL;
+    SQL.CommandText := 'ALTER SEQUENCE GEN_GRADE_ESTOQUE_ID RESTART WITH 0;';
+    SQL.ExecSQL;
+    SQL.CommandText := 'ALTER SEQUENCE GEN_GRADE_LANCAMENTO_ID RESTART WITH 0;';
+    SQL.ExecSQL;
+    SQL.CommandText := 'ALTER SEQUENCE GEN_GRADE_LANCAMENTO_ITENS_ID RESTART WITH 0;';
+    SQL.ExecSQL;
+    SQL.CommandText := 'ALTER SEQUENCE GEN_GRADE_AJUS_ID RESTART WITH 0;';
+    SQL.ExecSQL;
+    SQL.CommandText := 'ALTER SEQUENCE GEN_GRADE_PROD_ID RESTART WITH 0;';
+    SQL.ExecSQL;
+
+    ShowMessage('Limpado dados de grades.');
+  finally
+    //Fechar conexoes
+    SQL.Free;
+    conDestino.Close;
+  end;
+end;
+
 procedure TfrmPrinc.mnuLimpaProdutosClick(Sender: TObject);
 var
   SQL: TSQLDataSet;

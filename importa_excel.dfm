@@ -734,6 +734,10 @@ object frmPrinc: TfrmPrinc
         Caption = 'Produtos'
         OnClick = mnuLimpaProdutosClick
       end
+      object mnuLimpaGrades: TMenuItem
+        Caption = 'Grades'
+        OnClick = mnuLimpaGradesClick
+      end
       object mnuLimpaTituP: TMenuItem
         Caption = 'T'#237'tulos a Pagar'
         OnClick = mnuLimpaTituPClick
