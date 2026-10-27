@@ -77,6 +77,7 @@ Uma planilha só, com uma linha por combinação do produto (tamanho, ou tamanho
 | Carregar > Colunas | Lista as colunas aceitas pelo tipo selecionado |
 | Editar | Adicionar/deletar coluna e linha, procurar, substituir e dividir |
 | Limpar | Apaga os dados de um tipo na base `.FDB` (Clie/Forn, Transportadoras, Grupos, SubGrupos, Marcas, Produtos, Grades, Títulos a Pagar e a Receber). Pede confirmação e reinicia o generator. Limpar Produtos apaga também o estoque e os lançamentos das grades. Limpar Grades mantém os produtos: tira a grade deles e apaga o cadastro das grades, o estoque por tamanho e cor e os ajustes feitos pela importação de grades (o estoque total volta ao de antes da importação) |
+| Tema | Escolhe a aparência: claro (padrão do Windows) ou um dos temas embutidos (Carbon, Charcoal Dark Slate, Cobalt XEMedia, Glossy e Sapphire Kamri). A troca vale na hora e fica salva por usuário (`%APPDATA%\ImportaExcel\ImportaExcel.ini`) |
 
 Clique direito na grade: em uma célula, preenche a coluna copiando o valor ou em série; no cabeçalho, mescla, copia ou marca a coluna como Update.
 

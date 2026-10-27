@@ -122,6 +122,10 @@
             <Form>frmProcurar</Form>
             <FormType>dfm</FormType>
         </DCCReference>
+        <DCCReference Include="Units\uTema.pas"/>
+        <RcCompile Include="Temas.rc">
+            <Form>Temas.res</Form>
+        </RcCompile>
         <DCCReference Include="Units\uDividir.pas">
             <Form>frmDividir</Form>
             <FormType>dfm</FormType>

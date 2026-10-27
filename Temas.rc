@@ -1,0 +1,6 @@
+/* Temas VCL embutidos no executavel (menu Tema); o claro do Windows nao precisa de arquivo */
+CARBON VCLSTYLE "Temas\\Carbon.vsf"
+COBALTXEMEDIA VCLSTYLE "Temas\\CobaltXEMedia.vsf"
+SAPPHIREKAMRI VCLSTYLE "Temas\\SapphireKamri.vsf"
+GLOSSY VCLSTYLE "Temas\\Glossy.vsf"
+CHARCOALDARKSLATE VCLSTYLE "Temas\\CharcoalDarkSlate.vsf"

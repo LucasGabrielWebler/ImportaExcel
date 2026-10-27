@@ -19,12 +19,17 @@ uses
   uImportaCUSTOM in 'Units\uImportaCUSTOM.pas',
   uSubstituir in 'Units\uSubstituir.pas' {frmSubstituir},
   uProcurar in 'Units\uProcurar.pas' {frmProcurar},
-  uDividir in 'Units\uDividir.pas' {frmDividir};
+  uDividir in 'Units\uDividir.pas' {frmDividir},
+  uTema in 'Units\uTema.pas';
 
 {$R *.res}
+//Temas embutidos (menu Tema)
+{$R 'Temas.res' 'Temas.rc'}
 
 begin
   Application.Initialize;
+  //Tema salvo pelo usuário, antes de criar as telas
+  IniciaTema;
   Application.MainFormOnTaskbar := True;
   Application.CreateForm(TfrmPrinc, frmPrinc);
   Application.CreateForm(TfrmImportando, frmImportando);
