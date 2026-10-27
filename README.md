@@ -76,7 +76,7 @@ Uma planilha só, com uma linha por combinação do produto (tamanho, ou tamanho
 | Carregar > Cabeçalho | Carrega na grade o cabeçalho de outra planilha |
 | Carregar > Colunas | Lista as colunas aceitas pelo tipo selecionado |
 | Editar | Adicionar/deletar coluna e linha, procurar, substituir e dividir |
-| Limpar | Apaga os dados de um tipo na base `.FDB` (Clie/Forn, Transportadoras, Grupos, SubGrupos, Marcas, Produtos, Títulos a Pagar e a Receber). Pede confirmação e reinicia o generator. Limpar Produtos apaga também o estoque e os lançamentos das grades |
+| Limpar | Apaga os dados de um tipo na base `.FDB` (Clie/Forn, Transportadoras, Grupos, SubGrupos, Marcas, Produtos, Grades, Títulos a Pagar e a Receber). Pede confirmação e reinicia o generator. Limpar Produtos apaga também o estoque e os lançamentos das grades. Limpar Grades mantém os produtos: tira a grade deles e apaga o cadastro das grades, o estoque por tamanho e cor e os ajustes feitos pela importação de grades (o estoque total volta ao de antes da importação) |
 
 Clique direito na grade: em uma célula, preenche a coluna copiando o valor ou em série; no cabeçalho, mescla, copia ou marca a coluna como Update.
 

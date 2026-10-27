@@ -6,6 +6,10 @@ uses
   System.SysUtils, System.Classes, Vcl.Grids, Vcl.Dialogs, Data.SqlExpr, Data.DBXCommon,
   uUtil;
 
+const
+  //Observação dos ajustes de estoque (PROD_AJUS) criados pela importação de grades
+  OBS_AJUSTE = 'IMPORTADO PELO IMPORTA EXCEL (GRADES)';
+
 type
   cImportaGrade = class
     private
@@ -43,7 +47,6 @@ uses
 const
   //Coluna neutra das grades de uma dimensão (só linha, ex.: tamanho)
   COLUNA_UNICA = 'UNICO';
-  OBS_AJUSTE = 'IMPORTADO PELO IMPORTA EXCEL (GRADES)';
 
   //Generators das tabelas usadas: avança o generator que estiver atrás do maior código (nunca volta)
   GENERATORS: array[0..8] of array[0..2] of string = (
