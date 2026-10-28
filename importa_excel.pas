@@ -30,6 +30,9 @@ type
     mnuLimpaTituP: TMenuItem;
     mnuLimpaTituR: TMenuItem;
     mnuTema: TMenuItem;
+    mnuBackup: TMenuItem;
+    mnuBackupAgora: TMenuItem;
+    mnuBackupPasta: TMenuItem;
     mnuAdicionarColuna: TMenuItem;
     mnuAdicionarLinha: TMenuItem;
     mnuDeletarColuna: TMenuItem;
@@ -83,6 +86,8 @@ type
     procedure mnuLimpaTituRClick(Sender: TObject);
     procedure FormCreate(Sender: TObject);
     procedure mnuTemaItemClick(Sender: TObject);
+    procedure mnuBackupAgoraClick(Sender: TObject);
+    procedure mnuBackupPastaClick(Sender: TObject);
     procedure mnuAdicionarColunaClick(Sender: TObject);
     procedure mnuAdicionarLinhaClick(Sender: TObject);
     procedure mnuDeletarColunaClick(Sender: TObject);
@@ -129,7 +134,7 @@ implementation
 
 uses
   Data.DBXCommon, uImportaClieForn, uImportaProduto, uImportaGrupo, uImportaSubGrupo,
-  uImportaMarca, uImportaTituP, uImportaTituR, uImportaCUSTOM, uImportaTran, uImportaGrade, uTema;
+  uImportaMarca, uImportaTituP, uImportaTituR, uImportaCUSTOM, uImportaTran, uImportaGrade, uTema, uBackup;
 
 const
   //Recálculo das margens dos produtos (sem estouro numérico e com o sinal correto)
@@ -813,6 +818,10 @@ begin
   if SelectImport.Text = 'Produtos' then
     cImportaProduto.Inicia(StringGrid1, StrToIntDef(StartLine.Text, 1));
 
+  //Backup antes da primeira importação da empresa (pasta de backup ainda sem cópias)
+  if not BackupAntesDaImportacao(NomeTipoBackup(SelectImport.Text, edtTableName.Text, colUpdateCount > 0)) then
+    Exit;
+
 
   //Status se esta OK ou se tem erro, setado como OK
   status := 1;
@@ -1261,6 +1270,9 @@ begin
 
   end;
 
+  //Backup depois da importação concluída (não pergunta se parou com erro ou se foi cancelada)
+  if (status = 1) and frmImportando.Visible then
+    BackupDepoisDaImportacao(NomeTipoBackup(SelectImport.Text, edtTableName.Text, colUpdateCount > 0));
 end;
 
 
@@ -2343,6 +2355,18 @@ begin
   AplicaTema((Sender as TMenuItem).Hint);
   MontaMenuTema(mnuTema, mnuTemaItemClick);
   StringGrid1.Invalidate;
+end;
+
+//Menu Backup: cópia da base de destino na hora
+procedure TfrmPrinc.mnuBackupAgoraClick(Sender: TObject);
+begin
+  BackupManual;
+end;
+
+//Menu Backup: abre a pasta dos backups da empresa
+procedure TfrmPrinc.mnuBackupPastaClick(Sender: TObject);
+begin
+  AbrePastaBackup;
 end;
 
 //Botão abrir cadastro da empresa

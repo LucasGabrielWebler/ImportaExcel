@@ -67,7 +67,15 @@ Uma planilha só, com uma linha por combinação do produto (tamanho, ou tamanho
 | Cidades | Localizadas na tabela `CIDADE` durante a importação | Resolvidas por subconsulta na execução do script |
 | Códigos repetidos | Verificados durante a importação | Recusados pelo banco na execução do script |
 
-**Faça backup da base antes de importar no FDB.** A gravação não pode ser desfeita automaticamente.
+### Backup da base
+
+A gravação no `.FDB` não pode ser desfeita automaticamente. Por isso o importador guarda cópias da base em `C:\BACKUP_IMPORTACAO\<razão social da empresa>` (somente com destino `.FDB`):
+
+- **Antes da primeira importação da empresa** (pasta ainda sem cópias): pergunta se guarda a base como está, em `00_DADOS_ANTES_<TIPO>.FDB`. Se a cópia for pedida e não puder ser feita, a importação não começa.
+- **Depois de cada importação concluída**: pergunta "Deseja realizar backup (cópia da base de dados)?" e grava `NN_DADOS_APOS_<TIPO>.FDB` (ex.: `01_DADOS_APOS_CLIENTES_FORNECEDORES.FDB`, `02_DADOS_APOS_PRODUTOS.FDB`; com colunas Update o nome termina em `_ATUALIZACAO`). Não pergunta se a importação parou com erro ou foi cancelada.
+- **Menu Backup**: faz a cópia na hora (`NN_DADOS_MANUAL.FDB`) ou abre a pasta dos backups.
+
+A numeração segue a ordem das cópias e uma cópia nunca sobrescreve outra. A pasta usa a razão social da empresa 1 (`DADOS_EMPRE`). Antes de copiar, o importador confere se outro programa (ex.: ADMERP) está conectado na base e pede para fechá-lo (**Tentar novamente**), para a cópia não pegar uma gravação pela metade; **Copiar assim mesmo** ignora o aviso. Para voltar um backup, feche o ADMERP e copie o arquivo de volta como `DADOS.FDB`.
 
 ## Menus
 
@@ -77,6 +85,7 @@ Uma planilha só, com uma linha por combinação do produto (tamanho, ou tamanho
 | Carregar > Colunas | Lista as colunas aceitas pelo tipo selecionado |
 | Editar | Adicionar/deletar coluna e linha, procurar, substituir e dividir |
 | Limpar | Apaga os dados de um tipo na base `.FDB` (Clie/Forn, Transportadoras, Grupos, SubGrupos, Marcas, Produtos, Grades, Títulos a Pagar e a Receber). Pede confirmação e reinicia o generator. Limpar Produtos apaga também o estoque e os lançamentos das grades. Limpar Grades mantém os produtos: tira a grade deles e apaga o cadastro das grades, o estoque por tamanho e cor e os ajustes feitos pela importação de grades (o estoque total volta ao de antes da importação) |
+| Backup | Faz o backup da base na hora (cópia em `C:\BACKUP_IMPORTACAO`) ou abre a pasta dos backups da empresa |
 | Tema | Escolhe a aparência: claro (padrão do Windows) ou um dos temas embutidos (Carbon, Charcoal Dark Slate, Cobalt XEMedia, Glossy e Sapphire Kamri). A troca vale na hora e fica salva por usuário (`%APPDATA%\ImportaExcel\ImportaExcel.ini`) |
 
 Clique direito na grade: em uma célula, preenche a coluna copiando o valor ou em série; no cabeçalho, mescla, copia ou marca a coluna como Update.
@@ -110,6 +119,7 @@ O acesso ao banco usa dbExpress (`Data.DBXFirebird`).
 | `Units/uImportaGrade.pas` | Importação de grades (tamanho e cor) e do estoque por combinação |
 | `Units/uImportaTituP.pas`, `uImportaTituR.pas` | Títulos a pagar e a receber |
 | `Units/uImportaCUSTOM.pas` | Importação para tabela informada pelo usuário |
+| `Units/uBackup.pas` | Backup da base (cópias em `C:\BACKUP_IMPORTACAO`) |
 | `Units/uUtil.pas` | Leitura de Excel/CSV e funções auxiliares |
 | `Units/uProcurar.pas`, `uSubstituir.pas`, `uDividir.pas` | Ferramentas de edição da grade |
 | `empresa.pas`, `importando.pas` | Tela de dados da empresa e tela de andamento |
