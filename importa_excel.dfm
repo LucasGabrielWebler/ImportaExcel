@@ -748,6 +748,17 @@ object frmPrinc: TfrmPrinc
         OnClick = mnuLimpaTituRClick
       end
     end
+    object mnuBackup: TMenuItem
+      Caption = 'Backup'
+      object mnuBackupAgora: TMenuItem
+        Caption = 'Fazer backup da base agora'
+        OnClick = mnuBackupAgoraClick
+      end
+      object mnuBackupPasta: TMenuItem
+        Caption = 'Abrir pasta dos backups'
+        OnClick = mnuBackupPastaClick
+      end
+    end
     object mnuTema: TMenuItem
       Caption = 'Tema'
     end

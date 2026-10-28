@@ -123,6 +123,7 @@
             <FormType>dfm</FormType>
         </DCCReference>
         <DCCReference Include="Units\uTema.pas"/>
+        <DCCReference Include="Units\uBackup.pas"/>
         <RcCompile Include="Temas.rc">
             <Form>Temas.res</Form>
         </RcCompile>

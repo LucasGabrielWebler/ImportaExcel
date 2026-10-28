@@ -132,6 +132,47 @@ begin;
   Result := Str;
 end;
 
+//Alarga os botões do diálogo cuja legenda não cabe no tamanho padrão e centraliza os botões
+procedure AjustaBotoes(f: TForm);
+var
+  botoes: TList<TButton>;
+  i, espaco, total, x, largura: Integer;
+  alterou: Boolean;
+begin
+  botoes := TList<TButton>.Create;
+  try
+    for i := 0 to f.ComponentCount - 1 do
+      if f.Components[i] is TButton then botoes.Add(TButton(f.Components[i]));
+    if botoes.Count = 0 then Exit;
+    if botoes.Count > 1 then espaco := botoes[1].Left - botoes[0].Left - botoes[0].Width
+    else espaco := 0;
+    f.Canvas.Font := f.Font;
+    alterou := False;
+    for i := 0 to botoes.Count - 1 do
+    begin
+      largura := f.Canvas.TextWidth(StringReplace(botoes[i].Caption, '&', '', [rfReplaceAll])) + 20 * Screen.PixelsPerInch div 96;
+      if largura > botoes[i].Width then
+      begin
+        botoes[i].Width := largura;
+        alterou := True;
+      end;
+    end;
+    if not alterou then Exit;
+    total := espaco * (botoes.Count - 1);
+    for i := 0 to botoes.Count - 1 do total := total + botoes[i].Width;
+    x := 16 * Screen.PixelsPerInch div 96;
+    if total + 2 * x > f.ClientWidth then f.ClientWidth := total + 2 * x;
+    x := (f.ClientWidth - total) div 2;
+    for i := 0 to botoes.Count - 1 do
+    begin
+      botoes[i].Left := x;
+      x := x + botoes[i].Width + espaco;
+    end;
+  finally
+    botoes.Free;
+  end;
+end;
+
 //Função para criar caixa de diálogos
 function Mensagem(CONST Msg: string; DlgTypt: TmsgDlgType; button: TMsgDlgButtons;
   Caption: ARRAY OF string; dlgcaption: string): Integer;
@@ -155,6 +196,7 @@ begin
       inc(Captionindex);
     end;
   end;
+  AjustaBotoes(aMsgdlg);
   Result := aMsgdlg.Showmodal;
 end;
 

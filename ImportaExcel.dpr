@@ -20,7 +20,8 @@ uses
   uSubstituir in 'Units\uSubstituir.pas' {frmSubstituir},
   uProcurar in 'Units\uProcurar.pas' {frmProcurar},
   uDividir in 'Units\uDividir.pas' {frmDividir},
-  uTema in 'Units\uTema.pas';
+  uTema in 'Units\uTema.pas',
+  uBackup in 'Units\uBackup.pas';
 
 {$R *.res}
 //Temas embutidos (menu Tema)
